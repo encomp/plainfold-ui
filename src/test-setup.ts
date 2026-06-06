@@ -1,5 +1,14 @@
 import '@testing-library/jest-dom/vitest'
 
+// jsdom does not implement ResizeObserver (needed by Radix Slider/Switch)
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as any
+}
+
 // jsdom does not implement window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
