@@ -78,7 +78,7 @@ describe('PfErrorBoundary', () => {
       return <div data-testid="recovered">Recovered</div>
     }
 
-    const { rerender } = render(
+    render(
       <PfErrorBoundary>
         <ToggleThrow />
       </PfErrorBoundary>

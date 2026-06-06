@@ -10,7 +10,7 @@ const schema = z.object({
   volume: z.number().min(0).max(100),
 })
 
-function TestForm({ children, defaultValues }: { children: React.ReactNode; defaultValues?: any }) {
+function TestForm({ children, defaultValues }: { children: React.ReactNode; defaultValues?: Record<string, unknown> }) {
   const methods = useForm({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { volume: 50 },

@@ -6,7 +6,7 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
     observe() {}
     unobserve() {}
     disconnect() {}
-  } as any
+  } as unknown as typeof ResizeObserver
 }
 
 // jsdom does not implement window.matchMedia

@@ -10,7 +10,7 @@ const schema = z.object({
   email: z.string().email('Invalid email'),
 })
 
-function TestForm({ children, defaultValues }: { children: React.ReactNode; defaultValues?: any }) {
+function TestForm({ children, defaultValues }: { children: React.ReactNode; defaultValues?: Record<string, unknown> }) {
   const methods = useForm({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { email: '' },
