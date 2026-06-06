@@ -1,4 +1,3 @@
-import React from 'react'
 import { PfDialog } from './PfDialog'
 import { PfButton } from './PfButton'
 

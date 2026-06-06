@@ -1,14 +1,14 @@
-import React from 'react'
+import { type ReactNode } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { FieldValues, DefaultValues } from 'react-hook-form'
-import type { ZodType } from 'zod'
 
 interface PfFormProps<T extends FieldValues> {
-  schema: ZodType<T>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: any
   onSubmit: (data: T) => void
   defaultValues?: DefaultValues<T>
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function PfForm<T extends FieldValues>({
