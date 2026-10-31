@@ -77,6 +77,42 @@ describe('PfStepCards', () => {
     expect(screen.getByTestId('cards')).toBeInTheDocument()
   })
 
+  it('shows a Done cue for a done step without cost, not for others', () => {
+    render(
+      <PfStepCards
+        steps={[
+          { id: 'a', title: 'A', state: 'done' },
+          { id: 'b', title: 'B', state: 'done', cost: '$1.00' },
+          { id: 'c', title: 'C', state: 'todo' },
+        ]}
+      />,
+    )
+    expect(screen.getAllByText('Done')).toHaveLength(1)
+    expect(within(screen.getByLabelText('A, done')).getByText('Done')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('B, done')).queryByText('Done')).toBeNull()
+    expect(within(screen.getByLabelText('C, todo')).queryByText('Done')).toBeNull()
+  })
+
+  it('shows only the skipped chip on a skipped step even with a cost', () => {
+    render(<PfStepCards steps={[{ id: 's', title: 'S', state: 'skipped', cost: '$2.00' }]} />)
+    expect(screen.getByText('skipped')).toBeInTheDocument()
+    expect(screen.queryByText('$2.00')).toBeNull()
+  })
+
+  it('mutes title and count but not the card or the action slot', () => {
+    render(
+      <PfStepCards
+        steps={[{ id: 'p', title: 'Publish', state: 'todo', count: '5', action: <button>Go</button> }]}
+      />,
+    )
+    const card = screen.getByRole('listitem')
+    expect(card.style.color).toBe('var(--pf-text-primary)')
+    expect(screen.getByText('Publish').parentElement!.style.color).toBe('var(--pf-text-secondary)')
+    expect(screen.getByText('5').style.color).toBe('var(--pf-text-secondary)')
+    const action = screen.getByRole('button', { name: 'Go' }).parentElement!
+    expect(action.style.color).toBe('')
+  })
+
   it('renders nothing for no steps', () => {
     const { container } = render(<PfStepCards steps={[]} />)
     expect(container).toBeEmptyDOMElement()

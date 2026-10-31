@@ -1,6 +1,7 @@
 import React from 'react'
 
 export interface PfStepCardsStep {
+  /** Must be unique among the steps */
   id: string
   title: string
   state: 'done' | 'current' | 'todo' | 'skipped'
@@ -8,7 +9,7 @@ export interface PfStepCardsStep {
   tag?: string
   /** The big figure */
   count?: React.ReactNode
-  /** Already formatted, e.g. "$11.90" */
+  /** Already formatted, e.g. "$11.90". Ignored when the step is skipped. A done step without it shows "Done". */
   cost?: string
   /** One or two lines under the count */
   note?: React.ReactNode
@@ -22,6 +23,9 @@ export interface PfStepCardsProps {
   currentId?: string
   'data-testid'?: string
 }
+
+// Muted colour goes on title and count only (note and chip already have their own), never on the action slot.
+const MUTED = 'var(--pf-text-secondary)'
 
 const rootStyle: React.CSSProperties = {
   display: 'grid',
@@ -90,7 +94,7 @@ export function PfStepCards({ steps, currentId, 'data-testid': dataTestId }: PfS
         const isCurrent = i === currentIndex
         const state = step.state === 'current' && !isCurrent ? 'todo' : step.state
         const muted = state === 'todo' || state === 'skipped'
-        const chip = state === 'skipped' ? 'skipped' : step.cost
+        const chip = state === 'skipped' ? 'skipped' : step.cost || (state === 'done' ? 'Done' : undefined)
         return (
           <div
             key={step.id}
@@ -104,14 +108,13 @@ export function PfStepCards({ steps, currentId, 'data-testid': dataTestId }: PfS
                 padding: '11px',
                 background: 'var(--pf-bg-surface-alt)',
               }),
-              ...(muted && { color: 'var(--pf-text-secondary)' }),
             }}
           >
-            <div style={headerStyle}>
+            <div style={muted ? { ...headerStyle, color: MUTED } : headerStyle}>
               <span>{step.title}</span>
               {step.tag && <span style={tagStyle}>{step.tag}</span>}
             </div>
-            {step.count != null && <div style={countStyle}>{step.count}</div>}
+            {step.count != null && <div style={muted ? { ...countStyle, color: MUTED } : countStyle}>{step.count}</div>}
             {chip && (
               <div
                 style={{
