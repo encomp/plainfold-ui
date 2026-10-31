@@ -20,6 +20,7 @@ describe('PfStageBar', () => {
     render(<PfStageBar steps={steps} />)
     const cur = screen.getByRole('listitem', { current: 'step' })
     expect(cur).toHaveAttribute('aria-label', 'Review, in progress, 36%')
+    expect(cur.firstElementChild).toHaveStyle({ width: '36%' })
   })
 
   it('labels done, optional and todo steps', () => {
