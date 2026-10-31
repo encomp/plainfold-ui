@@ -175,6 +175,56 @@ describe('PfChatPanel', () => {
     expect(p.onModeChange).not.toHaveBeenCalled()
   })
 
+  it('returns focus to the menu button after a selection', () => {
+    setup({ menuItems: [{ id: 'x', label: 'X', onSelect: vi.fn() }] })
+    fireEvent.click(screen.getByTestId('pf-chat-menu'))
+    fireEvent.click(screen.getByTestId('pf-chat-menu-x'))
+    expect(screen.getByTestId('pf-chat-menu')).toHaveFocus()
+  })
+
+  it('moves through menu items with the arrow keys and closes on Tab', () => {
+    setup({
+      menuItems: [
+        { id: 'a', label: 'A', onSelect: vi.fn() },
+        { id: 'b', label: 'B', onSelect: vi.fn() },
+      ],
+    })
+    fireEvent.click(screen.getByTestId('pf-chat-menu'))
+    const a = screen.getByTestId('pf-chat-menu-a')
+    const b = screen.getByTestId('pf-chat-menu-b')
+    expect(a).toHaveFocus()
+    fireEvent.keyDown(a, { key: 'ArrowDown' })
+    expect(b).toHaveFocus()
+    fireEvent.keyDown(b, { key: 'ArrowDown' })
+    expect(a).toHaveFocus()
+    fireEvent.keyDown(a, { key: 'ArrowUp' })
+    expect(b).toHaveFocus()
+    fireEvent.keyDown(b, { key: 'Home' })
+    expect(a).toHaveFocus()
+    fireEvent.keyDown(a, { key: 'Tab' })
+    expect(screen.queryByRole('menu')).toBeNull()
+  })
+
+  it('follows new text only while the reader is near the bottom', () => {
+    const one: PfChatMessage[] = [{ id: 'a', role: 'assistant', text: 'x', pending: true }]
+    const { p, rerender } = setup({ messages: one })
+    const log = screen.getByRole('log')
+    Object.defineProperty(log, 'scrollHeight', { configurable: true, value: 1000 })
+    Object.defineProperty(log, 'clientHeight', { configurable: true, value: 100 })
+    log.scrollTop = 0
+    fireEvent.scroll(log) // reader scrolled up
+    rerender(<PfChatPanel {...p} messages={[{ ...one[0], text: 'xy' }]} />)
+    expect(log.scrollTop).toBe(0)
+    expect(log).toHaveAttribute('aria-busy', 'true')
+    const next: PfChatMessage[] = [
+      { ...one[0], text: 'xy', pending: false },
+      { id: 'b', role: 'user', text: 'q' },
+    ]
+    rerender(<PfChatPanel {...p} messages={next} />)
+    expect(log.scrollTop).toBe(1000)
+    expect(log).not.toHaveAttribute('aria-busy')
+  })
+
   it('closes the menu on an outside click', () => {
     setup({ menuItems: [{ id: 'x', label: 'X', onSelect: vi.fn() }] })
     fireEvent.click(screen.getByTestId('pf-chat-menu'))
@@ -270,6 +320,7 @@ describe('PfChatPanel', () => {
     expect(screen.queryByRole('separator')).toBeNull()
     expect(screen.getByText('summary-strip')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Close chat' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
   })
 
   it('uses a custom test id prefix', () => {

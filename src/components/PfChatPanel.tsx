@@ -76,7 +76,7 @@ const rootBase: React.CSSProperties = {
 const phoneStyle: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
-  zIndex: 1000,
+  zIndex: 40,
   width: '100%',
   height: '100%',
 }
@@ -256,10 +256,16 @@ export function PfChatPanel({
   const logRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ x: number; width: number } | null>(null)
 
+  // Follow the newest text, but not while the reader has scrolled up (streaming must not yank them).
   const last = messages[messages.length - 1]
+  const nearBottom = useRef(true)
+  const seenCount = useRef(0)
   useEffect(() => {
     const el = logRef.current
-    if (el) el.scrollTop = el.scrollHeight
+    if (el && (nearBottom.current || messages.length !== seenCount.current)) {
+      el.scrollTop = el.scrollHeight
+    }
+    seenCount.current = messages.length
   }, [messages.length, last?.text, mode])
 
   useEffect(() => {
@@ -293,6 +299,16 @@ export function PfChatPanel({
     if (menuOpen) closeMenu()
   }
 
+  const onMenuKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Tab') return setMenuOpen(false)
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+    const at = items.indexOf(document.activeElement as HTMLElement)
+    const next = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e.key]
+    if (next === undefined) return
+    e.preventDefault()
+    items[(next + items.length) % items.length]?.focus()
+  }
+
   const onResizeKey = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') onWidthChange?.(clamp(width + KEY_STEP))
     else if (e.key === 'ArrowRight') onWidthChange?.(clamp(width - KEY_STEP))
@@ -309,7 +325,14 @@ export function PfChatPanel({
   }
 
   return (
-    <aside aria-labelledby={titleId} style={rootStyle} onKeyDown={onKeyDown} data-testid={testId}>
+    <aside
+      role={phone ? 'dialog' : undefined}
+      aria-modal={phone ? true : undefined}
+      aria-labelledby={titleId}
+      style={rootStyle}
+      onKeyDown={onKeyDown}
+      data-testid={testId}
+    >
       {!expanded && (
         <div
           role="separator"
@@ -359,7 +382,7 @@ export function PfChatPanel({
               ⋯
             </button>
             {menuOpen && (
-              <div role="menu" style={menuStyle}>
+              <div role="menu" style={menuStyle} onKeyDown={onMenuKey}>
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
@@ -368,7 +391,7 @@ export function PfChatPanel({
                     style={menuItemStyle}
                     data-testid={`${testId}-menu-${item.id}`}
                     onClick={() => {
-                      setMenuOpen(false)
+                      closeMenu()
                       item.onSelect()
                     }}
                   >
@@ -405,6 +428,11 @@ export function PfChatPanel({
         ref={logRef}
         role="log"
         aria-live="polite"
+        aria-busy={last?.pending ? true : undefined}
+        onScroll={(e) => {
+          const el = e.currentTarget
+          nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+        }}
         style={logStyle}
         data-testid={`${testId}-messages`}
       >
