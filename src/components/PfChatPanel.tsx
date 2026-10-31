@@ -59,6 +59,9 @@ const MAX_WIDTH = 720
 const DEFAULT_WIDTH = 380
 const KEY_STEP = 20
 
+// Sources may come from model output: link only web and site-relative URLs, never javascript: or data:.
+const SAFE_HREF = /^(https?:\/\/|\/(?!\/))/i
+
 const clamp = (n: number) => Math.min(Math.max(n, MIN_WIDTH), MAX_WIDTH)
 
 const rootBase: React.CSSProperties = {
@@ -309,6 +312,10 @@ export function PfChatPanel({
     items[(next + items.length) % items.length]?.focus()
   }
 
+  const endDrag = () => {
+    drag.current = null
+  }
+
   const onResizeKey = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') onWidthChange?.(clamp(width + KEY_STEP))
     else if (e.key === 'ArrowRight') onWidthChange?.(clamp(width - KEY_STEP))
@@ -325,15 +332,8 @@ export function PfChatPanel({
   }
 
   return (
-    <aside
-      role={phone ? 'dialog' : undefined}
-      aria-modal={phone ? true : undefined}
-      aria-labelledby={titleId}
-      style={rootStyle}
-      onKeyDown={onKeyDown}
-      data-testid={testId}
-    >
-      {!expanded && (
+    <aside aria-labelledby={titleId} style={rootStyle} onKeyDown={onKeyDown} data-testid={testId}>
+      {!expanded && onWidthChange && (
         <div
           role="separator"
           aria-orientation="vertical"
@@ -353,12 +353,8 @@ export function PfChatPanel({
             if (drag.current)
               onWidthChange?.(clamp(drag.current.width + drag.current.x - e.clientX))
           }}
-          onPointerUp={() => {
-            drag.current = null
-          }}
-          onPointerCancel={() => {
-            drag.current = null
-          }}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
         />
       )}
       {expanded && summary}
@@ -459,7 +455,7 @@ export function PfChatPanel({
                 {m.sources.map((s, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && ', '}
-                    {s.href ? (
+                    {s.href && SAFE_HREF.test(s.href) ? (
                       <a
                         href={s.href}
                         target="_blank"

@@ -113,6 +113,38 @@ describe('PfChatPanel', () => {
     expect(p.onSend).toHaveBeenCalledWith('hi')
   })
 
+  it('does not send on Enter while composing text', () => {
+    const { p } = setup({ draft: 'hi' })
+    fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'Enter', isComposing: true })
+    expect(p.onSend).not.toHaveBeenCalled()
+  })
+
+  it('links only web and site-relative sources', () => {
+    setup({
+      messages: [
+        {
+          id: 's',
+          role: 'assistant',
+          text: 't',
+          sources: [
+            { label: 'Web', href: 'https://example.com' },
+            { label: 'Local', href: '/jobs/1' },
+            { label: 'Script', href: 'javascript:alert(1)' },
+            { label: 'Data', href: 'data:text/html,x' },
+            { label: 'Proto', href: '//evil.example' },
+          ],
+        },
+      ],
+    })
+    expect(screen.getAllByRole('link').map((a) => a.textContent)).toEqual(['Web', 'Local'])
+    expect(screen.getByText('Script')).toBeInTheDocument()
+  })
+
+  it('does not show a resize handle without onWidthChange', () => {
+    setup()
+    expect(screen.queryByRole('separator')).toBeNull()
+  })
+
   it('does not send on Shift+Enter', () => {
     const { p } = setup({ draft: 'hi' })
     fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'Enter', shiftKey: true })
@@ -320,7 +352,6 @@ describe('PfChatPanel', () => {
     expect(screen.queryByRole('separator')).toBeNull()
     expect(screen.getByText('summary-strip')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Close chat' })).toBeInTheDocument()
-    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
   })
 
   it('uses a custom test id prefix', () => {
