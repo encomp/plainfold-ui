@@ -119,6 +119,23 @@ describe('PfChatPanel', () => {
     expect(p.onSend).not.toHaveBeenCalled()
   })
 
+  it('does not send on the Safari composition-confirm Enter (keyCode 229)', () => {
+    const { p } = setup({ draft: 'hi' })
+    fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'Enter', keyCode: 229 })
+    expect(p.onSend).not.toHaveBeenCalled()
+  })
+
+  it('caps the docked width at 60% of the row so the page keeps room', () => {
+    setup({ mode: 'docked', width: 720 })
+    expect(screen.getByRole('complementary').style.maxWidth).toBe('60%')
+  })
+
+  it('names the options menu', () => {
+    setup({ menuItems: [{ id: 'new', label: 'New', onSelect: () => {} }] })
+    fireEvent.click(screen.getByLabelText('More'))
+    expect(screen.getByRole('menu', { name: 'Chat options' })).toBeTruthy()
+  })
+
   it('links only web and site-relative sources', () => {
     setup({
       messages: [

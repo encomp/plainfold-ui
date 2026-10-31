@@ -337,7 +337,7 @@ export function PfChatPanel({
       ? phoneStyle
       : expanded
         ? { width: '100%' }
-        : { width: `${clamp(width)}px`, flexShrink: 0 }),
+        : { width: `${clamp(width)}px`, maxWidth: '60%', flexShrink: 0 }),
     ...(expanded ? {} : { borderLeft: '1px solid var(--pf-border)' }),
   }
 
@@ -388,7 +388,7 @@ export function PfChatPanel({
               ⋯
             </button>
             {menuOpen && (
-              <div role="menu" style={menuStyle} onKeyDown={onMenuKey}>
+              <div role="menu" aria-label="Chat options" style={menuStyle} onKeyDown={onMenuKey}>
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
@@ -500,7 +500,7 @@ export function PfChatPanel({
           data-testid={`${testId}-input`}
           onChange={(e) => onDraftChange(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
               e.preventDefault()
               send()
             }
