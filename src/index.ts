@@ -38,6 +38,14 @@ export type {
   PfModelPickerValue,
   PfModelPickerProps,
 } from './components/PfModelPicker'
+export { PfChatPanel } from './components/PfChatPanel'
+export type {
+  PfChatMode,
+  PfChatSource,
+  PfChatMessage,
+  PfChatMenuItem,
+  PfChatPanelProps,
+} from './components/PfChatPanel'
 
 export { PfErrorBoundary } from './components/PfErrorBoundary'
 export { ThemeIcon } from './components/ThemeIcon'

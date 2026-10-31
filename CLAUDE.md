@@ -1,6 +1,6 @@
 # @plainfold/ui
 
-Material Design 3 component library for the Plainfold ecosystem. 24 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
+Material Design 3 component library for the Plainfold ecosystem. 25 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
 
 ## Architecture
 
@@ -48,6 +48,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfDataList** — table on desktop, cards on mobile
 - **PfStageBar** — stateless stage bar: one segment per step (`done`, `current` with `progress` 0–1, `todo`, `optional`), optional `currentLabel` after the bar; `role="list"` with per-step aria-labels and `aria-current="step"`
 - **PfModelPicker** — controlled provider + model pair of native selects in a `role="group"` (`label`, default "Model"); changing the provider emits its first model; `disabled` providers show `disabledNote`; model `note` (e.g. a price) follows the label
+- **PfChatPanel** — controlled chat column: `mode` `hidden` (renders nothing) / `docked` (resizable, `width` 280–720 via `role="separator"`, pointer or ←/→) / `expanded` (shows `summary`); docked is full-screen on phones. Messages in a `role="log"` (meta, sources, pending, error, `renderMessageActions`), composer (Enter sends, Shift+Enter newline), `⋯` menu from `menuItems`, slots `header`/`context`/`footer`/`emptyState`. Escape stays inside the panel. Plain-text answers; no markdown
 
 ### Misc
 - **PfErrorBoundary** — class component error boundary with reset
