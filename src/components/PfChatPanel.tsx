@@ -59,8 +59,8 @@ const MAX_WIDTH = 720
 const DEFAULT_WIDTH = 380
 const KEY_STEP = 20
 
-// Sources may come from model output: link only web and site-relative URLs, never javascript: or data:.
-const SAFE_HREF = /^(https?:\/\/|\/(?!\/))/i
+// Sources may come from model output: link only web and site-relative URLs, never javascript: or data:, nor a form a browser reads as protocol-relative.
+const SAFE_HREF = /^(https?:\/\/|\/(?![/\\\t\n\r]))/i
 
 const clamp = (n: number) => Math.min(Math.max(n, MIN_WIDTH), MAX_WIDTH)
 
@@ -271,6 +271,14 @@ export function PfChatPanel({
     seenCount.current = messages.length
   }, [messages.length, last?.text, mode])
 
+  // Hiding unmounts the log and the menu: a reopened panel starts at the newest message, menu shut.
+  useEffect(() => {
+    if (mode === 'hidden') {
+      nearBottom.current = true
+      setMenuOpen(false)
+    }
+  }, [mode])
+
   useEffect(() => {
     if (!menuOpen) return
     menuWrapRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
@@ -303,7 +311,7 @@ export function PfChatPanel({
   }
 
   const onMenuKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Tab') return setMenuOpen(false)
+    if (e.key === 'Tab') return closeMenu()
     const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
     const at = items.indexOf(document.activeElement as HTMLElement)
     const next = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e.key]
@@ -317,8 +325,10 @@ export function PfChatPanel({
   }
 
   const onResizeKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') onWidthChange?.(clamp(width + KEY_STEP))
-    else if (e.key === 'ArrowRight') onWidthChange?.(clamp(width - KEY_STEP))
+    const delta = { ArrowLeft: KEY_STEP, ArrowRight: -KEY_STEP }[e.key]
+    if (delta === undefined) return
+    e.preventDefault()
+    onWidthChange?.(clamp(width + delta))
   }
 
   const rootStyle: React.CSSProperties = {

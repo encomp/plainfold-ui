@@ -132,12 +132,44 @@ describe('PfChatPanel', () => {
             { label: 'Script', href: 'javascript:alert(1)' },
             { label: 'Data', href: 'data:text/html,x' },
             { label: 'Proto', href: '//evil.example' },
+            { label: 'Back', href: '/\\evil.example' },
+            { label: 'Tab', href: '/\t/evil.example' },
           ],
         },
       ],
     })
     expect(screen.getAllByRole('link').map((a) => a.textContent)).toEqual(['Web', 'Local'])
     expect(screen.getByText('Script')).toBeInTheDocument()
+  })
+
+  it('reopens at the newest message with the menu shut', () => {
+    const msgs: PfChatMessage[] = [{ id: 'a', role: 'user', text: 'x' }]
+    const items = [{ id: 'x', label: 'X', onSelect: vi.fn() }]
+    const { p, rerender } = setup({ messages: msgs, menuItems: items })
+    const log = screen.getByRole('log')
+    Object.defineProperty(log, 'scrollHeight', { configurable: true, value: 1000 })
+    Object.defineProperty(log, 'clientHeight', { configurable: true, value: 100 })
+    log.scrollTop = 0
+    fireEvent.scroll(log)
+    fireEvent.click(screen.getByTestId('pf-chat-menu'))
+    rerender(<PfChatPanel {...p} mode="hidden" />)
+    rerender(<PfChatPanel {...p} mode="docked" />)
+    expect(screen.queryByRole('menu')).toBeNull()
+    const again = screen.getByRole('log')
+    Object.defineProperty(again, 'scrollHeight', { configurable: true, value: 1000 })
+    rerender(
+      <PfChatPanel
+        {...p}
+        mode="docked"
+        messages={[...msgs, { id: 'b', role: 'user', text: 'y' }]}
+      />,
+    )
+    expect(again.scrollTop).toBe(1000)
+  })
+
+  it('prevents the page from scrolling on resize keys', () => {
+    setup({ onWidthChange: vi.fn() })
+    expect(fireEvent.keyDown(screen.getByRole('separator'), { key: 'ArrowLeft' })).toBe(false)
   })
 
   it('does not show a resize handle without onWidthChange', () => {
