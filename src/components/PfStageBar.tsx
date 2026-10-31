@@ -25,7 +25,7 @@ const rootStyle: React.CSSProperties = {
   rowGap: '4px',
 }
 
-const listStyle: React.CSSProperties = { display: 'flex', gap: '2px' }
+const listStyle: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '2px' }
 
 const segmentBase: React.CSSProperties = {
   width: '16px',
