@@ -33,7 +33,6 @@ const segmentBase: React.CSSProperties = {
   flexShrink: 0,
   borderRadius: 'var(--pf-radius-sm)',
   overflow: 'hidden',
-  background: 'var(--pf-bg-surface-alt)',
 }
 
 const SEGMENT_BG = {
