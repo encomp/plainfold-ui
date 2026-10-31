@@ -33,6 +33,8 @@ export { PfStageBar } from './components/PfStageBar'
 export type { PfStageBarStep } from './components/PfStageBar'
 export { PfStepCards } from './components/PfStepCards'
 export type { PfStepCardsStep, PfStepCardsProps } from './components/PfStepCards'
+export { PfCompareTable } from './components/PfCompareTable'
+export type { PfCompareTone, PfCompareRow, PfCompareTableProps } from './components/PfCompareTable'
 export { PfModelPicker } from './components/PfModelPicker'
 export type {
   PfModelOption,
