@@ -31,6 +31,8 @@ export { PfSegmentedButton } from './components/PfSegmentedButton'
 export { PfDataList } from './components/PfDataList'
 export { PfStageBar } from './components/PfStageBar'
 export type { PfStageBarStep } from './components/PfStageBar'
+export { PfStepCards } from './components/PfStepCards'
+export type { PfStepCardsStep, PfStepCardsProps } from './components/PfStepCards'
 export { PfModelPicker } from './components/PfModelPicker'
 export type {
   PfModelOption,
