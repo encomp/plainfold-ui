@@ -29,6 +29,8 @@ export type { PfNavItem } from './components/PfNavDrawer'
 
 export { PfSegmentedButton } from './components/PfSegmentedButton'
 export { PfDataList } from './components/PfDataList'
+export { PfStageBar } from './components/PfStageBar'
+export type { PfStageBarStep } from './components/PfStageBar'
 
 export { PfErrorBoundary } from './components/PfErrorBoundary'
 export { ThemeIcon } from './components/ThemeIcon'

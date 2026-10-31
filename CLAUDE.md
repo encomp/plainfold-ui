@@ -1,6 +1,6 @@
 # @plainfold/ui
 
-Material Design 3 component library for the Plainfold ecosystem. 22 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
+Material Design 3 component library for the Plainfold ecosystem. 23 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
 
 ## Architecture
 
@@ -46,6 +46,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 ### Data Display
 - **PfSegmentedButton** — segmented control with aria-pressed
 - **PfDataList** — table on desktop, cards on mobile
+- **PfStageBar** — stateless stage bar: one segment per step (`done`, `current` with `progress` 0–1, `todo`, `optional`), optional `currentLabel` after the bar; `role="list"` with per-step aria-labels and `aria-current="step"`
 
 ### Misc
 - **PfErrorBoundary** — class component error boundary with reset
