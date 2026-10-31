@@ -64,6 +64,7 @@ describe('PfCompareTable', () => {
       { id: 'a', name: 'Alpha', score: 80, cost: null, tag: '' },
       { id: 'b', name: 'Beta', score: 80, cost: null, tag: '' },
       { id: 'c', name: 'Gamma', score: null, cost: null, tag: '' },
+      { id: 'd', name: 'Delta', score: 60, cost: null, tag: '' },
     ]
     renderTable([row({ best: 'max' })], c)
     expect(screen.getAllByText('best')).toHaveLength(2)
@@ -138,5 +139,46 @@ describe('PfCompareTable', () => {
   it('scrolls horizontally in its container', () => {
     renderTable([row()])
     expect(screen.getByTestId('t').style.overflowX).toBe('auto')
+  })
+
+  it('no best in an all-equal row or with a single valid number', () => {
+    renderTable([row({ best: 'max', value: () => 5 })])
+    expect(screen.queryByText('best')).toBeNull()
+    renderTable([row({ id: 'one', best: 'max' })], [cols[0]])
+    expect(screen.queryByText('best')).toBeNull()
+  })
+
+  it('a bad cell that is also best has no best label or bold', () => {
+    renderTable([row({ best: 'max', tone: (c) => (c.score === 80 ? 'bad' : 'neutral') })])
+    const cell = screen.getAllByRole('cell')[0]
+    expect(within(cell).queryByText('best')).toBeNull()
+    expect(within(cell).getByText('fails')).toBeInTheDocument()
+    expect(cell.style.fontWeight).toBe('')
+  })
+
+  it('ok and warn tones carry text cues', () => {
+    renderTable([row({ tone: (c) => (c.score === 80 ? 'ok' : 'warn') })])
+    expect(screen.getByText('ok')).toBeInTheDocument()
+    expect(screen.getByText('warning')).toBeInTheDocument()
+  })
+
+  it('hides a group with no differing rows under onlyDifferences, groups use rowgroup scope', () => {
+    renderTable(
+      [
+        row({ id: 's', label: 'Same', group: 'Hidden', value: () => 1 }),
+        row({ id: 'd', label: 'Diff', group: 'Shown' }),
+      ],
+      cols,
+      { onlyDifferences: true },
+    )
+    expect(screen.queryByText('Hidden')).toBeNull()
+    expect(screen.getByText('Shown')).toHaveAttribute('scope', 'rowgroup')
+  })
+
+  it('first column is sticky', () => {
+    renderTable([row()])
+    const th = screen.getByRole('rowheader', { name: 'Score' })
+    expect(th.style.position).toBe('sticky')
+    expect(th.style.left).toBe('0px')
   })
 })
