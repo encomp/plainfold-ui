@@ -25,13 +25,19 @@ export interface PfCompareTableProps<T> {
   rows: PfCompareRow<T>[]
   /** Controlled. Hides rows whose value() is equal across all columns (null equals null). */
   onlyDifferences?: boolean
-  /** Shown when there are no columns */
+  /** Shown when there are no columns, or when onlyDifferences hides every row */
   emptyState?: React.ReactNode
+  /** Names the table, and the scroll region around it */
+  'aria-label'?: string
   'data-testid'?: string
 }
 
 // position: relative is the containing block for the visually hidden spans, so they stay inside the clip
-const wrapStyle: React.CSSProperties = { overflowX: 'auto', maxWidth: '100%', position: 'relative' }
+const wrapStyle: React.CSSProperties = {
+  overflowX: 'auto',
+  maxWidth: '100%',
+  position: 'relative',
+}
 
 const tableStyle: React.CSSProperties = {
   borderCollapse: 'separate',
@@ -83,10 +89,15 @@ const hiddenStyle: React.CSSProperties = {
   border: 0,
 }
 
+// NaN counts as null
+function known(v: number | string | null): number | string | null {
+  return typeof v === 'number' && Number.isNaN(v) ? null : v
+}
+
 function isDifferent<T>(row: PfCompareRow<T>, columns: T[]): boolean {
   if (!row.value || columns.length < 2) return true
-  const first = row.value(columns[0])
-  return columns.some((c) => row.value!(c) !== first)
+  const first = known(row.value(columns[0]))
+  return columns.some((c) => known(row.value!(c)) !== first)
 }
 
 function bestIndexes<T>(row: PfCompareRow<T>, columns: T[]): Set<number> {
@@ -112,6 +123,7 @@ export function PfCompareTable<T>({
   rows,
   onlyDifferences,
   emptyState,
+  'aria-label': ariaLabel,
   'data-testid': dataTestId,
 }: PfCompareTableProps<T>) {
   if (columns.length === 0) {
@@ -119,6 +131,7 @@ export function PfCompareTable<T>({
   }
 
   const visible = onlyDifferences ? rows.filter((r) => isDifferent(r, columns)) : rows
+  if (visible.length === 0 && emptyState != null) return <div data-testid={dataTestId}>{emptyState}</div>
   const span = columns.length + 1
   // Consecutive rows with the same group share one tbody and heading
   const runs: { group?: string; rows: PfCompareRow<T>[] }[] = []
@@ -128,15 +141,29 @@ export function PfCompareTable<T>({
   })
 
   return (
-    <div style={wrapStyle} data-testid={dataTestId}>
-      <table style={{ ...tableStyle, minWidth: `${LABEL_MIN + COL_MIN * columns.length}px` }}>
+    <div style={wrapStyle} tabIndex={0} role={ariaLabel ? 'region' : undefined} aria-label={ariaLabel} data-testid={dataTestId}>
+      <table
+        aria-label={ariaLabel}
+        style={{
+          ...tableStyle,
+          minWidth: `${LABEL_MIN + COL_MIN * columns.length}px`,
+        }}
+      >
         <thead>
           <tr>
             <th scope="col" style={stickyStyle}>
               <span style={hiddenStyle}>Item</span>
             </th>
             {columns.map((c) => (
-              <th key={getColumnId(c)} scope="col" style={{ ...cellStyle, minWidth: `${COL_MIN}px`, fontWeight: 600 }}>
+              <th
+                key={getColumnId(c)}
+                scope="col"
+                style={{
+                  ...cellStyle,
+                  minWidth: `${COL_MIN}px`,
+                  fontWeight: 600,
+                }}
+              >
                 {renderColumnHeader(c)}
               </th>
             ))}
@@ -144,7 +171,7 @@ export function PfCompareTable<T>({
         </thead>
         {runs.map((run, runIndex) => (
           <tbody key={runIndex}>
-            {run.group != null && (
+            {run.group && (
               <tr>
                 <th scope="rowgroup" colSpan={span} style={groupStyle}>
                   {run.group}
@@ -174,7 +201,12 @@ export function PfCompareTable<T>({
                     return (
                       <td
                         key={getColumnId(c)}
-                        style={{ ...cellStyle, minWidth: `${COL_MIN}px`, ...(color && { color }), ...(isBest && { fontWeight: 600 }) }}
+                        style={{
+                          ...cellStyle,
+                          minWidth: `${COL_MIN}px`,
+                          ...(color && { color }),
+                          ...(isBest && { fontWeight: 600 }),
+                        }}
                       >
                         {r.get(c)}
                         {isBest && <span style={hiddenStyle}> best</span>}

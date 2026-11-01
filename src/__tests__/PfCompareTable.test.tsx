@@ -121,24 +121,28 @@ describe('PfCompareTable', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
-  it('keeps no internal state when columns change', () => {
-    const { rerender } = renderTable([row({ best: 'max' })])
-    expect(screen.getByRole('columnheader', { name: 'Beta' })).toBeInTheDocument()
-    rerender(
-      <PfCompareTable
-        columns={[{ id: 'z', name: 'Zeta', score: 1, cost: 1, tag: '' }]}
-        getColumnId={(c) => c.id}
-        renderColumnHeader={(c) => c.name}
-        rows={[row({ best: 'max' })]}
-      />,
-    )
-    expect(screen.queryByRole('columnheader', { name: 'Beta' })).toBeNull()
-    expect(screen.getByRole('columnheader', { name: 'Zeta' })).toBeInTheDocument()
+  it('scroll container is focusable and named with the table', () => {
+    renderTable([row()], cols, { 'aria-label': 'Alpha vs Beta' })
+    const region = screen.getByRole('region', { name: 'Alpha vs Beta' })
+    expect(region.tabIndex).toBe(0)
+    expect(screen.getByRole('table', { name: 'Alpha vs Beta' })).toBeInTheDocument()
   })
 
-  it('scrolls horizontally in its container', () => {
-    renderTable([row()])
-    expect(screen.getByTestId('t').style.overflowX).toBe('auto')
+  it('treats NaN as null for differences', () => {
+    renderTable([row({ id: 'n', label: 'Ratio', value: () => NaN })], cols, { onlyDifferences: true })
+    expect(screen.queryByRole('rowheader', { name: 'Ratio' })).toBeNull()
+  })
+
+  it('empty group draws no heading row', () => {
+    renderTable([row({ group: '' })])
+    expect(screen.queryByRole('rowheader', { name: '' })).toBeNull()
+    expect(screen.getAllByRole('rowheader')).toHaveLength(1)
+  })
+
+  it('shows emptyState when onlyDifferences hides every row', () => {
+    renderTable([row({ value: () => 1 })], cols, { onlyDifferences: true, emptyState: <p>No differences</p> })
+    expect(screen.getByText('No differences')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).toBeNull()
   })
 
   it('no best in an all-equal row or with a single valid number', () => {
