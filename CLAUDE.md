@@ -73,7 +73,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 ```bash
 npm install
 npm test           # Vitest with jsdom
-npm run build      # ESM + CJS via Vite library mode
+npm run build      # ESM + CJS via Vite library mode, plus .d.ts via tsc
 npm run lint       # ESLint
 npm run typecheck  # TypeScript
 ```

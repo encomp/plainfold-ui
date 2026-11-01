@@ -15,12 +15,12 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "prepare": "vite build"
+    "prepare": "npm run build"
   },
   "dependencies": {
     "@plainfold/design-tokens": "github:encomp/plainfold-design-tokens",
