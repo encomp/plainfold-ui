@@ -23,7 +23,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfLinearProgress** — determinate progress bar with aria attributes
 - **PfEmptyState** — centered icon + heading + subtext + optional action
 - **PfSnackbar** — toast with auto-hide and optional action. Props: `open`, `onClose`
-- **PfTooltip** — Radix Tooltip wrapper
+- **PfTooltip** — Radix Tooltip wrapper; optional controlled `open` / `onOpenChange`
 
 ### Overlay
 - **PfDialog** — modal dialog. Props: `open`, `onClose` (not onOpenChange)

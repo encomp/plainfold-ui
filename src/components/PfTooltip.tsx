@@ -6,6 +6,8 @@ interface PfTooltipProps {
   children: React.ReactNode
   side?: 'top' | 'bottom' | 'left' | 'right'
   delayDuration?: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function PfTooltip({
@@ -13,6 +15,8 @@ export function PfTooltip({
   children,
   side = 'top',
   delayDuration = 300,
+  open,
+  onOpenChange,
 }: PfTooltipProps) {
   const contentStyle: React.CSSProperties = {
     background: 'var(--pf-bg-elevated)',
@@ -27,7 +31,7 @@ export function PfTooltip({
 
   return (
     <Tooltip.Provider delayDuration={delayDuration}>
-      <Tooltip.Root>
+      <Tooltip.Root open={open} onOpenChange={onOpenChange}>
         <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content side={side} style={contentStyle} sideOffset={4}>
