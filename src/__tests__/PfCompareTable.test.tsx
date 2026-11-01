@@ -193,6 +193,7 @@ describe('PfCompareTable', () => {
       />,
     )
     expect(screen.getByTestId('t').style.overflowX).toBe('auto')
+    expect(screen.getByTestId('t').style.position).toBe('relative')
     const table = container.querySelector('table') as HTMLTableElement
     expect(table.style.minWidth).toBe(`${96 + 110 * cols.length}px`)
     expect(screen.getByRole('columnheader', { name: 'Alpha' }).style.minWidth).toBe('110px')

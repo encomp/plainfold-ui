@@ -30,7 +30,8 @@ export interface PfCompareTableProps<T> {
   'data-testid'?: string
 }
 
-const wrapStyle: React.CSSProperties = { overflowX: 'auto', maxWidth: '100%' }
+// position: relative is the containing block for the visually hidden spans, so they stay inside the clip
+const wrapStyle: React.CSSProperties = { overflowX: 'auto', maxWidth: '100%', position: 'relative' }
 
 const tableStyle: React.CSSProperties = {
   borderCollapse: 'separate',
