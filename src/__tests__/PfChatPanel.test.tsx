@@ -560,3 +560,82 @@ describe('PfChatPanel', () => {
     })
   })
 })
+
+describe('PfChatPanel cost meter and slash menu', () => {
+  const items = [
+    { id: 'a', name: 'size-up', description: 'Size up a niche', whoLabel: 'everyone' },
+    { id: 'b', name: 'pitch-check', description: 'Check a pitch', whoLabel: 'you' },
+    { id: 'c', name: 'summarise', description: 'Shorten', whoLabel: 'everyone' },
+  ]
+
+  it('renders the meter with values and text', () => {
+    setup({ costMeter: { spentUsd: 0.07, ceilingUsd: 0.25 } })
+    const m = screen.getByRole('meter')
+    expect(m).toHaveAttribute('aria-valuenow', '0.07')
+    expect(m).toHaveAttribute('aria-valuemin', '0')
+    expect(m).toHaveAttribute('aria-valuemax', '0.25')
+    expect(m).toHaveTextContent('$0.07 of $0.25')
+  })
+
+  const fill = () => screen.getByRole('meter').lastElementChild!.firstElementChild as HTMLElement
+
+  it('uses warning at 80% and danger at 100%, clamping overspend', () => {
+    const { rerender, p } = setup({ costMeter: { spentUsd: 0.05, ceilingUsd: 0.25 } })
+    expect(fill().style.background).toContain('--pf-accent')
+    rerender(<PfChatPanel {...p} costMeter={{ spentUsd: 0.2, ceilingUsd: 0.25 }} />)
+    expect(fill().style.background).toContain('--pf-warning')
+    rerender(<PfChatPanel {...p} costMeter={{ spentUsd: 0.3, ceilingUsd: 0.25 }} />)
+    expect(fill().style.background).toContain('--pf-danger')
+    expect(fill().style.width).toBe('100%')
+    expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '0.25')
+  })
+
+  it('opens on / and filters on /su', () => {
+    const { rerender, p } = setup({ slashItems: items, draft: '/' })
+    expect(screen.getAllByRole('option')).toHaveLength(3)
+    expect(screen.getByText('for you')).toBeInTheDocument()
+    rerender(<PfChatPanel {...p} slashItems={items} draft="/su" />)
+    expect(screen.getAllByRole('option')).toHaveLength(1)
+    rerender(<PfChatPanel {...p} slashItems={items} draft="/size-up x" />)
+    expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('never opens without or with empty slashItems', () => {
+    const { rerender, p } = setup({ draft: '/' })
+    expect(screen.queryByRole('listbox')).toBeNull()
+    rerender(<PfChatPanel {...p} slashItems={[]} draft="/" />)
+    expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('moves with arrows and Enter inserts and calls onSlashSelect', () => {
+    const onSlashSelect = vi.fn()
+    const { p } = setup({ slashItems: items, draft: '/', onSlashSelect })
+    const input = screen.getByLabelText('Message')
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true')
+    fireEvent.keyDown(input, { key: 'ArrowUp' })
+    fireEvent.keyDown(input, { key: 'ArrowUp' })
+    expect(screen.getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true')
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(p.onDraftChange).toHaveBeenCalledWith('/summarise ')
+    expect(onSlashSelect).toHaveBeenCalledWith(items[2])
+    expect(p.onSend).not.toHaveBeenCalled()
+  })
+
+  it('click selects; Escape closes', () => {
+    const onSlashSelect = vi.fn()
+    const { p } = setup({ slashItems: items, draft: '/p', onSlashSelect })
+    fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'Escape' })
+    expect(screen.queryByRole('listbox')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: '/pi' } })
+    expect(p.onDraftChange).toHaveBeenCalledWith('/pi')
+  })
+
+  it('click on an option inserts it', () => {
+    const onSlashSelect = vi.fn()
+    const { p } = setup({ slashItems: items, draft: '/', onSlashSelect })
+    fireEvent.click(screen.getAllByRole('option')[1])
+    expect(p.onDraftChange).toHaveBeenCalledWith('/pitch-check ')
+    expect(onSlashSelect).toHaveBeenCalledWith(items[1])
+  })
+})
