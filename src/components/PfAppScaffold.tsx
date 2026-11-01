@@ -11,6 +11,7 @@ interface PfAppScaffoldProps {
   activeItemId: string
   appName?: string
   logo?: React.ReactNode
+  navFooter?: React.ReactNode
 }
 
 export function PfAppScaffold({
@@ -20,6 +21,7 @@ export function PfAppScaffold({
   activeItemId,
   appName,
   logo,
+  navFooter,
 }: PfAppScaffoldProps) {
   const bp = useBreakpoint()
 
@@ -45,6 +47,7 @@ export function PfAppScaffold({
           appName={appName}
           logo={logo}
           collapsed={false}
+          navFooter={navFooter}
         />
       )}
       {bp === 'tablet' && (

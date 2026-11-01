@@ -85,4 +85,28 @@ describe('PfAppScaffold', () => {
     expect(screen.getByText('TestApp')).toBeInTheDocument()
     expect(screen.getByTestId('app-logo')).toBeInTheDocument()
   })
+
+  it('passes navFooter to the drawer on desktop only', () => {
+    vi.mocked(useBreakpoint).mockReturnValue('desktop')
+    const { unmount } = render(
+      <PfAppScaffold navItems={navItems} onNavigate={() => {}} activeItemId="home" navFooter={<div>Foot</div>}>
+        <div>Content</div>
+      </PfAppScaffold>
+    )
+    expect(screen.getByText('Foot')).toBeInTheDocument()
+    unmount()
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    render(
+      <PfAppScaffold
+        navItems={[{ ...navItems[0], group: 'Agency' }]}
+        onNavigate={() => {}}
+        activeItemId="home"
+        navFooter={<div>Foot</div>}
+      >
+        <div>Content</div>
+      </PfAppScaffold>
+    )
+    expect(screen.queryByText('Foot')).toBeNull()
+    expect(screen.queryByText('Agency')).toBeNull()
+  })
 })

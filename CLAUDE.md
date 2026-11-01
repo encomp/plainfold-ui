@@ -39,7 +39,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 
 ### Navigation
 - **PfAppScaffold** — root layout, switches between drawer (desktop/tablet) and bottom nav (mobile)
-- **PfNavDrawer** — sidebar nav, full (240px) or collapsed/rail (64px)
+- **PfNavDrawer** — sidebar nav, full (240px) or collapsed/rail (64px); optional item `group` labels and `navFooter` slot
 - **PfNavBar** — mobile bottom tab bar with "More" overflow
 - **PfNavItem** — type: `{ id, label, icon, path }`
 

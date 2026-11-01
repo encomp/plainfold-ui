@@ -5,6 +5,7 @@ export interface PfNavItem {
   label: string
   icon: React.ReactNode
   path: string
+  group?: string
 }
 
 interface PfNavDrawerProps {
@@ -14,6 +15,7 @@ interface PfNavDrawerProps {
   appName?: string
   logo?: React.ReactNode
   collapsed?: boolean
+  navFooter?: React.ReactNode
 }
 
 export function PfNavDrawer({
@@ -23,6 +25,7 @@ export function PfNavDrawer({
   appName,
   logo,
   collapsed = false,
+  navFooter,
 }: PfNavDrawerProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
@@ -108,6 +111,36 @@ export function PfNavDrawer({
     height: '20px',
   }
 
+  function groupHeader(item: PfNavItem, index: number) {
+    if (!item.group || item.group === items[index - 1]?.group) return null
+    const divider = index > 0 ? '1px solid var(--pf-border)' : undefined
+    if (collapsed) {
+      return <div role="presentation" style={{ borderTop: divider, margin: '6px 8px' }} />
+    }
+    return (
+      <div
+        role="presentation"
+        data-testid={`nav-group-${item.group
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')}`}
+        style={{
+          borderTop: divider,
+          marginTop: index > 0 ? '8px' : undefined,
+          padding: '10px 12px 4px',
+          fontSize: '11px',
+          fontWeight: 600,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: 'var(--pf-text-secondary)',
+          fontFamily: 'var(--pf-font-ui)',
+        }}
+      >
+        {item.group}
+      </div>
+    )
+  }
+
   return (
     <nav style={navStyle} data-testid="nav-drawer">
       {(logo || appName) && (
@@ -117,21 +150,24 @@ export function PfNavDrawer({
         </div>
       )}
       <div style={itemsContainerStyle}>
-        {items.map((item) => (
-          <button
-            key={item.id}
-            style={getItemStyle(item)}
-            onClick={() => onNavigate(item.path)}
-            onMouseEnter={() => setHoveredId(item.id)}
-            onMouseLeave={() => setHoveredId(null)}
-            data-testid={`nav-${item.id}`}
-            title={collapsed ? item.label : undefined}
-          >
-            <span style={iconWrapperStyle}>{item.icon}</span>
-            {!collapsed && <span>{item.label}</span>}
-          </button>
+        {items.map((item, index) => (
+          <React.Fragment key={item.id}>
+            {groupHeader(item, index)}
+            <button
+              style={getItemStyle(item)}
+              onClick={() => onNavigate(item.path)}
+              onMouseEnter={() => setHoveredId(item.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              data-testid={`nav-${item.id}`}
+              title={collapsed ? item.label : undefined}
+            >
+              <span style={iconWrapperStyle}>{item.icon}</span>
+              {!collapsed && <span>{item.label}</span>}
+            </button>
+          </React.Fragment>
         ))}
       </div>
+      {!collapsed && navFooter}
     </nav>
   )
 }

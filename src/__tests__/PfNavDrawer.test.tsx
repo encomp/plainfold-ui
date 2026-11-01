@@ -83,4 +83,51 @@ describe('PfNavDrawer', () => {
     )
     expect(screen.queryByText('My App')).not.toBeInTheDocument()
   })
+
+  describe('groups and footer', () => {
+    const grouped: PfNavItem[] = [
+      { id: 'home', label: 'Home', icon: <span>H</span>, path: '/' },
+      { id: 'a1', label: 'Leads', icon: <span>L</span>, path: '/a1', group: 'Agency' },
+      { id: 'a2', label: 'Clients', icon: <span>C</span>, path: '/a2', group: 'Agency' },
+      { id: 'r1', label: 'Sites', icon: <span>S</span>, path: '/r1', group: 'Rank & Rent' },
+    ]
+
+    it('renders each group label once, in order', () => {
+      const { container } = render(
+        <PfNavDrawer items={grouped} onNavigate={() => {}} activeItemId="home" />
+      )
+      expect(screen.getAllByText('Agency')).toHaveLength(1)
+      expect(screen.getAllByText('Rank & Rent')).toHaveLength(1)
+      const order = Array.from(
+        container.querySelectorAll('[data-testid^="nav-"]')
+      ).map((e) => e.getAttribute('data-testid'))
+      expect(order).toEqual([
+        'nav-drawer', 'nav-home', 'nav-group-agency', 'nav-a1', 'nav-a2',
+        'nav-group-rank-rent', 'nav-r1',
+      ])
+      expect(screen.getByTestId('nav-group-agency')).toHaveAttribute('role', 'presentation')
+    })
+
+    it('renders no label without groups', () => {
+      render(<PfNavDrawer items={items} onNavigate={() => {}} activeItemId="home" />)
+      expect(document.querySelector('[data-testid^="nav-group-"]')).toBeNull()
+    })
+
+    it('hides label text when collapsed', () => {
+      render(<PfNavDrawer items={grouped} onNavigate={() => {}} activeItemId="home" collapsed />)
+      expect(screen.queryByText('Agency')).toBeNull()
+      expect(screen.queryByText('Rank & Rent')).toBeNull()
+    })
+
+    it('renders footer only when expanded', () => {
+      const { rerender } = render(
+        <PfNavDrawer items={items} onNavigate={() => {}} activeItemId="home" navFooter={<div>Foot</div>} />
+      )
+      expect(screen.getByText('Foot')).toBeInTheDocument()
+      rerender(
+        <PfNavDrawer items={items} onNavigate={() => {}} activeItemId="home" navFooter={<div>Foot</div>} collapsed />
+      )
+      expect(screen.queryByText('Foot')).toBeNull()
+    })
+  })
 })
