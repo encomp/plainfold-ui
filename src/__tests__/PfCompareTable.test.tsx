@@ -125,7 +125,18 @@ describe('PfCompareTable', () => {
     renderTable([row()], cols, { 'aria-label': 'Alpha vs Beta' })
     const region = screen.getByRole('region', { name: 'Alpha vs Beta' })
     expect(region.tabIndex).toBe(0)
-    expect(screen.getByRole('table', { name: 'Alpha vs Beta' })).toBeInTheDocument()
+    expect(region.getAttribute('aria-label')).toBe('Alpha vs Beta')
+    const table = screen.getByRole('table')
+    expect(table.hasAttribute('aria-label')).toBe(false)
+  })
+
+  it('without aria-label the scroll container is not a focusable region', () => {
+    renderTable([row()], cols)
+    expect(screen.queryByRole('region')).toBeNull()
+    const table = screen.getByRole('table')
+    const wrap = table.parentElement as HTMLElement
+    expect(wrap.hasAttribute('tabindex')).toBe(false)
+    expect(wrap.hasAttribute('role')).toBe(false)
   })
 
   it('treats NaN as null for differences', () => {

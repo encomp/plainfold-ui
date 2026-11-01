@@ -141,9 +141,10 @@ export function PfCompareTable<T>({
   })
 
   return (
-    <div style={wrapStyle} tabIndex={0} role={ariaLabel ? 'region' : undefined} aria-label={ariaLabel} data-testid={dataTestId}>
+    <div style={wrapStyle} tabIndex={ariaLabel ? 0 : undefined}
+      role={ariaLabel ? 'region' : undefined}
+      aria-label={ariaLabel} data-testid={dataTestId}>
       <table
-        aria-label={ariaLabel}
         style={{
           ...tableStyle,
           minWidth: `${LABEL_MIN + COL_MIN * columns.length}px`,
