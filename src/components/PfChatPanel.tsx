@@ -9,6 +9,20 @@ export interface PfChatSource {
   href?: string
 }
 
+export interface PfChatStep {
+  id: string
+  label: string
+  state: 'running' | 'done' | 'error'
+}
+
+export interface PfChatQuestion {
+  text: string
+  /** No choices: the composer is the way to answer */
+  choices?: { id: string; label: string }[]
+  /** Fires once; the choices are disabled afterwards */
+  onChoose?(id: string): void
+}
+
 export interface PfChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -20,6 +34,14 @@ export interface PfChatMessage {
   pending?: boolean
   /** Shown under the text in the danger colour */
   error?: string
+  /** Lookups done for this reply: a live list while pending, one folded line when all are done */
+  steps?: PfChatStep[]
+  /** Heading before the sources. Default "Sources" */
+  sourcesLabel?: string
+  /** The reply asks instead of guessing */
+  question?: PfChatQuestion
+  /** The reply stopped at a limit; Continue starts another */
+  stopped?: { message: string; onContinue(): void }
 }
 
 export interface PfChatMenuItem {
@@ -198,6 +220,43 @@ const hiddenStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
+const stepsStyle: React.CSSProperties = { margin: '0 0 6px', padding: 0, listStyle: 'none', fontSize: '13px' }
+
+const stepStyle: React.CSSProperties = { display: 'flex', gap: '6px', padding: '2px 0' }
+
+const STEP_GLYPH = { running: '◌', done: '✓', error: '✕' } satisfies Record<PfChatStep['state'], string>
+const STEP_WORD = { running: 'Running', done: 'Done', error: 'Error' } satisfies Record<PfChatStep['state'], string>
+
+const questionStyle: React.CSSProperties = {
+  marginTop: '8px',
+  padding: '8px',
+  border: '1px solid var(--pf-border)',
+  borderRadius: 'var(--pf-radius-md)',
+  background: 'var(--pf-bg-base)',
+}
+
+const choicesStyle: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }
+
+const choiceStyle: React.CSSProperties = {
+  padding: '6px 12px',
+  fontSize: '13px',
+  fontFamily: 'inherit',
+  color: 'var(--pf-accent)',
+  background: 'transparent',
+  border: '1px solid var(--pf-accent)',
+  borderRadius: 'var(--pf-radius-md)',
+  cursor: 'pointer',
+}
+
+const stoppedStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: '8px',
+  marginTop: '8px',
+  fontSize: '13px',
+}
+
 const alertStyle: React.CSSProperties = {
   padding: '8px 12px',
   fontSize: '13px',
@@ -229,6 +288,67 @@ const textareaStyle: React.CSSProperties = {
 }
 
 const footerStyle: React.CSSProperties = { padding: '0 12px 8px', fontSize: '12px' }
+
+function StepList({ steps }: { steps: PfChatStep[] }) {
+  return (
+    <ul style={stepsStyle}>
+      {steps.map((st) => (
+        <li key={st.id} style={stepStyle}>
+          <span aria-hidden="true">{STEP_GLYPH[st.state]}</span>
+          <span style={hiddenStyle}>{STEP_WORD[st.state]}: </span>
+          <span style={st.state === 'error' ? { color: 'var(--pf-danger)' } : undefined}>{st.label}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function MessageSteps({ steps, pending }: { steps: PfChatStep[]; pending?: boolean }) {
+  if (steps.length === 0) return null
+  if (!pending && steps.every((st) => st.state === 'done')) {
+    return (
+      <details style={{ ...smallStyle, marginTop: 0, marginBottom: '6px' }}>
+        <summary>{steps.length === 1 ? '1 step' : `${steps.length} steps`}</summary>
+        <StepList steps={steps} />
+      </details>
+    )
+  }
+  return (
+    <div role="status" aria-label="Steps">
+      <StepList steps={steps} />
+    </div>
+  )
+}
+
+function MessageQuestion({ question }: { question: PfChatQuestion }) {
+  const [chosen, setChosen] = useState(false)
+  const choices = question.choices ?? []
+  return (
+    <div role="group" aria-label={question.text} style={questionStyle}>
+      <div style={{ fontWeight: 600 }}>{question.text}</div>
+      {choices.length > 0 && (
+        <div style={choicesStyle}>
+          {choices.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              data-choice={c.id}
+              disabled={chosen}
+              style={{ ...choiceStyle, ...(chosen ? { opacity: 0.5, cursor: 'default' } : {}) }}
+              onClick={() => {
+                if (chosen) return
+                setChosen(true)
+                question.onChoose?.(c.id)
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function PfChatPanel({
   mode,
@@ -450,6 +570,7 @@ export function PfChatPanel({
             data-testid={`${testId}-message-${m.id}`}
           >
             <span style={hiddenStyle}>{m.role === 'user' ? 'You: ' : 'Assistant: '}</span>
+            {m.steps && <MessageSteps steps={m.steps} pending={m.pending} />}
             <div style={textStyle}>
               {m.text}
               {m.pending && (
@@ -458,10 +579,11 @@ export function PfChatPanel({
                 </span>
               )}
             </div>
+            {m.question && <MessageQuestion question={m.question} />}
             {m.error && <div style={{ ...smallStyle, color: 'var(--pf-danger)' }}>{m.error}</div>}
             {m.sources && m.sources.length > 0 && (
               <div style={smallStyle}>
-                Sources:{' '}
+                {m.sourcesLabel ?? 'Sources'}:{' '}
                 {m.sources.map((s, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && ', '}
@@ -479,6 +601,14 @@ export function PfChatPanel({
                     )}
                   </React.Fragment>
                 ))}
+              </div>
+            )}
+            {m.stopped && (
+              <div style={stoppedStyle}>
+                <span>{m.stopped.message}</span>
+                <PfButton size="sm" data-testid="chat-panel-continue" onClick={m.stopped.onContinue}>
+                  Continue
+                </PfButton>
               </div>
             )}
             {m.meta && <div style={smallStyle}>{m.meta}</div>}

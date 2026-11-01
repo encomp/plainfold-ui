@@ -408,4 +408,127 @@ describe('PfChatPanel', () => {
     expect(screen.getByTestId('c')).toBeInTheDocument()
     expect(screen.getByTestId('c-input')).toBeInTheDocument()
   })
+
+  describe('steps, question and stop-at-limit', () => {
+    it('renders messages without the new props exactly as before', () => {
+      setup({ messages })
+      expect(screen.getByTestId('pf-chat-messages').innerHTML).toMatchSnapshot()
+    })
+
+    const steps = [
+      { id: 's1', label: 'Looked up data', state: 'done' as const },
+      { id: 's2', label: 'Reading page', state: 'running' as const },
+    ]
+
+    it('shows steps live while pending, with a spinner on the running one', () => {
+      setup({ messages: [{ id: 'a', role: 'assistant', text: '', pending: true, steps }] })
+      const live = screen.getByRole('status', { name: 'Steps' })
+      expect(within(live).getByText('Looked up data')).toBeInTheDocument()
+      expect(within(live).getByText('Reading page')).toBeInTheDocument()
+      expect(within(live).getByText('Reading page').closest('li')).toHaveTextContent('◌')
+    })
+
+    it('folds finished steps into a closed details once not pending', () => {
+      const done = steps.map((s) => ({ ...s, state: 'done' as const }))
+      const { container } = setup({
+        messages: [{ id: 'a', role: 'assistant', text: 'Answer', steps: done }],
+      })
+      const details = container.querySelector('details') as HTMLDetailsElement
+      expect(details).not.toBeNull()
+      expect(details.open).toBe(false)
+      expect(within(details).getByText('2 steps')).toBeInTheDocument()
+      expect(screen.queryByRole('status', { name: 'Steps' })).toBeNull()
+    })
+
+    it('keeps a failed step visible after the reply ends', () => {
+      const failed = [
+        { id: 's1', label: 'Looked up data', state: 'done' as const },
+        { id: 's2', label: 'Search failed', state: 'error' as const },
+      ]
+      const { container } = setup({
+        messages: [{ id: 'a', role: 'assistant', text: 'Partial', steps: failed }],
+      })
+      expect(container.querySelector('details')).toBeNull()
+      expect(screen.getByText('Search failed')).toBeVisible()
+      expect(screen.getByText('Search failed').closest('li')).toHaveTextContent('Error')
+    })
+
+    it('replaces the Sources heading with sourcesLabel', () => {
+      setup({
+        messages: [
+          { id: 'a', role: 'assistant', text: 'x', sources: [{ label: 'One' }], sourcesLabel: 'Looked at' },
+        ],
+      })
+      expect(screen.getByText(/Looked at:/)).toBeInTheDocument()
+      expect(screen.queryByText(/Sources:/)).toBeNull()
+    })
+
+    it('calls onChoose once with the choice id, then disables the buttons', () => {
+      const onChoose = vi.fn()
+      setup({
+        messages: [
+          {
+            id: 'a',
+            role: 'assistant',
+            text: '',
+            question: {
+              text: 'Which area?',
+              choices: [
+                { id: 'city', label: 'City' },
+                { id: 'county', label: 'County' },
+              ],
+              onChoose,
+            },
+          },
+        ],
+      })
+      expect(screen.getByText('Which area?')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'County' }))
+      fireEvent.click(screen.getByRole('button', { name: 'City' }))
+      fireEvent.click(screen.getByRole('button', { name: 'County' }))
+      expect(onChoose).toHaveBeenCalledTimes(1)
+      expect(onChoose).toHaveBeenCalledWith('county')
+      expect(screen.getByRole('button', { name: 'City' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'County' })).toBeDisabled()
+    })
+
+    it('renders a question without choices as text only', () => {
+      const { container } = setup({
+        messages: [{ id: 'a', role: 'assistant', text: '', question: { text: 'Which area?' } }],
+      })
+      expect(screen.getByText('Which area?')).toBeInTheDocument()
+      expect(container.querySelectorAll('button[data-choice]')).toHaveLength(0)
+    })
+
+    it('shows the stop message and Continue calls onContinue', () => {
+      const onContinue = vi.fn()
+      setup({
+        messages: [
+          { id: 'a', role: 'assistant', text: 'So far', stopped: { message: 'Stopped at limit', onContinue } },
+        ],
+      })
+      expect(screen.getByText('Stopped at limit')).toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('chat-panel-continue'))
+      expect(onContinue).toHaveBeenCalledTimes(1)
+    })
+
+    it('orders focus choices then Continue (DOM order) and groups the question', () => {
+      setup({
+        messages: [
+          {
+            id: 'a',
+            role: 'assistant',
+            text: '',
+            question: { text: 'Which?', choices: [{ id: 'x', label: 'X' }, { id: 'y', label: 'Y' }], onChoose: vi.fn() },
+            stopped: { message: 'Stopped', onContinue: vi.fn() },
+          },
+        ],
+      })
+      expect(screen.getByRole('group', { name: 'Which?' })).toBeInTheDocument()
+      const order = Array.from(
+        screen.getByTestId('pf-chat-messages').querySelectorAll<HTMLElement>('button'),
+      ).map((b) => b.textContent)
+      expect(order).toEqual(['X', 'Y', 'Continue'])
+    })
+  })
 })

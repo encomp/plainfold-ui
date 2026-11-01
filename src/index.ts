@@ -47,6 +47,8 @@ export type {
   PfChatMode,
   PfChatSource,
   PfChatMessage,
+  PfChatStep,
+  PfChatQuestion,
   PfChatMenuItem,
   PfChatPanelProps,
 } from './components/PfChatPanel'
