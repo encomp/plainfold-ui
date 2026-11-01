@@ -577,7 +577,7 @@ describe('PfChatPanel cost meter and slash menu', () => {
     expect(m).toHaveTextContent('$0.07 of $0.25')
   })
 
-  const fill = () => screen.getByRole('meter').lastElementChild!.firstElementChild as HTMLElement
+  const fill = () => screen.getByTestId('chat-panel-cost-meter-fill')
 
   it('uses warning at 80% and danger at 100%, clamping overspend', () => {
     const { rerender, p } = setup({ costMeter: { spentUsd: 0.05, ceilingUsd: 0.25 } })
@@ -622,13 +622,30 @@ describe('PfChatPanel cost meter and slash menu', () => {
     expect(p.onSend).not.toHaveBeenCalled()
   })
 
-  it('click selects; Escape closes', () => {
-    const onSlashSelect = vi.fn()
-    const { p } = setup({ slashItems: items, draft: '/p', onSlashSelect })
-    fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'Escape' })
+  it('Escape closes the menu and stays shut until the draft changes, then reopens', () => {
+    const { rerender, p } = setup({ slashItems: items, draft: '/p' })
+    const input = screen.getByLabelText('Message')
+    fireEvent.keyDown(input, { key: 'Escape' })
     expect(screen.queryByRole('listbox')).toBeNull()
-    fireEvent.change(screen.getByLabelText('Message'), { target: { value: '/pi' } })
-    expect(p.onDraftChange).toHaveBeenCalledWith('/pi')
+    fireEvent.change(input, { target: { value: '/pi' } })
+    rerender(<PfChatPanel {...p} slashItems={items} draft="/pi" />)
+    fireEvent.change(input, { target: { value: '/p' } })
+    rerender(<PfChatPanel {...p} slashItems={items} draft="/p" />)
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('ignores slash keys while an IME composition is active', () => {
+    const { p } = setup({ slashItems: items, draft: '/' })
+    fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'Enter', keyCode: 229 })
+    expect(p.onDraftChange).not.toHaveBeenCalled()
+  })
+
+  it('a NaN or negative ceiling never shows NaN and reads as full', () => {
+    setup({ costMeter: { spentUsd: Number.NaN, ceilingUsd: Number.NaN } })
+    const m = screen.getByRole('meter')
+    expect(m.outerHTML).not.toContain('NaN')
+    expect(m).toHaveTextContent('$0.00 of $0.00')
+    expect(screen.getByTestId('chat-panel-cost-meter-fill').style.background).toContain('--pf-danger')
   })
 
   it('click on an option inserts it', () => {

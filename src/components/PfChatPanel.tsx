@@ -221,10 +221,7 @@ const messageBase: React.CSSProperties = {
 
 const MESSAGE_BG = {
   user: { alignSelf: 'flex-end', background: 'var(--pf-accent-muted)' },
-  assistant: {
-    alignSelf: 'flex-start',
-    background: 'var(--pf-bg-surface-alt)',
-  },
+  assistant: { alignSelf: 'flex-start', background: 'var(--pf-bg-surface-alt)' },
 } satisfies Record<PfChatMessage['role'], React.CSSProperties>
 
 const textStyle: React.CSSProperties = { whiteSpace: 'pre-wrap' }
@@ -244,25 +241,12 @@ const hiddenStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
-const stepsStyle: React.CSSProperties = {
-  margin: '0 0 6px',
-  padding: 0,
-  listStyle: 'none',
-  fontSize: '13px',
-}
+const stepsStyle: React.CSSProperties = { margin: '0 0 6px', padding: 0, listStyle: 'none', fontSize: '13px' }
 
-const stepStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '6px',
-  padding: '2px 0',
-}
+const stepStyle: React.CSSProperties = { display: 'flex', gap: '6px', padding: '2px 0' }
 
 const STEP_GLYPH = { running: '◌', done: '✓', error: '✕' } satisfies Record<PfChatStep['state'], string>
-const STEP_WORD = {
-  running: 'Running',
-  done: 'Done',
-  error: 'Error',
-} satisfies Record<PfChatStep['state'], string>
+const STEP_WORD = { running: 'Running', done: 'Done', error: 'Error' } satisfies Record<PfChatStep['state'], string>
 
 const questionStyle: React.CSSProperties = {
   marginTop: '8px',
@@ -272,12 +256,7 @@ const questionStyle: React.CSSProperties = {
   background: 'var(--pf-bg-base)',
 }
 
-const choicesStyle: React.CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '6px',
-  marginTop: '6px',
-}
+const choicesStyle: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }
 
 const choiceStyle: React.CSSProperties = {
   padding: '6px 12px',
@@ -308,6 +287,7 @@ const alertStyle: React.CSSProperties = {
 }
 
 const composerStyle: React.CSSProperties = {
+  position: 'relative',
   display: 'flex',
   alignItems: 'flex-end',
   gap: '8px',
@@ -329,10 +309,9 @@ const textareaStyle: React.CSSProperties = {
   borderRadius: 'var(--pf-radius-sm)',
 }
 
-const meterStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  borderBottom: '1px solid var(--pf-border)',
-}
+const footerStyle: React.CSSProperties = { padding: '0 12px 8px', fontSize: '12px' }
+
+const meterStyle: React.CSSProperties = { padding: '8px 12px', borderBottom: '1px solid var(--pf-border)' }
 
 const meterTextStyle: React.CSSProperties = {
   display: 'flex',
@@ -349,8 +328,6 @@ const meterTrackStyle: React.CSSProperties = {
   background: 'var(--pf-bg-surface-alt)',
   borderRadius: 'var(--pf-radius-sm)',
 }
-
-const slashWrapStyle: React.CSSProperties = { position: 'relative' }
 
 const slashListStyle: React.CSSProperties = {
   position: 'absolute',
@@ -376,20 +353,23 @@ const slashOptionStyle: React.CSSProperties = {
 }
 
 const money = (n: number) => `$${n.toFixed(2)}`
+const safe = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0)
 
 function CostMeter({ meter }: { meter: PfChatCostMeter }) {
-  const { spentUsd, ceilingUsd, label = 'This reply so far' } = meter
-  const spent = Math.min(Math.max(Number.isFinite(spentUsd) ? spentUsd : 0, 0), Math.max(ceilingUsd, 0))
-  const ratio = ceilingUsd > 0 ? spent / ceilingUsd : 1
+  const { label = 'This reply so far' } = meter
+  const ceiling = safe(meter.ceilingUsd)
+  const spentRaw = safe(meter.spentUsd)
+  const spent = Math.min(spentRaw, ceiling)
+  const ratio = ceiling > 0 ? spent / ceiling : 1
   const color = ratio >= 1 ? 'var(--pf-danger)' : ratio >= 0.8 ? 'var(--pf-warning)' : 'var(--pf-accent)'
-  const text = `${money(spentUsd)} of ${money(ceilingUsd)}`
+  const text = `${money(spentRaw)} of ${money(ceiling)}`
   return (
     <div
       role="meter"
       aria-label={label}
       aria-valuenow={spent}
       aria-valuemin={0}
-      aria-valuemax={ceilingUsd}
+      aria-valuemax={ceiling}
       aria-valuetext={text}
       style={meterStyle}
       data-testid="chat-panel-cost-meter"
@@ -400,20 +380,12 @@ function CostMeter({ meter }: { meter: PfChatCostMeter }) {
       </div>
       <div style={meterTrackStyle}>
         <div
-          style={{
-            width: `${Math.min(ratio, 1) * 100}%`,
-            height: '100%',
-            background: color,
-          }}
+          style={{ width: `${ratio * 100}%`, height: '100%', background: color }}
+          data-testid="chat-panel-cost-meter-fill"
         />
       </div>
     </div>
   )
-}
-
-const footerStyle: React.CSSProperties = {
-  padding: '0 12px 8px',
-  fontSize: '12px',
 }
 
 function StepList({ steps }: { steps: PfChatStep[] }) {
@@ -462,10 +434,7 @@ function MessageQuestion({ question }: { question: PfChatQuestion }) {
               type="button"
               data-choice={c.id}
               disabled={chosen}
-              style={{
-                ...choiceStyle,
-                ...(chosen ? { opacity: 0.5, cursor: 'default' } : {}),
-              }}
+              style={{ ...choiceStyle, ...(chosen ? { opacity: 0.5, cursor: 'default' } : {}) }}
               onClick={() => {
                 if (chosen) return
                 setChosen(true)
@@ -546,12 +515,12 @@ export function PfChatPanel({
   // The slash menu: open while the draft is "/" plus a name fragment; Escape shuts it until the draft changes.
   const slashId = useId()
   const [slashIndex, setSlashIndex] = useState(0)
-  const [slashShut, setSlashShut] = useState<string | null>(null)
+  const [slashShut, setSlashShut] = useState(false)
   const typed = /^\/\S*$/.test(draft) ? draft.slice(1).toLowerCase() : null
   const slashMatches =
     typed === null || !slashItems ? [] : slashItems.filter((it) => it.name.toLowerCase().startsWith(typed))
-  const slashOpen = slashMatches.length > 0 && slashShut !== draft
-  const slashAt = Math.min(slashIndex, Math.max(slashMatches.length - 1, 0))
+  const slashOpen = slashMatches.length > 0 && !slashShut
+  const slashAt = Math.min(slashIndex, slashMatches.length - 1)
   const pickSlash = (item: PfChatSlashItem) => {
     onDraftChange(`/${item.name} `)
     onSlashSelect?.(item)
@@ -582,12 +551,7 @@ export function PfChatPanel({
     if (e.key === 'Tab') return closeMenu()
     const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
     const at = items.indexOf(document.activeElement as HTMLElement)
-    const next = {
-      ArrowDown: at + 1,
-      ArrowUp: at - 1,
-      Home: 0,
-      End: items.length - 1,
-    }[e.key]
+    const next = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e.key]
     if (next === undefined) return
     e.preventDefault()
     items[(next + items.length) % items.length]?.focus()
@@ -633,7 +597,8 @@ export function PfChatPanel({
             e.currentTarget.setPointerCapture?.(e.pointerId)
           }}
           onPointerMove={(e) => {
-            if (drag.current) onWidthChange?.(clamp(drag.current.width + drag.current.x - e.clientX))
+            if (drag.current)
+              onWidthChange?.(clamp(drag.current.width + drag.current.x - e.clientX))
           }}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
@@ -717,7 +682,11 @@ export function PfChatPanel({
       >
         {messages.length === 0 && emptyState}
         {messages.map((m) => (
-          <div key={m.id} style={{ ...messageBase, ...MESSAGE_BG[m.role] }} data-testid={`${testId}-message-${m.id}`}>
+          <div
+            key={m.id}
+            style={{ ...messageBase, ...MESSAGE_BG[m.role] }}
+            data-testid={`${testId}-message-${m.id}`}
+          >
             <span style={hiddenStyle}>{m.role === 'user' ? 'You: ' : 'Assistant: '}</span>
             {m.steps && <MessageSteps steps={m.steps} pending={m.pending} />}
             <div style={textStyle}>
@@ -737,7 +706,12 @@ export function PfChatPanel({
                   <React.Fragment key={i}>
                     {i > 0 && ', '}
                     {s.href && SAFE_HREF.test(s.href) ? (
-                      <a href={s.href} target="_blank" rel="noreferrer" style={{ color: 'var(--pf-accent)' }}>
+                      <a
+                        href={s.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: 'var(--pf-accent)' }}
+                      >
                         {s.label}
                       </a>
                     ) : (
@@ -765,7 +739,7 @@ export function PfChatPanel({
           {error}
         </div>
       )}
-      <div style={slashWrapStyle}>
+      <div style={composerStyle}>
         {slashOpen && (
           <ul role="listbox" aria-label="Commands" id={`${slashId}-list`} style={slashListStyle}>
             {slashMatches.map((it, i) => (
@@ -775,10 +749,7 @@ export function PfChatPanel({
                 role="option"
                 aria-selected={i === slashAt}
                 data-testid={`${testId}-slash-${it.id}`}
-                style={{
-                  ...slashOptionStyle,
-                  ...(i === slashAt ? { background: 'var(--pf-accent-muted)' } : {}),
-                }}
+                style={{ ...slashOptionStyle, ...(i === slashAt ? { background: 'var(--pf-accent-muted)' } : {}) }}
                 // mousedown would blur the textarea before click lands
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pickSlash(it)}
@@ -789,54 +760,51 @@ export function PfChatPanel({
             ))}
           </ul>
         )}
-        <div style={composerStyle}>
-          <textarea
-            aria-label="Message"
-            rows={2}
-            value={draft}
-            style={textareaStyle}
-            data-testid={`${testId}-input`}
-            {...(slashOpen
-              ? {
-                  role: 'combobox',
-                  'aria-expanded': true,
-                  'aria-controls': `${slashId}-list`,
-                  'aria-activedescendant': `${slashId}-${slashAt}`,
-                  'aria-autocomplete': 'list' as const,
-                }
-              : {})}
-            onChange={(e) => {
-              setSlashIndex(0)
-              onDraftChange(e.target.value)
-            }}
-            onKeyDown={(e) => {
-              if (slashOpen) {
-                const n = slashMatches.length
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                  e.preventDefault()
-                  setSlashIndex((slashAt + (e.key === 'ArrowDown' ? 1 : n - 1)) % n)
-                  return
-                }
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
-                  e.preventDefault()
-                  pickSlash(slashMatches[slashAt])
-                  return
-                }
-                if (e.key === 'Escape') {
-                  setSlashShut(draft)
-                  return
-                }
-              }
-              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+        <textarea
+          aria-label="Message"
+          rows={2}
+          value={draft}
+          style={textareaStyle}
+          data-testid={`${testId}-input`}
+          {...(slashOpen && {
+            role: 'combobox',
+            'aria-expanded': true,
+            'aria-controls': `${slashId}-list`,
+            'aria-activedescendant': `${slashId}-${slashAt}`,
+            'aria-autocomplete': 'list' as const,
+          })}
+          onChange={(e) => {
+            setSlashIndex(0)
+            setSlashShut(false)
+            onDraftChange(e.target.value)
+          }}
+          onKeyDown={(e) => {
+            if (slashOpen && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+              const n = slashMatches.length
+              if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault()
-                send()
+                setSlashIndex((slashAt + (e.key === 'ArrowDown' ? 1 : n - 1)) % n)
+                return
               }
-            }}
-          />
-          <PfButton disabled={!canSend} data-testid={`${testId}-send`} onClick={send}>
-            Send
-          </PfButton>
-        </div>
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                pickSlash(slashMatches[slashAt])
+                return
+              }
+              if (e.key === 'Escape') {
+                setSlashShut(true)
+                return
+              }
+            }
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+              e.preventDefault()
+              send()
+            }
+          }}
+        />
+        <PfButton disabled={!canSend} data-testid={`${testId}-send`} onClick={send}>
+          Send
+        </PfButton>
       </div>
       {footer != null && <div style={footerStyle}>{footer}</div>}
     </aside>
