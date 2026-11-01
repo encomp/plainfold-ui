@@ -607,6 +607,36 @@ describe('PfChatPanel cost meter and slash menu', () => {
     expect(screen.queryByRole('listbox')).toBeNull()
   })
 
+  it('keeps the textarea a plain textarea (no combobox) and labels the listbox', () => {
+    setup({ slashItems: items, draft: '/' })
+    const input = screen.getByLabelText('Message')
+    expect(screen.queryByRole('combobox')).toBeNull()
+    expect(input).not.toHaveAttribute('role')
+    expect(input).not.toHaveAttribute('aria-expanded')
+    expect(input).not.toHaveAttribute('aria-activedescendant')
+    expect(input).toHaveAttribute('aria-controls', screen.getByRole('listbox').id)
+    expect(screen.getByRole('listbox', { name: 'Commands' })).toBeInTheDocument()
+  })
+
+  it('announces the highlighted option in a polite live region', () => {
+    setup({ slashItems: items, draft: '/' })
+    const live = screen.getByTestId('pf-chat-slash-live')
+    expect(live).toHaveAttribute('aria-live', 'polite')
+    expect(live).toHaveTextContent('/size-up, Size up a niche, 1 of 3')
+    fireEvent.keyDown(screen.getByLabelText('Message'), { key: 'ArrowDown' })
+    expect(live).toHaveTextContent('/pitch-check, Check a pitch, 2 of 3')
+  })
+
+  it('uses the higher-contrast secondary colour for the slash item description line', () => {
+    setup({ slashItems: items, draft: '/' })
+    expect(screen.getByText('for you').style.color).toBe('var(--pf-text-secondary)')
+  })
+
+  it('leaves the live region empty when the menu is closed', () => {
+    setup({ slashItems: items, draft: 'hello' })
+    expect(screen.getByTestId('pf-chat-slash-live')).toBeEmptyDOMElement()
+  })
+
   it('moves with arrows and Enter inserts and calls onSlashSelect', () => {
     const onSlashSelect = vi.fn()
     const { p } = setup({ slashItems: items, draft: '/', onSlashSelect })

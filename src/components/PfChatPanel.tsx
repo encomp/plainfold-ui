@@ -232,6 +232,9 @@ const smallStyle: React.CSSProperties = {
   color: 'var(--pf-text-muted)',
 }
 
+// muted is under 4.5:1 at 12px on the dark panel; secondary clears it in every bundled theme
+const smallLegibleStyle: React.CSSProperties = { ...smallStyle, color: 'var(--pf-text-secondary)' }
+
 const hiddenStyle: React.CSSProperties = {
   position: 'absolute',
   width: '1px',
@@ -409,7 +412,7 @@ function MessageSteps({ steps, pending }: { steps: PfChatStep[]; pending?: boole
   return (
     <div role="status" aria-label="Steps">
       {folded ? (
-        <details style={{ ...smallStyle, marginTop: 0, marginBottom: '6px' }}>
+        <details style={{ ...smallLegibleStyle, marginTop: 0, marginBottom: '6px' }}>
           <summary>{steps.length === 1 ? '1 step' : `${steps.length} steps`}</summary>
           <StepList steps={steps} />
         </details>
@@ -740,6 +743,13 @@ export function PfChatPanel({
         </div>
       )}
       <div style={composerStyle}>
+        {slashItems && (
+          <div role="status" aria-live="polite" data-testid={`${testId}-slash-live`} style={hiddenStyle}>
+            {slashOpen
+              ? `/${slashMatches[slashAt].name}, ${slashMatches[slashAt].description}, ${slashAt + 1} of ${slashMatches.length}`
+              : ''}
+          </div>
+        )}
         {slashOpen && (
           <ul role="listbox" aria-label="Commands" id={`${slashId}-list`} style={slashListStyle}>
             {slashMatches.map((it, i) => (
@@ -755,7 +765,7 @@ export function PfChatPanel({
                 onClick={() => pickSlash(it)}
               >
                 <span style={{ color: 'var(--pf-accent)', fontWeight: 600 }}>/{it.name}</span> {it.description}
-                <div style={smallStyle}>for {it.whoLabel}</div>
+                <div style={smallLegibleStyle}>for {it.whoLabel}</div>
               </li>
             ))}
           </ul>
@@ -766,13 +776,8 @@ export function PfChatPanel({
           value={draft}
           style={textareaStyle}
           data-testid={`${testId}-input`}
-          {...(slashOpen && {
-            role: 'combobox',
-            'aria-expanded': true,
-            'aria-controls': `${slashId}-list`,
-            'aria-activedescendant': `${slashId}-${slashAt}`,
-            'aria-autocomplete': 'list' as const,
-          })}
+          // a textarea may not be a combobox: the highlight is announced by the live region instead
+          {...(slashOpen && { 'aria-controls': `${slashId}-list`, 'aria-autocomplete': 'list' as const })}
           onChange={(e) => {
             setSlashIndex(0)
             setSlashShut(false)
