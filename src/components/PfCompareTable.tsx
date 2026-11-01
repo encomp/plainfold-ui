@@ -27,7 +27,7 @@ export interface PfCompareTableProps<T> {
   onlyDifferences?: boolean
   /** Shown when there are no columns, or when onlyDifferences hides every row */
   emptyState?: React.ReactNode
-  /** Names the table, and the scroll region around it */
+  /** Names the scroll region around the table (a focusable region landmark); without it the region is neither focusable nor a landmark */
   'aria-label'?: string
   'data-testid'?: string
 }
