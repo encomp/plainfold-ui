@@ -1,6 +1,6 @@
 # @plainfold/ui
 
-Material Design 3 component library for the Plainfold ecosystem. 26 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
+Material Design 3 component library for the Plainfold ecosystem. 27 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
 
 ## Architecture
 
@@ -35,6 +35,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfFormTextField** — text input connected to react-hook-form
 - **PfFormSelect** — Radix Select connected to react-hook-form. Props: `options=[{label, value}]`
 - **PfFormSlider** — Radix Slider connected to react-hook-form
+- **PfRadio** — native radio input in a label with optional `description`; `onChange(value)`, accent colour, focus-visible ring
 - **PfFormSwitch** — Radix Switch connected to react-hook-form
 
 ### Navigation

@@ -53,4 +53,13 @@ describe('PfLinearProgress', () => {
     render(<PfLinearProgress value={50} data-testid="progress" />)
     expect(screen.getByTestId('progress')).toBeInTheDocument()
   })
+
+  it('marks the fill and disables its transition for reduced motion', () => {
+    const { container } = render(<PfLinearProgress value={40} />)
+    expect(container.querySelector('.pf-linear-progress-fill')).not.toBeNull()
+    const css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent).join('')
+    expect(css).toContain('prefers-reduced-motion: reduce')
+    expect(css).toContain('transition: none')
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '40')
+  })
 })

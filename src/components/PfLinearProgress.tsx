@@ -54,6 +54,7 @@ export function PfLinearProgress({
 
   return (
     <div data-testid={dataTestId}>
+      <style>{`@media (prefers-reduced-motion: reduce) { .pf-linear-progress-fill { transition: none !important } }`}</style>
       {showHeader && (
         <div style={headerStyle}>
           {label && <span style={labelStyle}>{label}</span>}
@@ -68,7 +69,7 @@ export function PfLinearProgress({
         aria-label={label ?? 'Progress'}
         style={trackStyle}
       >
-        <div style={fillStyle} />
+        <div className="pf-linear-progress-fill" style={fillStyle} />
       </div>
     </div>
   )

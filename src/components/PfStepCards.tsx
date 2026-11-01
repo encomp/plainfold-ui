@@ -21,6 +21,8 @@ export interface PfStepCardsProps {
   steps: PfStepCardsStep[]
   /** The highlighted card. If it matches no step, none is highlighted. Without it, the first step in state 'current' is highlighted. */
   currentId?: string
+  /** Minimum card width in px before the grid wraps. Default 150. */
+  minCardWidth?: number
   'data-testid'?: string
 }
 
@@ -29,7 +31,6 @@ const MUTED = 'var(--pf-text-secondary)'
 
 const rootStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))',
   gap: '8px',
   margin: 0,
   padding: 0,
@@ -79,7 +80,7 @@ const noteStyle: React.CSSProperties = {
 
 const actionStyle: React.CSSProperties = { marginTop: '4px' }
 
-export function PfStepCards({ steps, currentId, 'data-testid': dataTestId }: PfStepCardsProps) {
+export function PfStepCards({ steps, currentId, minCardWidth = 150, 'data-testid': dataTestId }: PfStepCardsProps) {
   if (steps.length === 0) return null
 
   // With currentId, only that card is current. Without it, only the first 'current' step is.
@@ -89,7 +90,7 @@ export function PfStepCards({ steps, currentId, 'data-testid': dataTestId }: PfS
       : steps.findIndex((s) => s.state === 'current')
 
   return (
-    <div role="list" style={rootStyle} data-testid={dataTestId}>
+    <div role="list" style={{ ...rootStyle, gridTemplateColumns: `repeat(auto-fit, minmax(min(${minCardWidth}px, 100%), 1fr))` }} data-testid={dataTestId}>
       {steps.map((step, i) => {
         const isCurrent = i === currentIndex
         const state = step.state === 'current' && !isCurrent ? 'todo' : step.state

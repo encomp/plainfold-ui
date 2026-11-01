@@ -87,4 +87,12 @@ describe('PfButton', () => {
     expect(button.style.fontSize).toBe('16px')
     expect(button.style.padding).toBe('12px 20px')
   })
+
+  it('has the pf-button class and a focus-visible rule that beats the inline outline', () => {
+    render(<PfButton>Go</PfButton>)
+    expect(screen.getByRole('button', { name: 'Go' })).toHaveClass('pf-button')
+    const css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent).join('')
+    expect(css).toContain('.pf-button:focus-visible')
+    expect(css).toMatch(/\.pf-button:focus-visible\s*\{[^}]*outline: 2px solid var\(--pf-accent\) !important/)
+  })
 })

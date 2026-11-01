@@ -117,4 +117,14 @@ describe('PfStepCards', () => {
     const { container } = render(<PfStepCards steps={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('defaults the grid to a 150px minimum card width', () => {
+    render(<PfStepCards steps={steps} />)
+    expect(screen.getByRole('list').style.gridTemplateColumns).toBe('repeat(auto-fit, minmax(min(150px, 100%), 1fr))')
+  })
+
+  it('takes minCardWidth', () => {
+    render(<PfStepCards steps={steps} minCardWidth={240} />)
+    expect(screen.getByRole('list').style.gridTemplateColumns).toBe('repeat(auto-fit, minmax(min(240px, 100%), 1fr))')
+  })
 })

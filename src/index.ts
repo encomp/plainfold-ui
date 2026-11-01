@@ -5,6 +5,8 @@ export { getMotionConfig } from './utils/getMotionConfig'
 export type { MotionConfig } from './utils/getMotionConfig'
 
 export { PfButton } from './components/PfButton'
+export { PfRadio } from './components/PfRadio'
+export type { PfRadioProps } from './components/PfRadio'
 export { PfCard } from './components/PfCard'
 export { PfBadge } from './components/PfBadge'
 export { PfLinearProgress } from './components/PfLinearProgress'

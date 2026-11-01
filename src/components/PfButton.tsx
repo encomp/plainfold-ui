@@ -99,9 +99,10 @@ export function PfButton({
 
   return (
     <>
-      <style>{`@keyframes pf-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes pf-spin { to { transform: rotate(360deg); } } .pf-button:focus-visible { outline: 2px solid var(--pf-accent) !important; outline-offset: 2px }`}</style>
       <button
         type={type}
+        className="pf-button"
         style={baseStyle}
         onClick={isDisabled ? undefined : onClick}
         disabled={isDisabled}
