@@ -54,8 +54,12 @@ const stickyStyle: React.CSSProperties = {
   left: 0,
   background: 'var(--pf-bg-surface)',
   fontWeight: 600,
-  minWidth: '120px',
+  minWidth: '96px',
+  maxWidth: '160px',
 }
+
+const COL_MIN = 110
+const LABEL_MIN = 96
 
 const groupStyle: React.CSSProperties = {
   ...cellStyle,
@@ -124,14 +128,14 @@ export function PfCompareTable<T>({
 
   return (
     <div style={wrapStyle} data-testid={dataTestId}>
-      <table style={tableStyle}>
+      <table style={{ ...tableStyle, minWidth: `${LABEL_MIN + COL_MIN * columns.length}px` }}>
         <thead>
           <tr>
             <th scope="col" style={stickyStyle}>
               <span style={hiddenStyle}>Item</span>
             </th>
             {columns.map((c) => (
-              <th key={getColumnId(c)} scope="col" style={{ ...cellStyle, fontWeight: 600 }}>
+              <th key={getColumnId(c)} scope="col" style={{ ...cellStyle, minWidth: `${COL_MIN}px`, fontWeight: 600 }}>
                 {renderColumnHeader(c)}
               </th>
             ))}
@@ -169,7 +173,7 @@ export function PfCompareTable<T>({
                     return (
                       <td
                         key={getColumnId(c)}
-                        style={{ ...cellStyle, ...(color && { color }), ...(isBest && { fontWeight: 600 }) }}
+                        style={{ ...cellStyle, minWidth: `${COL_MIN}px`, ...(color && { color }), ...(isBest && { fontWeight: 600 }) }}
                       >
                         {r.get(c)}
                         {isBest && <span style={hiddenStyle}> best</span>}

@@ -181,4 +181,23 @@ describe('PfCompareTable', () => {
     expect(th.style.position).toBe('sticky')
     expect(th.style.left).toBe('0px')
   })
+
+  it('keeps columns readable and scrolls inside its container when narrow', () => {
+    const { container } = render(
+      <PfCompareTable
+        columns={cols}
+        getColumnId={(c) => c.id}
+        renderColumnHeader={(c) => c.name}
+        rows={[row()]}
+        data-testid="t"
+      />,
+    )
+    expect(screen.getByTestId('t').style.overflowX).toBe('auto')
+    const table = container.querySelector('table') as HTMLTableElement
+    expect(table.style.minWidth).toBe(`${96 + 110 * cols.length}px`)
+    expect(screen.getByRole('columnheader', { name: 'Alpha' }).style.minWidth).toBe('110px')
+    const label = screen.getByRole('rowheader', { name: 'Score' })
+    expect(label.style.minWidth).toBe('96px')
+    expect(label.style.maxWidth).toBe('160px')
+  })
 })
