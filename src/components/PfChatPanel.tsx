@@ -305,17 +305,18 @@ function StepList({ steps }: { steps: PfChatStep[] }) {
 
 function MessageSteps({ steps, pending }: { steps: PfChatStep[]; pending?: boolean }) {
   if (steps.length === 0) return null
-  if (!pending && steps.every((st) => st.state === 'done')) {
-    return (
-      <details style={{ ...smallStyle, marginTop: 0, marginBottom: '6px' }}>
-        <summary>{steps.length === 1 ? '1 step' : `${steps.length} steps`}</summary>
-        <StepList steps={steps} />
-      </details>
-    )
-  }
+  const folded = !pending && steps.every((st) => st.state === 'done')
+  // The status wrapper stays mounted so progress and finish are both announced.
   return (
     <div role="status" aria-label="Steps">
-      <StepList steps={steps} />
+      {folded ? (
+        <details style={{ ...smallStyle, marginTop: 0, marginBottom: '6px' }}>
+          <summary>{steps.length === 1 ? '1 step' : `${steps.length} steps`}</summary>
+          <StepList steps={steps} />
+        </details>
+      ) : (
+        <StepList steps={steps} />
+      )}
     </div>
   )
 }
@@ -579,7 +580,7 @@ export function PfChatPanel({
                 </span>
               )}
             </div>
-            {m.question && <MessageQuestion question={m.question} />}
+            {m.question && <MessageQuestion key={m.question.text} question={m.question} />}
             {m.error && <div style={{ ...smallStyle, color: 'var(--pf-danger)' }}>{m.error}</div>}
             {m.sources && m.sources.length > 0 && (
               <div style={smallStyle}>

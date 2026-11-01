@@ -437,7 +437,7 @@ describe('PfChatPanel', () => {
       expect(details).not.toBeNull()
       expect(details.open).toBe(false)
       expect(within(details).getByText('2 steps')).toBeInTheDocument()
-      expect(screen.queryByRole('status', { name: 'Steps' })).toBeNull()
+      expect(within(screen.getByRole('status', { name: 'Steps' })).getByText('2 steps')).toBeInTheDocument()
     })
 
     it('keeps a failed step visible after the reply ends', () => {
@@ -529,6 +529,34 @@ describe('PfChatPanel', () => {
         screen.getByTestId('pf-chat-messages').querySelectorAll<HTMLElement>('button'),
       ).map((b) => b.textContent)
       expect(order).toEqual(['X', 'Y', 'Continue'])
+    })
+
+    it('keeps one status wrapper from live to folded', () => {
+      const msg = (pending: boolean, state: 'running' | 'done'): PfChatMessage => ({
+        id: 'a',
+        role: 'assistant',
+        text: '',
+        pending,
+        steps: [{ id: 's1', label: 'Step', state }],
+      })
+      const { p, rerender } = setup({ messages: [msg(true, 'running')] })
+      const el = screen.getByRole('status', { name: 'Steps' })
+      rerender(<PfChatPanel {...p} messages={[msg(false, 'done')]} />)
+      expect(screen.getByRole('status', { name: 'Steps' })).toBe(el)
+    })
+
+    it('resets the chosen state when the question is replaced', () => {
+      const q = (text: string): PfChatMessage => ({
+        id: 'a',
+        role: 'assistant',
+        text: '',
+        question: { text, choices: [{ id: 'x', label: text + ' X' }], onChoose: vi.fn() },
+      })
+      const { p, rerender } = setup({ messages: [q('First')] })
+      fireEvent.click(screen.getByRole('button', { name: 'First X' }))
+      expect(screen.getByRole('button', { name: 'First X' })).toBeDisabled()
+      rerender(<PfChatPanel {...p} messages={[q('Second')]} />)
+      expect(screen.getByRole('button', { name: 'Second X' })).toBeEnabled()
     })
   })
 })
