@@ -229,11 +229,9 @@ const textStyle: React.CSSProperties = { whiteSpace: 'pre-wrap' }
 const smallStyle: React.CSSProperties = {
   marginTop: '4px',
   fontSize: '12px',
-  color: 'var(--pf-text-muted)',
+  // muted is under 4.5:1 at 12px on the dark panel; secondary clears it in every bundled theme
+  color: 'var(--pf-text-secondary)',
 }
-
-// muted is under 4.5:1 at 12px on the dark panel; secondary clears it in every bundled theme
-const smallLegibleStyle: React.CSSProperties = { ...smallStyle, color: 'var(--pf-text-secondary)' }
 
 const hiddenStyle: React.CSSProperties = {
   position: 'absolute',
@@ -412,7 +410,7 @@ function MessageSteps({ steps, pending }: { steps: PfChatStep[]; pending?: boole
   return (
     <div role="status" aria-label="Steps">
       {folded ? (
-        <details style={{ ...smallLegibleStyle, marginTop: 0, marginBottom: '6px' }}>
+        <details style={{ ...smallStyle, marginTop: 0, marginBottom: '6px' }}>
           <summary>{steps.length === 1 ? '1 step' : `${steps.length} steps`}</summary>
           <StepList steps={steps} />
         </details>
@@ -765,7 +763,7 @@ export function PfChatPanel({
                 onClick={() => pickSlash(it)}
               >
                 <span style={{ color: 'var(--pf-accent)', fontWeight: 600 }}>/{it.name}</span> {it.description}
-                <div style={smallLegibleStyle}>for {it.whoLabel}</div>
+                <div style={smallStyle}>for {it.whoLabel}</div>
               </li>
             ))}
           </ul>

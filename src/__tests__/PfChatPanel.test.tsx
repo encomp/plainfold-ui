@@ -685,4 +685,14 @@ describe('PfChatPanel cost meter and slash menu', () => {
     expect(p.onDraftChange).toHaveBeenCalledWith('/pitch-check ')
     expect(onSlashSelect).toHaveBeenCalledWith(items[1])
   })
+
+  it('small lines (meta, sources) use the secondary colour, never muted', () => {
+    setup({
+      messages: [
+        { id: 'a', role: 'assistant', text: 'x', meta: 'Stopped at the limit', sources: [{ label: 'Src' }] },
+      ],
+    })
+    expect(screen.getByText('Stopped at the limit').style.color).toBe('var(--pf-text-secondary)')
+    expect(screen.getByText(/Sources/).style.color).toBe('var(--pf-text-secondary)')
+  })
 })
