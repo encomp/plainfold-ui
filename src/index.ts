@@ -40,6 +40,8 @@ export type {
   PfColumn,
   PfDataTableProps,
 } from './components/PfDataTable'
+export { PfBudgetBars } from './components/PfBudgetBars'
+export type { PfBudgetSegment, PfBudgetRow, PfBudgetBarsProps } from './components/PfBudgetBars'
 export { PfStageBar } from './components/PfStageBar'
 export type { PfStageBarStep } from './components/PfStageBar'
 export { PfStepCards } from './components/PfStepCards'
