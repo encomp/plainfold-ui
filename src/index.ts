@@ -31,6 +31,14 @@ export type { PfNavItem } from './components/PfNavDrawer'
 
 export { PfSegmentedButton } from './components/PfSegmentedButton'
 export { PfDataList } from './components/PfDataList'
+export { PfDataTable } from './components/PfDataTable'
+export { pfTableHeaderStyle, pfTableCellStyle } from './components/tableStyles'
+export type {
+  PfCellKind,
+  PfSort,
+  PfColumn,
+  PfDataTableProps,
+} from './components/PfDataTable'
 export { PfStageBar } from './components/PfStageBar'
 export type { PfStageBarStep } from './components/PfStageBar'
 export { PfStepCards } from './components/PfStepCards'
