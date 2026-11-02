@@ -149,12 +149,20 @@ const headerStyle: React.CSSProperties = {
 }
 
 const titleStyle: React.CSSProperties = {
-  flex: 1,
-  minWidth: 0,
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
   margin: 0,
   fontSize: '16px',
   fontWeight: 600,
-  overflowWrap: 'anywhere',
+}
+
+const headerSlotStyle: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  gap: '4px',
 }
 
 const menuWrapStyle: React.CSSProperties = { position: 'relative' }
@@ -610,7 +618,7 @@ export function PfChatPanel({
         <h2 id={titleId} style={titleStyle}>
           {title}
         </h2>
-        {header}
+        <div style={headerSlotStyle}>{header}</div>
         {menuItems && menuItems.length > 0 && (
           <div ref={menuWrapRef} style={menuWrapStyle}>
             <button

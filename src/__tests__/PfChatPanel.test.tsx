@@ -696,3 +696,20 @@ describe('PfChatPanel cost meter and slash menu', () => {
     expect(screen.getByText(/Sources/).style.color).toBe('var(--pf-text-secondary)')
   })
 })
+
+describe('PfChatPanel header title', () => {
+  it('never shrinks or wraps when the header slot holds wide controls', () => {
+    setup({
+      title: 'Chat',
+      header: (
+        <>
+          <select style={{ width: 300 }} aria-label="one" />
+          <select style={{ width: 300 }} aria-label="two" />
+        </>
+      ),
+    })
+    const title = screen.getByRole('heading', { name: 'Chat' })
+    expect(title.style.flexShrink).toBe('0')
+    expect(title.style.whiteSpace).toBe('nowrap')
+  })
+})
