@@ -45,7 +45,7 @@ export function PfFormTextField({
         const inputStyle: React.CSSProperties = {
           width: '100%',
           background: 'var(--pf-bg-surface-alt)',
-          border: `1px solid ${hasError ? 'var(--pf-danger)' : focused ? 'var(--pf-accent)' : 'var(--pf-border)'}`,
+          border: `1px solid ${hasError ? 'var(--pf-danger)' : focused ? 'var(--pf-accent-text, var(--pf-accent))' : 'var(--pf-border)'}`,
           borderRadius: 'var(--pf-radius-sm)',
           fontSize: '14px',
           padding: '8px 12px',

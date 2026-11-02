@@ -158,7 +158,7 @@ const sortButtonStyle: CSSProperties = {
   color: 'inherit',
 }
 
-const checkboxStyle: CSSProperties = { accentColor: 'var(--pf-accent)', width: 18, height: 18, cursor: 'pointer' }
+const checkboxStyle: CSSProperties = { accentColor: 'var(--pf-accent-text, var(--pf-accent))', width: 18, height: 18, cursor: 'pointer' }
 const flatButton: CSSProperties = {
   font: 'inherit', fontSize: 14, padding: '6px 12px', cursor: 'pointer', color: 'var(--pf-text-primary)',
   background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6,

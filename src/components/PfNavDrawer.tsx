@@ -78,7 +78,7 @@ export function PfNavDrawer({
       padding: collapsed ? '10px 0' : '10px 12px',
       justifyContent: collapsed ? 'center' : 'flex-start',
       background: isActive ? 'var(--pf-accent-muted)' : 'transparent',
-      borderLeft: isActive ? '2px solid var(--pf-accent)' : '2px solid transparent',
+      borderLeft: isActive ? '2px solid var(--pf-accent-text, var(--pf-accent))' : '2px solid transparent',
       color: isActive
         ? 'var(--pf-accent-text, var(--pf-accent))'
         : isHovered
@@ -87,7 +87,7 @@ export function PfNavDrawer({
       border: 'none',
       borderLeftWidth: '2px',
       borderLeftStyle: 'solid',
-      borderLeftColor: isActive ? 'var(--pf-accent)' : 'transparent',
+      borderLeftColor: isActive ? 'var(--pf-accent-text, var(--pf-accent))' : 'transparent',
       cursor: 'pointer',
       borderRadius: 'var(--pf-radius-sm)',
       fontFamily: 'var(--pf-font-ui)',

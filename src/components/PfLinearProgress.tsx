@@ -26,6 +26,7 @@ export function PfLinearProgress({
   }
 
   const fillStyle: React.CSSProperties = {
+    // fill accent; value also shown as text
     background: color ?? 'var(--pf-accent)',
     height: '100%',
     width: `${clampedValue}%`,

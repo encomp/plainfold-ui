@@ -55,7 +55,7 @@ export function PfFormSwitch({
           height: '24px',
           borderRadius: '12px',
           border: checked ? 'none' : '1px solid var(--pf-border)',
-          background: checked ? 'var(--pf-accent)' : 'var(--pf-bg-surface-alt)',
+          background: checked ? 'var(--pf-accent-text, var(--pf-accent))' : 'var(--pf-bg-surface-alt)',
           position: 'relative',
           cursor: 'pointer',
           padding: 0,

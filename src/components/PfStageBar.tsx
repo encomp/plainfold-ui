@@ -79,7 +79,7 @@ export function PfStageBar({ steps, currentLabel, 'data-testid': dataTestId }: P
                 ...segmentBase,
                 background: SEGMENT_BG[state],
                 // Ring keeps a current step with no or 0 progress distinct from 'todo'.
-                boxShadow: isCurrent ? 'inset 0 0 0 1px var(--pf-accent)' : undefined,
+                boxShadow: isCurrent ? 'inset 0 0 0 1px var(--pf-accent-text, var(--pf-accent))' : undefined,
               }}
             >
               {isCurrent && (
@@ -87,6 +87,7 @@ export function PfStageBar({ steps, currentLabel, 'data-testid': dataTestId }: P
                   style={{
                     height: '100%',
                     width: `${pct ?? 0}%`,
+                    // fill accent; value also shown as text
                     background: 'var(--pf-accent)',
                     transition: 'width var(--pf-duration-fast) var(--pf-easing-default)',
                   }}

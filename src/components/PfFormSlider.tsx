@@ -32,21 +32,21 @@ function injectStyles() {
     .pf-slider-range {
       position: absolute;
       height: 100%;
-      background: var(--pf-accent);
+      background: var(--pf-accent-text, var(--pf-accent));
       border-radius: var(--pf-radius-sm);
     }
     .pf-slider-thumb {
       display: block;
       width: 20px;
       height: 20px;
-      background: var(--pf-accent);
+      background: var(--pf-accent-text, var(--pf-accent));
       border: 2px solid var(--pf-bg-surface);
       border-radius: 50%;
       cursor: pointer;
       outline: none;
     }
     .pf-slider-thumb:focus-visible {
-      box-shadow: 0 0 0 2px var(--pf-accent-muted);
+      box-shadow: 0 0 0 2px var(--pf-accent-text, var(--pf-accent));
     }
   `
   document.head.appendChild(style)

@@ -105,7 +105,7 @@ export function PfStepCards({ steps, currentId, minCardWidth = 150, 'data-testid
             style={{
               ...cardBase,
               ...(isCurrent && {
-                border: '2px solid var(--pf-accent)',
+                border: '2px solid var(--pf-accent-text, var(--pf-accent))',
                 padding: '11px',
                 background: 'var(--pf-bg-surface-alt)',
               }),

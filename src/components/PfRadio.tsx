@@ -44,7 +44,7 @@ export function PfRadio({
           disabled={disabled}
           onChange={() => onChange(value)}
           data-testid={dataTestId}
-          style={{ accentColor: 'var(--pf-accent)', margin: '2px 0 0' }}
+          style={{ accentColor: 'var(--pf-accent-text, var(--pf-accent))', margin: '2px 0 0' }}
         />
         <span style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <span style={{ fontSize: '14px', fontWeight: 500 }}>{label}</span>

@@ -25,22 +25,40 @@ describe('--pf-accent-text', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('is used wherever the accent is a text color (never bare --pf-accent in a color: property)', () => {
-    const textColor =
-      /(?<![-\w])color\s*:(?:(?!background|border|outline|boxShadow)[^;}]){0,120}?var\(--pf-accent\)/;
-    const offenders = sources
-      .filter(({ text }) => textColor.test(text.replaceAll(ACCENT_TEXT, '')))
-      .map(({ f }) => f);
-    expect(offenders).toEqual([]);
+  // Properties where the accent is text or a thin foreground. Fills
+  // (background, progress bars) are deliberately not listed.
+  const foregroundProps: Record<string, { re: RegExp; bare: string }> = {
+    color: { re: /(?<![-\w])color\s*:/, bare: "color: 'var(--pf-accent)'" },
+    outline: { re: /(?<![-\w])outline\s*:/, bare: "outline: '2px solid var(--pf-accent)'" },
+    outlineCss: { re: /(?<![-\w])outline\s*:/, bare: 'outline: 2px solid var(--pf-accent);' },
+    accentColor: { re: /(?<![-\w])(accentColor|accent-color)\s*:/, bare: "accentColor: 'var(--pf-accent)'" },
+    border: { re: /(?<![-\w])border[\w-]*\s*:/, bare: "borderLeft: '2px solid var(--pf-accent)'" },
+    borderColor: { re: /(?<![-\w])border[\w-]*\s*:/, bare: "borderLeftColor: 'var(--pf-accent)'" },
+    caretColor: { re: /(?<![-\w])(caretColor|caret-color)\s*:/, bare: "caretColor: 'var(--pf-accent)'" },
+    fill: { re: /(?<![-\w])fill\s*:/, bare: "fill: 'var(--pf-accent)'" },
+    stroke: { re: /(?<![-\w])stroke\s*:/, bare: "stroke: 'var(--pf-accent)'" },
+    boxShadow: { re: /(?<![-\w])(boxShadow|box-shadow)\s*:/, bare: "boxShadow: 'inset 0 0 0 1px var(--pf-accent)'" },
+  };
+  const bareAccentIn = (text: string) =>
+    Object.values(foregroundProps).some(({ re }) => {
+      const body = text.replaceAll(ACCENT_TEXT, '');
+      const m = new RegExp(
+        re.source + '(?:(?!background|;|\\})[^;}]){0,120}?var\\(--pf-accent\\)',
+      );
+      return m.test(body);
+    });
+
+  it('guard patterns catch a bare sample and pass a fallback sample', () => {
+    for (const [name, { bare }] of Object.entries(foregroundProps)) {
+      expect(bareAccentIn(bare), name).toBe(true);
+      expect(bareAccentIn(bare.replace('var(--pf-accent)', ACCENT_TEXT)), name).toBe(false);
+    }
+    expect(bareAccentIn("background: 'var(--pf-accent)'")).toBe(false);
   });
 
-  it('is used for focus outlines', () => {
+  it('never uses a bare --pf-accent as text, border, indicator, ring or checked-state colour', () => {
     const offenders = sources
-      .filter(({ text }) =>
-        /outline\s*:[^;}`'"]*(?:solid\s+)var\(--pf-accent\)/.test(
-          text.replaceAll(ACCENT_TEXT, ''),
-        ),
-      )
+      .filter(({ text }) => bareAccentIn(text))
       .map(({ f }) => f);
     expect(offenders).toEqual([]);
   });

@@ -273,7 +273,7 @@ const choiceStyle: React.CSSProperties = {
   fontFamily: 'inherit',
   color: 'var(--pf-accent-text, var(--pf-accent))',
   background: 'transparent',
-  border: '1px solid var(--pf-accent)',
+  border: '1px solid var(--pf-accent-text, var(--pf-accent))',
   borderRadius: 'var(--pf-radius-md)',
   cursor: 'pointer',
 }
@@ -370,6 +370,7 @@ function CostMeter({ meter }: { meter: PfChatCostMeter }) {
   const spentRaw = safe(meter.spentUsd)
   const spent = Math.min(spentRaw, ceiling)
   const ratio = ceiling > 0 ? spent / ceiling : 1
+  // fill accent; value also shown as text
   const color = ratio >= 1 ? 'var(--pf-danger)' : ratio >= 0.8 ? 'var(--pf-warning)' : 'var(--pf-accent)'
   const text = `${money(spentRaw)} of ${money(ceiling)}`
   return (
