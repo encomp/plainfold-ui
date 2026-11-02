@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
+import { PfRowMenu } from './PfRowMenu'
+import type { PfRowMenuItem } from './PfRowMenu'
 import {
   pfTableStyle,
   pfTableHeaderStyle,
@@ -51,6 +53,40 @@ export interface PfDataTableProps<T> {
   onSortChange?: (s: PfSort | null) => void
   /** phone only: replaces the card body */
   renderCard?: (r: T) => ReactNode
+
+  /** Adds a leading checkbox column (and a select-all on phones). `selectedIds` may include ids from other pages. */
+  selection?: {
+    selectedIds: ReadonlySet<string>
+    onChange(ids: Set<string>): void
+    /** max selected ids, counted across pages */
+    cap?: number
+    isSelectable?(r: T): boolean
+    label(r: T): string
+    bar?: (count: number) => ReactNode
+    testId?: (r: T) => string
+    allTestId?: string
+  }
+  selectedId?: string | null
+  onRowClick?: (r: T) => void
+  /** dimmed rows use the secondary text colour at full opacity */
+  isDimmed?: (r: T) => boolean
+  rowAttrs?: (r: T) => Record<string, string>
+  /** empty array = no trigger */
+  rowMenu?: (r: T) => PfRowMenuItem[]
+  rowMenuLabel?: (r: T) => string
+  rowMenuTestId?: (r: T) => string
+  popupTestId?: string
+  /** full-width row after the row (inside the card on phones) */
+  renderDetail?: (r: T) => ReactNode | null
+  /** consecutive rows with one id share a group heading */
+  groupBy?: (r: T) => { id: string; label: ReactNode }
+  /** server numbered paging: `rows` is one page; hidden with a single page */
+  page?: number
+  onPageChange?: (p: number) => void
+  total?: number
+  pageSize?: number
+  /** "Load more" button; the caller renders errors and keeps hasMore true to allow a retry */
+  loadMore?: { hasMore: boolean; loading?: boolean; onLoadMore(): void }
 }
 
 const EMPTY = '—'
@@ -122,9 +158,17 @@ const sortButtonStyle: CSSProperties = {
   color: 'inherit',
 }
 
+const checkboxStyle: CSSProperties = { accentColor: 'var(--pf-accent)', width: 18, height: 18, cursor: 'pointer' }
+const flatButton: CSSProperties = {
+  font: 'inherit', fontSize: 14, padding: '6px 12px', cursor: 'pointer', color: 'var(--pf-text-primary)',
+  background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6,
+}
+
 export function PfDataTable<T>({
   rows, columns, getRowId, 'data-testid': testId, rowTestId, 'aria-label': ariaLabel,
   emptyState, loading, loadingState, sort, onSortChange, renderCard,
+  selection, selectedId, onRowClick, isDimmed, rowAttrs, rowMenu, rowMenuLabel, rowMenuTestId,
+  popupTestId, renderDetail, groupBy, page, onPageChange, total, pageSize, loadMore,
 }: PfDataTableProps<T>) {
   const bp = useBreakpoint()
   const controlled = onSortChange !== undefined
@@ -142,6 +186,120 @@ export function PfDataTable<T>({
     if (current.dir === first) return setSort({ id: c.id, dir: first === 'asc' ? 'desc' : 'asc' })
     setSort(null)
   }
+
+  // selection
+  const selIds = selection?.selectedIds
+  const cap = selection?.cap ?? Infinity
+  const atCap = !!selIds && selIds.size >= cap
+  const selectable = selection ? rows.filter((r) => selection.isSelectable?.(r) ?? true) : []
+  const pageSelected = selIds ? selectable.filter((r) => selIds.has(getRowId(r))) : []
+  const allChecked = selectable.length > 0 && pageSelected.length === selectable.length
+  const partial = pageSelected.length > 0 && !allChecked
+  const allRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (allRef.current) allRef.current.indeterminate = partial
+  })
+  const toggleAll = () => {
+    if (!selection || !selIds) return
+    const next = new Set(selIds)
+    const room = cap - selIds.size
+    if (pageSelected.length > 0 && (allChecked || room <= 0)) {
+      pageSelected.forEach((r) => next.delete(getRowId(r)))
+    } else {
+      for (const r of selectable) {
+        if (next.size >= cap) break
+        next.add(getRowId(r))
+      }
+    }
+    selection.onChange(next)
+  }
+  const toggleRow = (r: T) => {
+    if (!selection || !selIds) return
+    const next = new Set(selIds)
+    const id = getRowId(r)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    selection.onChange(next)
+  }
+  const selectAllBox = (extra?: CSSProperties) => (
+    <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
+      checked={allChecked} disabled={selectable.length === 0} onChange={toggleAll}
+      style={{ ...checkboxStyle, ...extra }} />
+  )
+  const rowBox = (r: T) => {
+    const checked = !!selIds?.has(getRowId(r))
+    const disabled = !(selection?.isSelectable?.(r) ?? true) || (!checked && atCap)
+    return (
+      <input type="checkbox" aria-label={selection!.label(r)} data-testid={selection!.testId?.(r)}
+        checked={checked} disabled={disabled} onChange={() => toggleRow(r)} style={checkboxStyle} />
+    )
+  }
+  const selectionBar = selection && selIds && selIds.size > 0 && (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '8px 0',
+      color: 'var(--pf-text-primary)', fontSize: 14 }}>
+      <span>{selIds.size} selected</span>
+      {selection.bar?.(selIds.size)}
+    </div>
+  )
+  const limitNote = atCap && (
+    <div role="status" style={{ fontSize: 13, color: 'var(--pf-text-secondary)', padding: '4px 0' }}>
+      Limit of {cap} reached
+    </div>
+  )
+
+  // row behaviour
+  const menuFor = (r: T) => {
+    const items = rowMenu?.(r) ?? []
+    if (!items.length) return null
+    return (
+      <PfRowMenu items={items} label={rowMenuLabel?.(r) ?? 'Row actions'}
+        testId={rowMenuTestId?.(r)} popupTestId={popupTestId} />
+    )
+  }
+  const rowProps = (r: T) => ({
+    'data-testid': rowTestId?.(r),
+    ...(selectedId != null && selectedId === getRowId(r)
+      ? { 'data-selected': 'true' } : {}),
+    ...(isDimmed?.(r) ? { 'data-dimmed': 'true' } : {}),
+    ...(rowAttrs?.(r) ?? {}),
+    onClick: onRowClick
+      ? (e: React.MouseEvent<HTMLElement>) => {
+          const t = e.target as Element
+          const hit = t.closest?.('a, button, input, label, th, [role=menuitem]')
+          if (hit && e.currentTarget.contains(hit)) return
+          onRowClick(r)
+        }
+      : undefined,
+    onKeyDown: onRowClick
+      ? (e: React.KeyboardEvent<HTMLElement>) => {
+          if (e.key !== 'Enter') return
+          const first = e.currentTarget.querySelector('a, button:not([data-pf-menu-trigger])')
+          if (first && e.target === first) onRowClick(r)
+        }
+      : undefined,
+  })
+  const selectedStyle = (r: T): CSSProperties =>
+    selectedId != null && selectedId === getRowId(r)
+      ? { outline: '2px solid var(--pf-accent)', outlineOffset: -2 } : {}
+  const cursor: CSSProperties = onRowClick ? { cursor: 'pointer' } : {}
+
+  const pages = page !== undefined && total !== undefined && pageSize
+    ? Math.max(1, Math.ceil(total / pageSize)) : 1
+  const pager = page !== undefined && onPageChange && pages > 1 && (
+    <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+      gap: 12, padding: '12px 0', color: 'var(--pf-text-primary)', fontSize: 14 }}>
+      <button type="button" style={flatButton} disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Previous</button>
+      <span>Page {page} of {pages}</span>
+      <button type="button" style={flatButton} disabled={page >= pages} onClick={() => onPageChange(page + 1)}>Next</button>
+    </nav>
+  )
+  const more = loadMore?.hasMore && (
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0' }}>
+      <button type="button" style={flatButton} disabled={!!loadMore.loading} onClick={loadMore.onLoadMore}>
+        Load more
+      </button>
+    </div>
+  )
 
   if (rows.length === 0) {
     if (loading) {
@@ -162,8 +320,68 @@ export function PfDataTable<T>({
     const titleCol = body.find((c) => c.kind !== 'actions')
     const lines = body.filter((c) => c !== titleCol && c.kind !== 'actions')
     const actions = body.filter((c) => c.kind === 'actions')
+    const cardNodes: ReactNode[] = []
+    let lastGroup: string | null = null
+    for (const r of shown) {
+      if (groupBy) {
+        const g = groupBy(r)
+        if (g.id !== lastGroup) {
+          lastGroup = g.id
+          cardNodes.push(
+            <div key={`g:${g.id}:${cardNodes.length}`} role="heading" aria-level={3}
+              style={{ fontWeight: 600, fontSize: 13, color: 'var(--pf-text-secondary)', marginTop: 8 }}>
+              {g.label}
+            </div>,
+          )
+        }
+      }
+      const menu = menuFor(r)
+      const detail = renderDetail?.(r)
+      const dim = isDimmed?.(r)
+      cardNodes.push(
+        <div key={getRowId(r)} role="listitem" {...rowProps(r)}
+          style={{ border: '1px solid var(--pf-border)', borderRadius: 8, padding: 12,
+            background: 'var(--pf-bg-surface)', color: dim ? 'var(--pf-text-secondary)' : 'var(--pf-text-primary)',
+            overflowWrap: 'anywhere', minWidth: 0, ...cursor, ...selectedStyle(r) }}>
+          {renderCard ? renderCard(r) : (
+            <>
+              {titleCol && (
+                <div style={{ fontWeight: 600, fontSize: 15, marginBottom: lines.length ? 6 : 0 }}>
+                  {show(titleCol.cell(r))}
+                </div>
+              )}
+              {lines.map((c) => (
+                <div key={c.id} style={{ fontSize: 14, marginTop: 2 }}>
+                  <span style={{ color: 'var(--pf-text-secondary)' }}>{c.header}: </span>
+                  <span>{show(c.cell(r))}</span>
+                </div>
+              ))}
+              {actions.map((c) => (
+                <div key={c.id} style={{ marginTop: 8 }}>{show(c.cell(r))}</div>
+              ))}
+            </>
+          )}
+          {(selection || menu) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+              <span>{selection && rowBox(r)}</span>
+              {menu}
+            </div>
+          )}
+          {detail != null && <div style={{ marginTop: 8 }}>{detail}</div>}
+        </div>,
+      )
+    }
     return (
       <>
+        {selectionBar}
+        {limitNote}
+        {selection && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13,
+            color: 'var(--pf-text-secondary)' }}>
+            {selectAllBox()}
+            <span aria-hidden="true">Select all</span>
+          </label>
+        )}
         {sortCols.length > 0 && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
             fontSize: 13, color: 'var(--pf-text-secondary)' }}>
@@ -186,72 +404,102 @@ export function PfDataTable<T>({
         )}
         <div role="list" data-testid={testId} aria-label={ariaLabel}
           style={{ display: 'flex', flexDirection: 'column', gap: 8, ...dimmed }}>
-          {shown.map((r) => (
-            <div key={getRowId(r)} role="listitem" data-testid={rowTestId?.(r)}
-              style={{ border: '1px solid var(--pf-border)', borderRadius: 8, padding: 12,
-                background: 'var(--pf-bg-surface)', color: 'var(--pf-text-primary)',
-                overflowWrap: 'anywhere', minWidth: 0 }}>
-              {renderCard ? renderCard(r) : (
-                <>
-                  {titleCol && (
-                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: lines.length ? 6 : 0 }}>
-                      {show(titleCol.cell(r))}
-                    </div>
-                  )}
-                  {lines.map((c) => (
-                    <div key={c.id} style={{ fontSize: 14, marginTop: 2 }}>
-                      <span style={{ color: 'var(--pf-text-secondary)' }}>{c.header}: </span>
-                      <span>{show(c.cell(r))}</span>
-                    </div>
-                  ))}
-                  {actions.map((c) => (
-                    <div key={c.id} style={{ marginTop: 8 }}>{show(c.cell(r))}</div>
-                  ))}
-                </>
-              )}
-            </div>
-          ))}
+          {cardNodes}
         </div>
+        {pager}
+        {more}
       </>
     )
   }
 
-  return (
-    <div style={{ overflowX: 'auto', ...dimmed }}>
-      <table style={pfTableStyle} data-testid={testId} aria-label={ariaLabel}>
-        <thead>
-          <tr>
-            {columns.map((c) => {
-              const sorted = current?.id === c.id && isSortable(c) ? current : null
-              const label = c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header
-              return (
-                <th key={c.id} scope="col"
-                  aria-sort={sorted ? (sorted.dir === 'asc' ? 'ascending' : 'descending') : undefined}
-                  style={{ ...pfTableHeaderStyle, ...(isNumeric(c) ? { textAlign: 'right' } : {}),
-                    width: c.width, minWidth: c.minWidth }}>
-                  {isSortable(c) ? (
-                    <button type="button" onClick={() => cycle(c)} style={sortButtonStyle}>
-                      {label}
-                      <Arrow dir={sorted?.dir ?? 'asc'} visible={!!sorted} />
-                    </button>
-                  ) : label}
-                </th>
-              )
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {shown.map((r) => (
-            <tr key={getRowId(r)} data-testid={rowTestId?.(r)}>
-              {columns.map((c) => (
-                <td key={c.id} style={{ ...pfTableCellStyle, ...(isNumeric(c) ? pfTableNumberStyle : {}) }}>
-                  {show(c.cell(r))}
-                </td>
-              ))}
-            </tr>
+  const colCount = columns.length + (selection ? 1 : 0) + (rowMenu ? 1 : 0)
+  const groups: Array<{ id: string; label: ReactNode; rows: T[] }> = []
+  for (const r of shown) {
+    const g = groupBy?.(r)
+    const last = groups[groups.length - 1]
+    if (last && (!g || last.id === g.id) && (g || !groupBy)) last.rows.push(r)
+    else groups.push({ id: g?.id ?? '', label: g?.label, rows: [r] })
+  }
+
+  const renderRow = (r: T) => {
+    const detail = renderDetail?.(r)
+    const dim = isDimmed?.(r)
+    const menu = menuFor(r)
+    return (
+      <React.Fragment key={getRowId(r)}>
+        <tr {...rowProps(r)} style={{ ...cursor, ...selectedStyle(r) }}>
+          {selection && (
+            <td style={{ ...pfTableCellStyle, width: 36, ...(dim ? { color: 'var(--pf-text-secondary)' } : {}) }}>
+              {rowBox(r)}
+            </td>
+          )}
+          {columns.map((c) => (
+            <td key={c.id} style={{ ...pfTableCellStyle, ...(isNumeric(c) ? pfTableNumberStyle : {}),
+              color: dim ? 'var(--pf-text-secondary)' : 'var(--pf-text-primary)' }}>
+              {show(c.cell(r))}
+            </td>
           ))}
-        </tbody>
-      </table>
-    </div>
+          {rowMenu && (
+            <td style={{ ...pfTableCellStyle, width: 48, textAlign: 'right' }}>{menu}</td>
+          )}
+        </tr>
+        {detail != null && (
+          <tr>
+            <td colSpan={colCount} style={pfTableCellStyle}>{detail}</td>
+          </tr>
+        )}
+      </React.Fragment>
+    )
+  }
+
+  return (
+    <>
+      {selectionBar}
+      {limitNote}
+      <div style={{ overflowX: 'auto', ...dimmed }}>
+        <table style={pfTableStyle} data-testid={testId} aria-label={ariaLabel}>
+          <thead>
+            <tr>
+              {selection && (
+                <th scope="col" style={{ ...pfTableHeaderStyle, width: 36 }}>{selectAllBox()}</th>
+              )}
+              {columns.map((c) => {
+                const sorted = current?.id === c.id && isSortable(c) ? current : null
+                const label = c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header
+                return (
+                  <th key={c.id} scope="col"
+                    aria-sort={sorted ? (sorted.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+                    style={{ ...pfTableHeaderStyle, ...(isNumeric(c) ? { textAlign: 'right' } : {}),
+                      width: c.width, minWidth: c.minWidth }}>
+                    {isSortable(c) ? (
+                      <button type="button" onClick={() => cycle(c)} style={sortButtonStyle}>
+                        {label}
+                        <Arrow dir={sorted?.dir ?? 'asc'} visible={!!sorted} />
+                      </button>
+                    ) : label}
+                  </th>
+                )
+              })}
+              {rowMenu && (
+                <th scope="col" style={pfTableHeaderStyle}><span style={srOnly}>Actions</span></th>
+              )}
+            </tr>
+          </thead>
+          {groups.map((g, i) => (
+            <tbody key={`${g.id}:${i}`}>
+              {groupBy && (
+                <tr>
+                  <th scope="rowgroup" colSpan={colCount}
+                    style={{ ...pfTableHeaderStyle, background: 'var(--pf-bg-surface)' }}>{g.label}</th>
+                </tr>
+              )}
+              {g.rows.map(renderRow)}
+            </tbody>
+          ))}
+        </table>
+      </div>
+      {pager}
+      {more}
+    </>
   )
 }

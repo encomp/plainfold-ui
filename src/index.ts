@@ -32,6 +32,7 @@ export type { PfNavItem } from './components/PfNavDrawer'
 export { PfSegmentedButton } from './components/PfSegmentedButton'
 export { PfDataList } from './components/PfDataList'
 export { PfDataTable } from './components/PfDataTable'
+export type { PfRowMenuItem } from './components/PfRowMenu'
 export { pfTableHeaderStyle, pfTableCellStyle } from './components/tableStyles'
 export type {
   PfCellKind,
