@@ -271,7 +271,7 @@ const choiceStyle: React.CSSProperties = {
   padding: '6px 12px',
   fontSize: '13px',
   fontFamily: 'inherit',
-  color: 'var(--pf-accent)',
+  color: 'var(--pf-accent-text, var(--pf-accent))',
   background: 'transparent',
   border: '1px solid var(--pf-accent)',
   borderRadius: 'var(--pf-radius-md)',
@@ -719,7 +719,7 @@ export function PfChatPanel({
                         href={s.href}
                         target="_blank"
                         rel="noreferrer"
-                        style={{ color: 'var(--pf-accent)' }}
+                        style={{ color: 'var(--pf-accent-text, var(--pf-accent))' }}
                       >
                         {s.label}
                       </a>
@@ -770,7 +770,7 @@ export function PfChatPanel({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pickSlash(it)}
               >
-                <span style={{ color: 'var(--pf-accent)', fontWeight: 600 }}>/{it.name}</span> {it.description}
+                <span style={{ color: 'var(--pf-accent-text, var(--pf-accent))', fontWeight: 600 }}>/{it.name}</span> {it.description}
                 <div style={smallStyle}>for {it.whoLabel}</div>
               </li>
             ))}

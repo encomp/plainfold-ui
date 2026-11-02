@@ -11,7 +11,7 @@ interface PfBadgeProps {
 const variantStyles: Record<PfBadgeVariant, React.CSSProperties> = {
   default: {
     background: 'var(--pf-accent-muted)',
-    color: 'var(--pf-accent)',
+    color: 'var(--pf-accent-text, var(--pf-accent))',
   },
   success: {
     background: 'var(--pf-positive-muted)',

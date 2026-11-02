@@ -23,7 +23,7 @@ export function PfRadio({
 }: PfRadioProps) {
   return (
     <>
-      <style>{`.pf-radio:focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 2px }`}</style>
+      <style>{`.pf-radio:focus-visible { outline: 2px solid var(--pf-accent-text, var(--pf-accent)); outline-offset: 2px }`}</style>
       <label
         style={{
           display: 'flex',

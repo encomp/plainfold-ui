@@ -47,7 +47,7 @@ const srOnly: CSSProperties = {
 }
 const linkButton: CSSProperties = {
   background: 'none', border: 0, padding: 0, font: 'inherit', fontSize: 13, cursor: 'pointer',
-  color: 'var(--pf-accent)', textDecoration: 'underline',
+  color: 'var(--pf-accent-text, var(--pf-accent))', textDecoration: 'underline',
 }
 const smallButton: CSSProperties = {
   font: 'inherit', fontSize: 13, padding: '4px 10px', cursor: 'pointer', color: 'var(--pf-text-primary)',
@@ -127,7 +127,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
       {r.setLimitText ?? 'Set a limit'}
     </button>
   ) : r.setLimitHref ? (
-    <a href={r.setLimitHref} style={{ fontSize: 13, color: 'var(--pf-accent)' }}>
+    <a href={r.setLimitHref} style={{ fontSize: 13, color: 'var(--pf-accent-text, var(--pf-accent))' }}>
       {r.setLimitText ?? 'Set a limit'}
     </a>
   ) : null)
@@ -136,7 +136,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
     <div data-testid={tid(`row-${r.id}`)} data-highlight={r.highlighted ? 'true' : undefined}
       style={{ padding: compact ? 0 : '12px 0', overflowWrap: 'anywhere', minWidth: 0,
         borderBottom: compact ? undefined : '1px solid var(--pf-border)',
-        ...(r.highlighted ? { outline: '2px solid var(--pf-accent)', outlineOffset: 2, borderRadius: 6 } : {}) }}>
+        ...(r.highlighted ? { outline: '2px solid var(--pf-accent-text, var(--pf-accent))', outlineOffset: 2, borderRadius: 6 } : {}) }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         gap: 12, flexWrap: 'wrap', marginBottom: 6, color: 'var(--pf-text-primary)', fontSize: 14 }}>
         <span style={{ fontWeight: 600 }}>{r.label}</span>

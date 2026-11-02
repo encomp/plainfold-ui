@@ -80,7 +80,7 @@ export function PfNavDrawer({
       background: isActive ? 'var(--pf-accent-muted)' : 'transparent',
       borderLeft: isActive ? '2px solid var(--pf-accent)' : '2px solid transparent',
       color: isActive
-        ? 'var(--pf-accent)'
+        ? 'var(--pf-accent-text, var(--pf-accent))'
         : isHovered
           ? 'var(--pf-text-primary)'
           : 'var(--pf-text-secondary)',

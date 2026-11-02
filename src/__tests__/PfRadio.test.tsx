@@ -43,7 +43,7 @@ describe('PfRadio', () => {
     expect(screen.getByRole('radio')).toHaveFocus()
     const css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent).join('')
     expect(css).toContain('.pf-radio:focus-visible')
-    expect(css).toContain('outline: 2px solid var(--pf-accent)')
+    expect(css).toContain('outline: 2px solid var(--pf-accent-text, var(--pf-accent))')
   })
 
   it('puts data-testid on the input and renders the description', () => {

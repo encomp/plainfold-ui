@@ -283,7 +283,7 @@ export function PfDataTable<T>({
   })
   const selectedStyle = (r: T): CSSProperties =>
     selectedId != null && selectedId === getRowId(r)
-      ? { outline: '2px solid var(--pf-accent)', outlineOffset: -2 } : {}
+      ? { outline: '2px solid var(--pf-accent-text, var(--pf-accent))', outlineOffset: -2 } : {}
   const cursor: CSSProperties = onRowClick ? { cursor: 'pointer' } : {}
 
   const pages = page !== undefined && total !== undefined && pageSize

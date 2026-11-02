@@ -103,7 +103,7 @@ export function PfFormSelect({
                       <Select.Item key={option.value} value={option.value} style={itemStyle}>
                         <Select.ItemText>{option.label}</Select.ItemText>
                         <Select.ItemIndicator>
-                          <Check size={14} style={{ color: 'var(--pf-accent)' }} />
+                          <Check size={14} style={{ color: 'var(--pf-accent-text, var(--pf-accent))' }} />
                         </Select.ItemIndicator>
                       </Select.Item>
                     ))}

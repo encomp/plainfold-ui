@@ -20,7 +20,7 @@ interface PfButtonProps {
 const variantStyles: Record<PfButtonVariant, React.CSSProperties> = {
   primary: {
     background: 'var(--pf-accent)',
-    color: 'var(--pf-bg-base)',
+    color: 'var(--pf-on-accent, var(--pf-bg-base))',
     border: '1px solid transparent',
   },
   secondary: {
@@ -99,7 +99,7 @@ export function PfButton({
 
   return (
     <>
-      <style>{`@keyframes pf-spin { to { transform: rotate(360deg); } } .pf-button:focus-visible { outline: 2px solid var(--pf-accent) !important; outline-offset: 2px }`}</style>
+      <style>{`@keyframes pf-spin { to { transform: rotate(360deg); } } .pf-button:focus-visible { outline: 2px solid var(--pf-accent-text, var(--pf-accent)) !important; outline-offset: 2px }`}</style>
       <button
         type={type}
         className="pf-button"

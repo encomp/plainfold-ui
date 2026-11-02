@@ -88,3 +88,12 @@ Uses jsdom with `@testing-library/react`. test-setup.ts provides `window.matchMe
 ## CI/CD
 
 PR: lint → typecheck → test → build. Publishing via Changesets.
+
+## Theming tokens: accent text and on-accent
+
+Components read two optional tokens in addition to `--pf-accent`. Neither is required; when a theme does not define them every component renders exactly as it did before.
+
+- `--pf-accent-text` — the accent used as a text or thin foreground colour (link text, accent-coloured labels, active nav text, check icons, focus outlines). Components always write `var(--pf-accent-text, var(--pf-accent))`. Set it when your accent is bright enough for fills (buttons, active segments, bars) but too light to read as text on the page background.
+- `--pf-on-accent` — text or icons placed on an accent fill (primary button label, active segmented-button label). Components write `var(--pf-on-accent, var(--pf-bg-base))`. Set it when the accent fill needs a different label colour than the page background.
+
+Fills, backgrounds and bars keep using `--pf-accent`. `src/__tests__/accentTextFallback.test.ts` guards both rules: never a bare `--pf-accent` in a text `color:` or focus outline, and never either new token without its fallback.
