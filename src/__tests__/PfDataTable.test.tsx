@@ -238,6 +238,42 @@ describe('PfDataTable sorting (client mode)', () => {
     expect(svg).toHaveAttribute('aria-hidden', 'true')
   })
 
+  it('sort buttons keep the default focus outline and are focusable', () => {
+    setup()
+    const btn = within(header('Count')).getByRole('button')
+    expect(btn.style.outline).toBe('')
+    expect(btn.style.cssText).not.toMatch(/outline|all:/)
+    btn.focus()
+    expect(document.activeElement).toBe(btn)
+  })
+
+  it('header cells have scope="col" and only sortable ones can carry aria-sort', () => {
+    setup({ sort: { id: 'plain', dir: 'asc' } })
+    screen.getAllByRole('columnheader').forEach((th) => expect(th).toHaveAttribute('scope', 'col'))
+    expect(document.querySelectorAll('[aria-sort]').length).toBe(0)
+  })
+
+  it('reserves arrow space on every sortable header, hidden when unsorted', () => {
+    setup()
+    const svgs = (n: string) => header(n).querySelectorAll('svg')
+    expect(svgs('Count').length).toBe(1)
+    expect((svgs('Count')[0] as unknown as HTMLElement).style.visibility).toBe('hidden')
+    expect(svgs('Plain').length).toBe(0)
+    click('Count')
+    expect((svgs('Count')[0] as unknown as HTMLElement).style.visibility).toBe('visible')
+    expect(header('Count').textContent).toBe('Count')
+  })
+
+  it('sort control is a native button so Enter and Space activate it', () => {
+    // jsdom does not synthesize click from keys; a native type=button gets this from the browser
+    setup()
+    const btn = within(header('Count')).getByRole('button')
+    expect(btn.tagName).toBe('BUTTON')
+    expect(btn).toHaveAttribute('type', 'button')
+    expect(btn).not.toHaveAttribute('tabindex', '-1')
+    expect(btn).not.toHaveAttribute('disabled')
+  })
+
   it('does not mutate the rows prop', () => {
     const copy = [...rows]
     setup()

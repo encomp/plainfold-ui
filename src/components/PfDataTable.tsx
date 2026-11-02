@@ -30,6 +30,12 @@ export interface PfColumn<T> {
   hideOnCard?: boolean
 }
 
+/**
+ * Generic table (cards on phones). Sorting: client mode sorts by `sortValue`; passing
+ * `onSortChange` switches to controlled (server) mode where the table never reorders.
+ * On phones the "Sort by" select picks a column and uses that column's first direction
+ * (`firstDir`, or desc for number/money/date, asc otherwise); there is no direction toggle.
+ */
 export interface PfDataTableProps<T> {
   rows: T[]
   columns: PfColumn<T>[]
@@ -96,17 +102,19 @@ const srOnly: CSSProperties = {
   overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
 }
 
-function Arrow({ dir }: { dir: 'asc' | 'desc' }) {
+function Arrow({ dir, visible }: { dir: 'asc' | 'desc'; visible: boolean }) {
   return (
     <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false"
-      style={{ marginLeft: 4, flexShrink: 0 }}>
+      style={{ marginLeft: 4, flexShrink: 0, visibility: visible ? 'visible' : 'hidden' }}>
       <path d={dir === 'asc' ? 'M5 1 L9 8 L1 8 Z' : 'M5 9 L9 2 L1 2 Z'} fill="currentColor" />
     </svg>
   )
 }
 
 const sortButtonStyle: CSSProperties = {
-  all: 'unset',
+  background: 'none',
+  border: 0,
+  padding: 0,
   cursor: 'pointer',
   display: 'inline-flex',
   alignItems: 'center',
@@ -214,7 +222,7 @@ export function PfDataTable<T>({
         <thead>
           <tr>
             {columns.map((c) => {
-              const sorted = current?.id === c.id ? current : null
+              const sorted = current?.id === c.id && isSortable(c) ? current : null
               const label = c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header
               return (
                 <th key={c.id} scope="col"
@@ -224,7 +232,7 @@ export function PfDataTable<T>({
                   {isSortable(c) ? (
                     <button type="button" onClick={() => cycle(c)} style={sortButtonStyle}>
                       {label}
-                      {sorted && <Arrow dir={sorted.dir} />}
+                      <Arrow dir={sorted?.dir ?? 'asc'} visible={!!sorted} />
                     </button>
                   ) : label}
                 </th>
