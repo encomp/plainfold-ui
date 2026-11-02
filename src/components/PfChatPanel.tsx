@@ -187,7 +187,7 @@ const menuStyle: React.CSSProperties = {
   flexDirection: 'column',
   minWidth: '180px',
   padding: '4px',
-  background: 'var(--pf-bg-elevated)',
+  background: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
   border: '1px solid var(--pf-border)',
   borderRadius: 'var(--pf-radius-md)',
 }
@@ -349,7 +349,7 @@ const slashListStyle: React.CSSProperties = {
   margin: 0,
   padding: '4px',
   listStyle: 'none',
-  background: 'var(--pf-bg-elevated)',
+  background: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
   border: '1px solid var(--pf-border)',
   borderRadius: 'var(--pf-radius-md)',
 }

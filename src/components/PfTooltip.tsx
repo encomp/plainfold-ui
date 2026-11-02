@@ -19,7 +19,7 @@ export function PfTooltip({
   onOpenChange,
 }: PfTooltipProps) {
   const contentStyle: React.CSSProperties = {
-    background: 'var(--pf-bg-elevated)',
+    background: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
     color: 'var(--pf-text-primary)',
     border: '1px solid var(--pf-border)',
     borderRadius: 'var(--pf-radius-sm)',
@@ -38,7 +38,7 @@ export function PfTooltip({
             {content}
             <Tooltip.Arrow
               style={{
-                fill: 'var(--pf-bg-elevated)',
+                fill: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
               }}
             />
           </Tooltip.Content>

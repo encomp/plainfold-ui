@@ -36,7 +36,7 @@ export function PfSnackbar({
     bottom: '24px',
     left: '50%',
     transform: 'translateX(-50%)',
-    background: 'var(--pf-bg-elevated)',
+    background: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
     border: '1px solid var(--pf-border)',
     borderRadius: 'var(--pf-radius-md)',
     padding: '12px 16px',
