@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 
 export interface PfBudgetSegment { label: string; value: number; color: string }
@@ -25,13 +25,19 @@ export interface PfBudgetBarsProps {
   format: (n: number) => string
   /** no padding, no inline editing */
   compact?: boolean
-  /** resolve = saved; reject(Error(message)) = message shown, form stays open */
+  /** resolve = saved, and only after the new data is in `rows` (focus returns to the Edit button then);  reject(Error(message)) = message shown, form stays open. The amount is rounded to cents. */
   onEditLimit?: (id: string, next: number) => Promise<void>
   editLabel?: string
   editAriaLabel?: (r: PfBudgetRow) => string
   editInputLabel?: string
   /** `${p}-row-${id}`, `${p}-edit-${id}`, `${p}-input`, `${p}-save`, `${p}-cancel` */
   testIdPrefix?: string
+  /** texts (English defaults) */
+  saveLabel?: string
+  cancelLabel?: string
+  overLimitText?: string
+  invalidAmountText?: string
+  saveErrorText?: string
   'data-testid'?: string
 }
 
@@ -58,9 +64,16 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const inFlight = useRef(false)
+  const errorId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const refocus = useRef(false)
+
+  // a row that turns read-only (e.g. the caller moved to a past month) closes its form
+  useEffect(() => {
+    if (!canEdit) setEditing(false)
+  }, [canEdit])
 
   useEffect(() => {
     if (editing) inputRef.current?.focus()
@@ -80,21 +93,25 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
     setEditing(false)
   }
   const save = async () => {
-    if (pending || !onEditLimit) return
-    const n = value.trim() === '' ? NaN : Number(value)
-    if (!Number.isFinite(n) || n < 0) {
-      setError('Enter an amount of 0 or more.')
+    if (inFlight.current || !onEditLimit || !canEdit) return
+    const raw = value.trim() === '' ? NaN : Number(value)
+    if (!Number.isFinite(raw) || raw < 0) {
+      setError(o.invalidAmountText ?? 'Enter an amount of 0 or more.')
       return
     }
+    const n = Math.round(raw * 100) / 100
     setError(null)
+    inFlight.current = true
     setPending(true)
     try {
       await onEditLimit(r.id, n)
+      inFlight.current = false
       setPending(false)
       close()
     } catch (e) {
+      inFlight.current = false
       setPending(false)
-      setError(e instanceof Error ? e.message : 'Could not save.')
+      setError(e instanceof Error && e.message ? e.message : (o.saveErrorText ?? 'Could not save.'))
     }
   }
 
@@ -105,7 +122,8 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
   const tid = (s: string) => (p ? `${p}-${s}` : undefined)
 
   const action = !hasLimit && (canEdit ? (
-    <button ref={triggerRef} type="button" style={linkButton} onClick={openEdit}>
+    <button ref={triggerRef} type="button" data-testid={tid(`edit-${r.id}`)} style={linkButton}
+      aria-label={o.editAriaLabel?.(r)} onClick={openEdit}>
       {r.setLimitText ?? 'Set a limit'}
     </button>
   ) : r.setLimitHref ? (
@@ -125,7 +143,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
         <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
           {over && (
             <span style={{ color: 'var(--pf-danger)' }}>
-              <span aria-hidden="true">⚠</span><span style={srOnly}>Over limit</span>
+              <span aria-hidden="true">⚠</span><span style={srOnly}>{o.overLimitText ?? 'Over limit'}</span>
             </span>
           )}
           <span style={over ? { color: 'var(--pf-danger)' } : undefined}>
@@ -161,7 +179,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
           {!editing && action}
         </div>
       )}
-      {segs && hasLimit && (
+      {segs && (
         <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'flex', gap: 12,
           flexWrap: 'wrap', fontSize: 12, color: 'var(--pf-text-secondary)' }}>
           {segs.map((s, i) => (
@@ -174,22 +192,22 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
         </ul>
       )}
       {r.note != null && <div style={{ marginTop: 6, fontSize: 13, color: 'var(--pf-text-secondary)' }}>{r.note}</div>}
-      {editing && (
-        <form noValidate onSubmit={(e) => { e.preventDefault(); void save() }}
+      {editing && canEdit && (
+        <form noValidate onKeyDown={(e) => { if (e.key === 'Escape') close() }} onSubmit={(e) => { e.preventDefault(); void save() }}
           style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13,
             color: 'var(--pf-text-secondary)' }}>
             <span>{o.editInputLabel ?? 'Limit'}</span>
             <input ref={inputRef} type="number" min="0" step="0.01" value={value} data-testid={tid('input')}
               onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') close() }}
+              aria-invalid={error ? true : undefined} aria-describedby={error ? errorId : undefined}
               style={{ font: 'inherit', fontSize: 14, padding: '4px 8px', width: 140,
                 color: 'var(--pf-text-primary)', background: 'var(--pf-bg-surface)',
                 border: '1px solid var(--pf-border)', borderRadius: 6 }} />
           </label>
-          <button type="submit" disabled={pending} data-testid={tid('save')} style={smallButton}>Save</button>
-          <button type="button" data-testid={tid('cancel')} style={smallButton} onClick={close}>Cancel</button>
-          {error && <span role="alert" style={{ color: 'var(--pf-danger)', fontSize: 13 }}>{error}</span>}
+          <button type="submit" disabled={pending} data-testid={tid('save')} style={smallButton}>{o.saveLabel ?? 'Save'}</button>
+          <button type="button" data-testid={tid('cancel')} style={smallButton} onClick={close}>{o.cancelLabel ?? 'Cancel'}</button>
+          {error && <span id={errorId} role="alert" style={{ color: 'var(--pf-danger)', fontSize: 13 }}>{error}</span>}
         </form>
       )}
     </div>
@@ -198,7 +216,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
 
 export function PfBudgetBars(props: PfBudgetBarsProps) {
   return (
-    <div data-testid={props['data-testid']} style={{ display: 'flex', flexDirection: 'column' }}>
+    <div data-testid={props['data-testid']} style={{ display: 'flex', flexDirection: 'column', gap: props.compact ? 10 : 0 }}>
       {props.rows.map((r) => <BudgetRow key={r.id} r={r} o={props} />)}
     </div>
   )

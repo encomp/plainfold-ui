@@ -125,6 +125,16 @@ describe('PfBudgetBars segments', () => {
     setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4.004, limit: 8, segments: segs }] })
     expect(bar('Seg spent').children.length).toBe(2)
   })
+  it('the legend shows on a no-limit row too, without a bar', () => {
+    setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4, limit: null, segments: segs }] })
+    expect(within(row('s')).queryByRole('progressbar')).toBeNull()
+    expect(row('s')).toHaveTextContent('One $3.00')
+    expect(row('s')).toHaveTextContent('Two $1.00')
+  })
+  it('compact rows are separated by a gap', () => {
+    setup({ testIdPrefix: 'bb', compact: true, 'data-testid': 'cb' })
+    expect(screen.getByTestId('cb').style.gap).toBe('10px')
+  })
   it('over limit with segments stays within the track', () => {
     setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4, limit: 2, segments: segs }] })
     const w = (Array.from(bar('Seg spent').children) as HTMLElement[]).map((s) => parseFloat(s.style.width))
@@ -245,7 +255,7 @@ describe('PfBudgetBars editing', () => {
   it('an editable no-limit row opens the edit from its action, empty input, focused', () => {
     const onEditLimit = vi.fn()
     setup(props(onEditLimit, [{ id: 'a', label: 'Alpha', actual: 2, limit: null, editable: true, setLimitText: 'Set a cap' }]))
-    fireEvent.click(screen.getByRole('button', { name: 'Set a cap' }))
+    fireEvent.click(screen.getByTestId('bb-edit-a'))
     const input = screen.getByTestId('bb-input') as HTMLInputElement
     expect(input.value).toBe('')
     expect(document.activeElement).toBe(input)
@@ -257,6 +267,77 @@ describe('PfBudgetBars editing', () => {
     expect(screen.queryByTestId('bb-edit-a')).toBeNull()
     expect(screen.getByRole('link')).toHaveAttribute('href', '/s')
     expect(row('a').style.padding).toBe('0px')
+  })
+
+  it('closes the form when the row turns read-only, and never saves afterwards', () => {
+    const onEditLimit = vi.fn()
+    const { rerender } = setup(props(onEditLimit))
+    open()
+    expect(screen.getByTestId('bb-input')).toBeInTheDocument()
+    rerender(<PfBudgetBars rows={editable({ editable: false })} format={usd} testIdPrefix="bb" onEditLimit={onEditLimit} />)
+    expect(screen.queryByTestId('bb-input')).toBeNull()
+    rerender(<PfBudgetBars rows={editable()} format={usd} testIdPrefix="bb" onEditLimit={onEditLimit} />)
+    expect(screen.queryByTestId('bb-input')).toBeNull()
+  })
+
+  it('no-limit action has the per-row testid and aria label', () => {
+    setup(props(vi.fn(), [{ id: 'a', label: 'Alpha', actual: 2, limit: null, editable: true, setLimitText: 'Set a cap' }]))
+    const b = screen.getByTestId('bb-edit-a')
+    expect(b).toHaveTextContent('Set a cap')
+    expect(b).toHaveAttribute('aria-label', 'Edit Alpha cap')
+  })
+
+  it('Escape cancels from Save and Cancel focus too', () => {
+    setup(props(vi.fn()))
+    open()
+    fireEvent.keyDown(screen.getByTestId('bb-save'), { key: 'Escape' })
+    expect(screen.queryByTestId('bb-input')).toBeNull()
+    open()
+    fireEvent.keyDown(screen.getByTestId('bb-cancel'), { key: 'Escape' })
+    expect(screen.queryByTestId('bb-input')).toBeNull()
+  })
+
+  it('same-tick double submit calls onEditLimit once', () => {
+    const onEditLimit = vi.fn(() => new Promise<void>(() => {}))
+    setup(props(onEditLimit))
+    open()
+    const form = screen.getByTestId('bb-input').closest('form') as HTMLFormElement
+    fireEvent.submit(form)
+    fireEvent.submit(form)
+    expect(onEditLimit).toHaveBeenCalledTimes(1)
+  })
+
+  it('error is linked to the input with aria-invalid and aria-describedby', () => {
+    setup(props(vi.fn()))
+    open()
+    fireEvent.change(screen.getByTestId('bb-input'), { target: { value: '-1' } })
+    fireEvent.click(screen.getByTestId('bb-save'))
+    const input = screen.getByTestId('bb-input')
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(document.getElementById(input.getAttribute('aria-describedby')!)).toBe(screen.getByRole('alert'))
+  })
+
+  it('a non-Error rejection still shows a message', async () => {
+    setup(props(vi.fn().mockRejectedValue('boom')))
+    open()
+    fireEvent.click(screen.getByTestId('bb-save'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save.')
+  })
+
+  it('rounds the amount to cents', async () => {
+    const onEditLimit = vi.fn().mockResolvedValue(undefined)
+    setup(props(onEditLimit))
+    open()
+    fireEvent.change(screen.getByTestId('bb-input'), { target: { value: '12.346' } })
+    fireEvent.click(screen.getByTestId('bb-save'))
+    await waitFor(() => expect(onEditLimit).toHaveBeenCalledWith('a', 12.35))
+  })
+
+  it('text props override the English defaults', () => {
+    setup({ ...props(vi.fn()), saveLabel: 'Guardar', cancelLabel: 'Cancelar' })
+    open()
+    expect(screen.getByTestId('bb-save')).toHaveTextContent('Guardar')
+    expect(screen.getByTestId('bb-cancel')).toHaveTextContent('Cancelar')
   })
 
   it('not editable rows show no Edit', () => {
