@@ -223,7 +223,7 @@ export function PfDataTable<T>({
   }
   const selectAllBox = (extra?: CSSProperties) => (
     <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
-      checked={allChecked} disabled={selectable.length === 0} onChange={toggleAll}
+      checked={allChecked} disabled={selectable.length === 0 || (atCap && !allChecked && !partial)} onChange={toggleAll}
       style={{ ...checkboxStyle, ...extra }} />
   )
   const rowBox = (r: T) => {
@@ -241,9 +241,10 @@ export function PfDataTable<T>({
       {selection.bar?.(selIds.size)}
     </div>
   )
-  const limitNote = atCap && (
-    <div role="status" style={{ fontSize: 13, color: 'var(--pf-text-secondary)', padding: '4px 0' }}>
-      Limit of {cap} reached
+  // always mounted so the live region announces when it fills
+  const limitNote = selection && (
+    <div role="status" style={{ fontSize: 13, color: 'var(--pf-text-secondary)', padding: atCap ? '4px 0' : 0 }}>
+      {atCap ? `Limit of ${cap} reached` : null}
     </div>
   )
 
@@ -265,7 +266,7 @@ export function PfDataTable<T>({
     onClick: onRowClick
       ? (e: React.MouseEvent<HTMLElement>) => {
           const t = e.target as Element
-          const hit = t.closest?.('a, button, input, label, th, [role=menuitem]')
+          const hit = t.closest?.('a, button, input, label, th, [role=menuitem], [data-pf-detail]')
           if (hit && e.currentTarget.contains(hit)) return
           onRowClick(r)
         }
@@ -273,7 +274,9 @@ export function PfDataTable<T>({
     onKeyDown: onRowClick
       ? (e: React.KeyboardEvent<HTMLElement>) => {
           if (e.key !== 'Enter') return
-          const first = e.currentTarget.querySelector('a, button:not([data-pf-menu-trigger])')
+          const first = Array.from(
+            e.currentTarget.querySelectorAll('a, button:not([data-pf-menu-trigger])'),
+          ).find((el) => !el.closest('[data-pf-detail]'))
           if (first && e.target === first) onRowClick(r)
         }
       : undefined,
@@ -285,17 +288,23 @@ export function PfDataTable<T>({
 
   const pages = page !== undefined && total !== undefined && pageSize
     ? Math.max(1, Math.ceil(total / pageSize)) : 1
-  const pager = page !== undefined && onPageChange && pages > 1 && (
-    <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: 12, padding: '12px 0', color: 'var(--pf-text-primary)', fontSize: 14 }}>
-      <button type="button" style={flatButton} disabled={page <= 1} onClick={() => onPageChange(page - 1)}>Previous</button>
+  // a page past the end (total shrank) still shows the pager so the user can go back
+  const pager = page !== undefined && onPageChange && (pages > 1 || page > 1) && (
+    <nav aria-label={ariaLabel ? `${ariaLabel} pagination` : 'Pagination'}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 12, padding: '12px 0', color: 'var(--pf-text-primary)', fontSize: 14 }}>
+      <button type="button" style={flatButton} aria-disabled={page <= 1 || !!loading}
+        onClick={() => { if (page > 1 && !loading) onPageChange(page - 1) }}>Previous</button>
       <span>Page {page} of {pages}</span>
-      <button type="button" style={flatButton} disabled={page >= pages} onClick={() => onPageChange(page + 1)}>Next</button>
+      <button type="button" style={flatButton} aria-disabled={page >= pages || !!loading}
+        onClick={() => { if (page < pages && !loading) onPageChange(page + 1) }}>Next</button>
     </nav>
   )
+  // aria-disabled (not disabled) so a focused button keeps keyboard focus while loading
   const more = loadMore?.hasMore && (
     <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0' }}>
-      <button type="button" style={flatButton} disabled={!!loadMore.loading} onClick={loadMore.onLoadMore}>
+      <button type="button" style={flatButton} aria-disabled={!!loadMore.loading} aria-busy={!!loadMore.loading}
+        onClick={() => { if (!loadMore.loading) loadMore.onLoadMore() }}>
         Load more
       </button>
     </div>
@@ -307,12 +316,20 @@ export function PfDataTable<T>({
         <>{loadingState ?? <div role="status" style={{ padding: 16, color: 'var(--pf-text-secondary)' }}>Loading...</div>}</>
       )
     }
-    return <>{emptyState ?? null}</>
+    return <>{emptyState ?? null}{pager}{more}</>
   }
 
   const sortCol = current ? columns.find((c) => c.id === current.id) : undefined
   const shown = !controlled && current && sortCol ? sortRows(rows, sortCol, current.dir) : rows
   const dimmed: CSSProperties = loading ? { opacity: 0.5 } : {}
+
+  const groups: Array<{ id: string; label: ReactNode; rows: T[] }> = []
+  for (const r of shown) {
+    const g = groupBy?.(r)
+    const last = groups[groups.length - 1]
+    if (last && last.id === (g?.id ?? '')) last.rows.push(r)
+    else groups.push({ id: g?.id ?? '', label: g?.label, rows: [r] })
+  }
 
   if (bp === 'mobile') {
     const sortCols = columns.filter(isSortable)
@@ -320,25 +337,11 @@ export function PfDataTable<T>({
     const titleCol = body.find((c) => c.kind !== 'actions')
     const lines = body.filter((c) => c !== titleCol && c.kind !== 'actions')
     const actions = body.filter((c) => c.kind === 'actions')
-    const cardNodes: ReactNode[] = []
-    let lastGroup: string | null = null
-    for (const r of shown) {
-      if (groupBy) {
-        const g = groupBy(r)
-        if (g.id !== lastGroup) {
-          lastGroup = g.id
-          cardNodes.push(
-            <div key={`g:${g.id}:${cardNodes.length}`} role="heading" aria-level={3}
-              style={{ fontWeight: 600, fontSize: 13, color: 'var(--pf-text-secondary)', marginTop: 8 }}>
-              {g.label}
-            </div>,
-          )
-        }
-      }
+    const card = (r: T) => {
       const menu = menuFor(r)
       const detail = renderDetail?.(r)
       const dim = isDimmed?.(r)
-      cardNodes.push(
+      return (
         <div key={getRowId(r)} role="listitem" {...rowProps(r)}
           style={{ border: '1px solid var(--pf-border)', borderRadius: 8, padding: 12,
             background: 'var(--pf-bg-surface)', color: dim ? 'var(--pf-text-secondary)' : 'var(--pf-text-primary)',
@@ -367,8 +370,8 @@ export function PfDataTable<T>({
               {menu}
             </div>
           )}
-          {detail != null && <div style={{ marginTop: 8 }}>{detail}</div>}
-        </div>,
+          {detail != null && <div data-pf-detail="" style={{ marginTop: 8 }}>{detail}</div>}
+        </div>
       )
     }
     return (
@@ -404,7 +407,19 @@ export function PfDataTable<T>({
         )}
         <div role="list" data-testid={testId} aria-label={ariaLabel}
           style={{ display: 'flex', flexDirection: 'column', gap: 8, ...dimmed }}>
-          {cardNodes}
+          {groupBy
+            ? groups.map((g, i) => (
+                <div key={`${g.id}:${i}`} role="listitem" style={{ minWidth: 0 }}>
+                  <div role="heading" aria-level={3}
+                    style={{ fontWeight: 600, fontSize: 13, color: 'var(--pf-text-secondary)', margin: '8px 0' }}>
+                    {g.label}
+                  </div>
+                  <div role="list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {g.rows.map(card)}
+                  </div>
+                </div>
+              ))
+            : shown.map(card)}
         </div>
         {pager}
         {more}
@@ -413,14 +428,6 @@ export function PfDataTable<T>({
   }
 
   const colCount = columns.length + (selection ? 1 : 0) + (rowMenu ? 1 : 0)
-  const groups: Array<{ id: string; label: ReactNode; rows: T[] }> = []
-  for (const r of shown) {
-    const g = groupBy?.(r)
-    const last = groups[groups.length - 1]
-    if (last && (!g || last.id === g.id) && (g || !groupBy)) last.rows.push(r)
-    else groups.push({ id: g?.id ?? '', label: g?.label, rows: [r] })
-  }
-
   const renderRow = (r: T) => {
     const detail = renderDetail?.(r)
     const dim = isDimmed?.(r)

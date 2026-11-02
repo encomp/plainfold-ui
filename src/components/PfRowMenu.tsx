@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 export interface PfRowMenuItem {
@@ -15,10 +15,13 @@ interface Props {
   popupTestId?: string
 }
 
+// Above dialogs and sheets (z-index 100), below snackbars (9999).
+const MENU_Z_INDEX = 1000
+
 /** Internal: the "⋯" trigger and menu popup of PfDataTable rows. */
 export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const [pos, setPos] = useState({ top: 0, right: 0, above: 0 })
   const trigger = useRef<HTMLButtonElement>(null)
   const popup = useRef<HTMLDivElement>(null)
 
@@ -31,8 +34,11 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
       setOpen(false)
     }
     const onScroll = (e: Event) => {
-      if (popup.current?.contains(e.target as Node)) return
+      if (e.target instanceof Node && popup.current?.contains(e.target)) return
+      // the focused item is about to unmount: keep focus on the trigger instead of losing it
+      const held = popup.current?.contains(document.activeElement)
       setOpen(false)
+      if (held) trigger.current?.focus()
     }
     document.addEventListener('mousedown', onDown)
     window.addEventListener('scroll', onScroll, true)
@@ -42,6 +48,16 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
       window.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onScroll)
     }
+  }, [open])
+
+  // flip above the trigger when the popup would run off the bottom of the viewport
+  useLayoutEffect(() => {
+    if (!open || !popup.current) return
+    const h = popup.current.offsetHeight
+    if (h > 0 && pos.top + h > window.innerHeight && pos.above - h >= 0) {
+      setPos((p) => ({ ...p, top: p.above - h }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const close = (refocus: boolean) => {
@@ -60,7 +76,7 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true) }
     else if (e.key === 'ArrowDown') { e.preventDefault(); move(1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1) }
-    else if (e.key === 'Tab') close(false)
+    else if (e.key === 'Tab') close(true) // no preventDefault: Tab then moves on from the trigger
   }
 
   return (
@@ -73,11 +89,10 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
         aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
-        onKeyDown={open ? onKeyDown : undefined}
         onClick={() => {
           if (!open && trigger.current) {
             const r = trigger.current.getBoundingClientRect()
-            setPos({ top: r.bottom + 4, right: Math.max(0, window.innerWidth - r.right) })
+            setPos({ top: r.bottom + 4, right: Math.max(0, window.innerWidth - r.right), above: r.top - 4 })
           }
           setOpen(!open)
         }}
@@ -94,7 +109,7 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
           data-testid={popupTestId}
           onKeyDown={onKeyDown}
           onClick={(e) => e.stopPropagation()}
-          style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 1000, minWidth: 160,
+          style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: MENU_Z_INDEX, minWidth: 160,
             background: 'var(--pf-bg-elevated, var(--pf-bg-surface))', color: 'var(--pf-text-primary)',
             border: '1px solid var(--pf-border)', borderRadius: 8, padding: 4,
             boxShadow: '0 4px 16px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column' }}

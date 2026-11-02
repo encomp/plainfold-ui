@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
-import { render, screen, within, fireEvent } from '@testing-library/react'
+import { render, screen, within, fireEvent, cleanup } from '@testing-library/react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfDataTable } from '../components/PfDataTable'
 import type { PfDataTableProps } from '../components/PfDataTable'
@@ -105,7 +105,21 @@ describe('selection', () => {
 
   it('no limit message below the cap', () => {
     setup({ selection: sel(['r1'], vi.fn(), { cap: 3 }) })
-    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.getByRole('status').textContent).toBe('')
+  })
+
+  it('the status node is mounted before the cap is hit', () => {
+    const { rerender } = setup({ rows: mk(5), selection: sel(['r1', 'r2'], vi.fn(), { cap: 3 }) })
+    const node = screen.getByRole('status')
+    rerender(table({ rows: mk(5), selection: sel(['r1', 'r2', 'r3'], vi.fn(), { cap: 3 }) }))
+    expect(screen.getByRole('status')).toBe(node)
+    expect(node).toHaveTextContent('Limit of 3 reached')
+  })
+
+  it('at the cap with nothing selected on this page, select-all is disabled', () => {
+    setup({ rows: mk(5), selection: sel(['x1', 'x2', 'x3'], vi.fn(), { cap: 3 }) })
+    expect(all()).toBeDisabled()
+    expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).toBeDisabled()
   })
 
   it('zero selectable rows disables select-all', () => {
@@ -188,7 +202,11 @@ describe('row click, selected, dimmed', () => {
 
   it('adds no tab stops to rows', () => {
     setup({ onRowClick: vi.fn() })
-    expect(screen.getByTestId('row-r1')).not.toHaveAttribute('tabindex')
+    expect(document.querySelectorAll('tr[tabindex], td[tabindex], th[tabindex]').length).toBe(0)
+    cleanup()
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    setup({ onRowClick: vi.fn() })
+    expect(document.querySelectorAll('[role=listitem][tabindex], [role=list][tabindex]').length).toBe(0)
   })
 
   it('selectedId gets data-selected and an accent outline', () => {
@@ -305,6 +323,37 @@ describe('row menu', () => {
     expect(onRowClick).not.toHaveBeenCalled()
   })
 
+  it('Tab from the menu closes it and returns focus to the trigger', () => {
+    setup(props())
+    fireEvent.click(trigger('r1'))
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: 'Tab' })
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(trigger('r1'))
+  })
+
+  it('scroll and resize close the menu and keep focus on the trigger', () => {
+    setup(props())
+    fireEvent.click(trigger('r1'))
+    fireEvent.scroll(window)
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(trigger('r1'))
+    fireEvent.click(trigger('r1'))
+    fireEvent(window, new Event('resize'))
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(trigger('r1'))
+  })
+
+  it('flips above the trigger near the bottom of the viewport', () => {
+    setup(props())
+    const t = trigger('r1')
+    t.getBoundingClientRect = () => ({ top: 740, bottom: 760, left: 0, right: 100, width: 100, height: 20, x: 0, y: 740, toJSON() {} })
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(120)
+    Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true })
+    fireEvent.click(t)
+    expect(screen.getByRole('menu').style.top).toBe('616px')
+    spy.mockRestore()
+  })
+
   it('menu on a card', () => {
     vi.mocked(useBreakpoint).mockReturnValue('mobile')
     setup(props())
@@ -340,6 +389,23 @@ describe('detail rows', () => {
   })
 })
 
+describe('phone detail', () => {
+  it('clicks and Enter inside a detail do not fire the row', () => {
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    const onRowClick = vi.fn()
+    setup({
+      onRowClick,
+      columns: [{ id: 'n', header: 'N', cell: (r: Row) => r.name }],
+      renderDetail: (r) => (r.id === 'r1' ? <div><span>dtext</span><button>dbtn</button></div> : null),
+    })
+    fireEvent.click(screen.getByText('dtext'))
+    fireEvent.keyDown(screen.getByText('dbtn'), { key: 'Enter' })
+    expect(onRowClick).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText('Name 1'))
+    expect(onRowClick).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('groups', () => {
   const rows: Row[] = [
     { id: 'r1', name: 'A', grp: 'g1' }, { id: 'r2', name: 'B', grp: 'g1' }, { id: 'r3', name: 'C', grp: 'g2' },
@@ -367,7 +433,26 @@ describe('groups', () => {
     vi.mocked(useBreakpoint).mockReturnValue('mobile')
     setup({ rows, groupBy })
     expect(screen.getAllByRole('heading').map((h) => h.textContent)).toEqual(['Group g1', 'Group g2'])
-    expect(screen.getAllByRole('listitem').length).toBe(3)
+    expect(screen.getAllByTestId(/^row-/).length).toBe(3)
+  })
+
+  it('phone groups are valid ARIA: list > listitem(group) > heading + list > listitem(row)', () => {
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    setup({ rows, groupBy })
+    const outer = screen.getByTestId('tbl')
+    expect(outer).toHaveAttribute('role', 'list')
+    Array.from(outer.children).forEach((c) => expect(c).toHaveAttribute('role', 'listitem'))
+    expect(outer.children.length).toBe(2)
+    const inner = outer.children[0].querySelector('[role=list]') as HTMLElement
+    expect(Array.from(inner.children).map((c) => c.getAttribute('data-testid'))).toEqual(['row-r1', 'row-r2'])
+    expect(outer.children[0].firstElementChild).toHaveAttribute('role', 'heading')
+  })
+
+  it('without groupBy the phone list is flat', () => {
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    setup()
+    const outer = screen.getByTestId('tbl')
+    expect(Array.from(outer.children).map((c) => c.getAttribute('data-testid'))).toEqual(['row-r1', 'row-r2', 'row-r3'])
   })
 })
 
@@ -384,10 +469,41 @@ describe('server paging', () => {
 
   it('disables Previous on page 1 and Next on the last page', () => {
     const { rerender } = setup({ page: 1, total: 31, pageSize: 10, onPageChange: vi.fn() })
-    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Next' })).not.toBeDisabled()
-    rerender(table({ page: 4, total: 31, pageSize: 10, onPageChange: vi.fn() }))
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Previous' })).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'false')
+    const onPageChange = vi.fn()
+    rerender(table({ page: 4, total: 31, pageSize: 10, onPageChange }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('Previous and Next are inert while loading, and keep focus', () => {
+    const onPageChange = vi.fn()
+    setup({ page: 2, total: 31, pageSize: 10, onPageChange, loading: true })
+    const next = screen.getByRole('button', { name: 'Next' })
+    next.focus()
+    fireEvent.click(next)
+    expect(onPageChange).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(next)
+  })
+
+  it('a page past the end still shows the pager so the user can go back', () => {
+    const onPageChange = vi.fn()
+    setup({ rows: [], emptyState: <p>Nothing here</p>, page: 3, total: 10, pageSize: 10, onPageChange })
+    expect(screen.getByText('Nothing here')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }))
+    expect(onPageChange).toHaveBeenCalledWith(2)
+  })
+
+  it('an empty first page shows no pager', () => {
+    setup({ rows: [], emptyState: <p>Nothing here</p>, page: 1, total: 0, pageSize: 10, onPageChange: vi.fn() })
+    expect(screen.queryByRole('navigation')).toBeNull()
+  })
+
+  it('names the pager after the table', () => {
+    setup({ 'aria-label': 'Things', page: 1, total: 30, pageSize: 10, onPageChange: vi.fn() })
+    expect(screen.getByRole('navigation', { name: 'Things pagination' })).toBeInTheDocument()
   })
 
   it('is hidden with one page, and exact multiples do not add a page', () => {
@@ -415,7 +531,25 @@ describe('load more', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
     expect(onLoadMore).toHaveBeenCalledTimes(1)
     rerender(table({ loadMore: { hasMore: true, loading: true, onLoadMore } }))
-    expect(screen.getByRole('button', { name: 'Load more' })).toBeDisabled()
+    const btn = screen.getByRole('button', { name: 'Load more' })
+    expect(btn).toHaveAttribute('aria-disabled', 'true')
+    expect(btn).toHaveAttribute('aria-busy', 'true')
+    fireEvent.click(btn)
+    expect(onLoadMore).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps focus on the button while loading', () => {
+    const onLoadMore = vi.fn()
+    const { rerender } = setup({ loadMore: { hasMore: true, onLoadMore } })
+    const btn = screen.getByRole('button', { name: 'Load more' })
+    btn.focus()
+    rerender(table({ loadMore: { hasMore: true, loading: true, onLoadMore } }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Load more' }))
+  })
+
+  it('still shows Load more beside an empty-state page when hasMore', () => {
+    setup({ rows: [], emptyState: <p>None yet</p>, loadMore: { hasMore: true, onLoadMore: vi.fn() } })
+    expect(screen.getByRole('button', { name: 'Load more' })).toBeInTheDocument()
   })
 
   it('stays available after an error so the caller can retry', () => {
