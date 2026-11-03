@@ -7,6 +7,8 @@ export interface PfCheckboxProps {
   label?: React.ReactNode
   'aria-label'?: string
   disabled?: boolean
+  'aria-disabled'?: boolean
+  'aria-describedby'?: string
   indeterminate?: boolean
   id?: string
   'data-testid'?: string
@@ -30,6 +32,8 @@ export function PfCheckbox({
   label,
   'aria-label': ariaLabel,
   disabled = false,
+  'aria-disabled': ariaDisabled,
+  'aria-describedby': ariaDescribedBy,
   indeterminate = false,
   id,
   'data-testid': dataTestId,
@@ -48,6 +52,8 @@ export function PfCheckbox({
       checked={checked}
       disabled={disabled}
       aria-label={ariaLabel}
+      aria-disabled={ariaDisabled}
+      aria-describedby={ariaDescribedBy}
       data-testid={dataTestId}
       onChange={(e) => onChange(e.target.checked)}
     />

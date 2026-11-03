@@ -36,4 +36,11 @@ describe('PfCheckbox', () => {
     expect(style).toContain('var(--pf-text-muted)')
     expect(style).not.toContain('opacity')
   })
+
+  it('passes aria-disabled and aria-describedby to the input', () => {
+    render(<PfCheckbox checked onChange={() => {}} aria-label="x" aria-disabled aria-describedby="why" />)
+    const input = screen.getByRole('checkbox')
+    expect(input).toHaveAttribute('aria-disabled', 'true')
+    expect(input).toHaveAttribute('aria-describedby', 'why')
+  })
 })
