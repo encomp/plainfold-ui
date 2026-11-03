@@ -133,6 +133,19 @@ describe('selection', () => {
     expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).not.toBeDisabled()
   })
 
+  it.each(['desktop', 'mobile'] as const)('hideDisabledSelection omits unselectable rows\' checkboxes (%s)', (bp) => {
+    vi.mocked(useBreakpoint).mockReturnValue(bp)
+    setup({ hideDisabledSelection: true, selection: sel([], vi.fn(), { isSelectable: (r: Row) => r.id !== 'r2' }) })
+    expect(screen.queryByRole('checkbox', { name: 'Select Name 2' })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).toBeInTheDocument()
+    expect(screen.getByTestId('row-r2')).toBeInTheDocument()
+  })
+
+  it('hideDisabledSelection keeps cap-disabled checkboxes', () => {
+    setup({ rows: mk(5), hideDisabledSelection: true, selection: sel(['r1', 'r2', 'r3'], vi.fn(), { cap: 3 }) })
+    expect(screen.getByRole('checkbox', { name: 'Select Name 4' })).toBeDisabled()
+  })
+
   it('count bar shows only when something is selected', () => {
     const { rerender } = setup({ selection: sel([], vi.fn(), { bar: (n: number) => <b>bar {n}</b> }) })
     expect(screen.queryByText(/selected/)).toBeNull()

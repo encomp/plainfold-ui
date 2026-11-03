@@ -459,6 +459,30 @@ describe('PfDataTable phone cards', () => {
     ])
   })
 
+  it('phone Sort by can pick a direction', () => {
+    const onSortChange = vi.fn()
+    render(
+      <PfDataTable<Row> rows={rows} data-testid="tbl"
+        columns={[{ id: 'count', header: 'Count', kind: 'number', cell: (r) => r.count, sortable: true }]}
+        getRowId={(r) => r.id} sort={{ id: 'count', dir: 'desc' }} onSortChange={onSortChange} />,
+    )
+    expect(screen.getByRole('button', { name: 'Descending' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Ascending' })).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(screen.getByRole('button', { name: 'Ascending' }))
+    expect(onSortChange).toHaveBeenLastCalledWith({ id: 'count', dir: 'asc' })
+  })
+
+  it('direction buttons appear only once a column is picked and flip uncontrolled order', () => {
+    setup()
+    expect(screen.queryByRole('button', { name: 'Ascending' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'count' } })
+    const ids = () => screen.getAllByRole('listitem').map((i) => i.getAttribute('data-testid'))
+    expect(ids()).toEqual(['row-b', 'row-a', 'row-d', 'row-c'])
+    fireEvent.click(screen.getByRole('button', { name: 'Ascending' }))
+    expect(ids()).toEqual(['row-a', 'row-d', 'row-b', 'row-c'])
+    expect(screen.getByRole('button', { name: 'Ascending' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('no Sort by select when nothing is sortable', () => {
     setup({ columns: [{ id: 'p', header: 'Plain', cell: (r) => r.name }] })
     expect(screen.queryByLabelText('Sort by')).toBeNull()
