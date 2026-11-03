@@ -116,6 +116,7 @@ export function PfButton({
     transition: 'all var(--pf-duration-fast) var(--pf-easing-default)',
     outline: 'none',
     userSelect: 'none',
+    whiteSpace: 'nowrap',
     cursor: isDisabled ? 'not-allowed' : 'pointer',
     ...variantStyles[variant],
     ...sizeStyles[size],
@@ -139,17 +140,13 @@ export function PfButton({
       aria-haspopup={ariaHasPopup}
       aria-pressed={ariaPressed}
       aria-current={ariaCurrent}
+      aria-busy={loading || undefined}
       aria-describedby={showReason ? reasonId : undefined}
       data-testid={dataTestId}
     >
-      {loading ? (
-        <span style={spinnerStyle} data-testid="pf-button-spinner" />
-      ) : (
-        <>
-          {icon}
-          {children}
-        </>
-      )}
+      {loading && <span style={spinnerStyle} aria-hidden="true" data-testid="pf-button-spinner" />}
+      {!loading && icon}
+      {children}
     </button>
   )
 
@@ -157,7 +154,7 @@ export function PfButton({
     <>
       <style>{`@keyframes pf-spin { to { transform: rotate(360deg); } } .pf-button:focus-visible { outline: 2px solid var(--pf-accent-text, var(--pf-accent)) !important; outline-offset: 2px }`}</style>
       {showReason ? (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
           {button}
           <span id={reasonId} style={{ fontSize: pfText.meta, color: 'var(--pf-text-muted)' }}>
             {reason}

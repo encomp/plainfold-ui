@@ -41,7 +41,7 @@ describe('PfFormSelect', () => {
   it('shows placeholder', () => {
     render(
       <TestForm>
-        <PfFormSelect name="color" options={options} placeholder="Choose a color" />
+        <PfFormSelect name="color" aria-label="Colour" options={options} placeholder="Choose a color" />
       </TestForm>
     )
     expect(screen.getByText('Choose a color')).toBeInTheDocument()
@@ -58,13 +58,13 @@ describe('PfFormSelect on PfSelect', () => {
     expect(screen.getByRole('combobox', { name: 'Colour' })).toHaveTextContent('Blue')
   })
 
-  it('names the trigger by the field name when there is no label', () => {
+  it('names the trigger by its aria-label when there is no label', () => {
     render(
       <TestForm>
-        <PfFormSelect name="color" options={options} />
+        <PfFormSelect name="color" aria-label="Paint" options={options} />
       </TestForm>
     )
-    expect(screen.getByRole('combobox', { name: 'color' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Paint' })).toBeInTheDocument()
   })
 
   it('links the error text to the trigger', async () => {

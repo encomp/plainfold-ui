@@ -6,14 +6,14 @@ describe('PfPageHeader', () => {
   it('renders back link, h1 title, context and actions', () => {
     render(
       <PfPageHeader
-        title="Pavers Test"
+        title="Sample Item"
         context="Idea"
-        back={{ label: 'Niches', href: '/niches' }}
+        back={{ label: 'Parent', href: '/parent' }}
         actions={<button>Share</button>}
       />,
     )
-    expect(screen.getByRole('heading', { level: 1, name: 'Pavers Test' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Niches' })).toHaveAttribute('href', '/niches')
+    expect(screen.getByRole('heading', { level: 1, name: 'Sample Item' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Parent' })).toHaveAttribute('href', '/parent')
     expect(screen.getByText('Idea')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument()
   })
@@ -33,11 +33,11 @@ describe('PfPageHeader', () => {
   })
   it('passes onNavigate to the back link', () => {
     const nav = vi.fn()
-    render(<PfPageHeader title="T" back={{ label: 'Niches', href: '/niches' }} onNavigate={nav} />)
+    render(<PfPageHeader title="T" back={{ label: 'Parent', href: '/parent' }} onNavigate={nav} />)
     const a = screen.getByRole('link')
     const ev = createEvent.click(a, { button: 0 })
     fireEvent(a, ev)
-    expect(nav).toHaveBeenCalledWith('/niches')
+    expect(nav).toHaveBeenCalledWith('/parent')
     expect(ev.defaultPrevented).toBe(true)
   })
 })

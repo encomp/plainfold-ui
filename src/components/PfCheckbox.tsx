@@ -23,7 +23,9 @@ const css = `
   border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px) }
 .pf-checkbox:indeterminate::after { content: ""; width: 10px; height: 0; border-top: 2px solid var(--pf-on-accent, var(--pf-bg-base)) }
 .pf-checkbox:focus-visible { outline: 2px solid var(--pf-accent-text, var(--pf-accent)); outline-offset: 2px }
-.pf-checkbox:disabled { cursor: not-allowed; opacity: 0.5 }
+.pf-checkbox:disabled, .pf-checkbox:disabled:checked, .pf-checkbox:disabled:indeterminate { cursor: not-allowed; background: var(--pf-bg-surface-alt); border-color: var(--pf-border) }
+.pf-checkbox:disabled:checked::after { border-color: var(--pf-text-muted) }
+.pf-checkbox:disabled:indeterminate::after { border-top-color: var(--pf-text-muted) }
 `
 
 export function PfCheckbox({

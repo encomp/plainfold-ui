@@ -54,6 +54,7 @@ export function PfEmptyState({
     color: 'var(--pf-text-secondary)',
     fontSize: pfText.body,
     margin: 0,
+    maxWidth: '52ch',
   }
 
   return (

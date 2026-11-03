@@ -17,7 +17,7 @@ const srOnly: CSSProperties = {
   overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
 }
 
-const css = `.pf-action-link:hover,.pf-action-link:focus-visible{text-decoration:underline!important;text-underline-offset:3px}.pf-action-link-back:hover{color:var(--pf-text-primary)!important}.pf-action-link:focus-visible{outline:2px solid var(--pf-accent-text, var(--pf-accent));outline-offset:2px}`
+const css = `.pf-action-link:not(.pf-action-link-back):hover,.pf-action-link:focus-visible{text-decoration:underline!important;text-underline-offset:3px}.pf-action-link-back:hover{color:var(--pf-text-primary)!important}.pf-action-link:focus-visible{outline:2px solid var(--pf-accent-text, var(--pf-accent));outline-offset:2px}`
 
 export function PfActionLink({
   href,

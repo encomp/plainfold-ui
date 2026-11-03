@@ -42,12 +42,13 @@ export function PfRadio({
             gap: '2px',
             padding: '12px 14px',
             borderRadius: 'var(--pf-radius-md)',
-            border: `1px solid ${checked ? ACCENT : 'var(--pf-border-strong)'}`,
-            background: checked ? `color-mix(in srgb, ${ACCENT} 8%, transparent)` : 'transparent',
+            border: `1px solid ${disabled ? 'var(--pf-border)' : checked ? ACCENT : 'var(--pf-border-strong)'}`,
+            background: disabled
+              ? 'var(--pf-bg-surface-alt)'
+              : checked ? `color-mix(in srgb, ${ACCENT} 8%, transparent)` : 'transparent',
             fontFamily: 'var(--pf-font-ui)',
-            color: 'var(--pf-text-primary)',
+            color: disabled ? 'var(--pf-text-muted)' : 'var(--pf-text-primary)',
             cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.5 : 1,
           }}
         >
           <input
@@ -73,7 +74,7 @@ export function PfRadio({
               width="16"
               height="16"
               viewBox="0 0 16 16"
-              style={{ position: 'absolute', top: '12px', right: '12px', color: ACCENT }}
+              style={{ position: 'absolute', top: '12px', right: '12px', color: disabled ? 'var(--pf-text-muted)' : ACCENT }}
             >
               <path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -108,9 +109,9 @@ export function PfRadio({
           style={{ accentColor: 'var(--pf-accent-text, var(--pf-accent))', margin: '2px 0 0' }}
         />
         <span style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>{label}</span>
+          <span style={{ fontSize: pfText.body, fontWeight: 500 }}>{label}</span>
           {description != null && (
-            <span style={{ fontSize: '12px', color: 'var(--pf-text-secondary)' }}>{description}</span>
+            <span style={{ fontSize: pfText.label, color: 'var(--pf-text-secondary)' }}>{description}</span>
           )}
         </span>
       </label>

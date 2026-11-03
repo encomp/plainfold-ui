@@ -35,7 +35,14 @@ describe('PfButton', () => {
     const button = screen.getByRole('button')
     expect(button).toBeDisabled()
     expect(screen.getByTestId('pf-button-spinner')).toBeInTheDocument()
-    expect(screen.queryByText('Save')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('wraps a long reason instead of squeezing the button', () => {
+    render(<PfButton disabled reason="Pick a decision first.">Save</PfButton>)
+    const wrap = screen.getByText('Pick a decision first.').parentElement!
+    expect(wrap.style.flexWrap).toBe('wrap')
+    expect(screen.getByRole('button').style.whiteSpace).toBe('nowrap')
   })
 
   it('calls onClick when clicked', () => {

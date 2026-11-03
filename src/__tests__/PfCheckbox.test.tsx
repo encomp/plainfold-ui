@@ -24,10 +24,13 @@ describe('PfCheckbox', () => {
     expect(input).toBeDisabled()
   })
 
-  it('dims a disabled aria-label-only checkbox on the input itself', () => {
+  it('draws a disabled checked box grey, not a pale accent', () => {
     const { container } = render(<PfCheckbox checked onChange={() => {}} aria-label="x" disabled />)
     expect(container.querySelector('label')).toBeNull()
-    expect(container.querySelector('style')?.textContent).toMatch(/\.pf-checkbox:disabled \{[^}]*opacity: 0\.5/)
+    const css = container.querySelector('style')!.textContent!
+    expect(css).not.toContain('opacity')
+    expect(css).toMatch(/\.pf-checkbox:disabled(:checked)?[^{]*\{[^}]*background: var\(--pf-bg-surface-alt\)/)
+    expect(css).toMatch(/\.pf-checkbox:disabled:checked::after[^{]*\{[^}]*var\(--pf-text-muted\)/)
   })
 
   it('mutes a disabled label without dimming it twice', () => {

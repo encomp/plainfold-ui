@@ -43,11 +43,10 @@ export function PfToggleGroup({
             borderRadius: '8px',
             borderWidth: '1px',
             borderStyle: 'solid',
-            borderColor: pressed ? 'transparent' : 'var(--pf-border-strong)',
-            background: pressed ? 'var(--pf-accent)' : 'var(--pf-bg-surface)',
-            color: pressed ? 'var(--pf-on-accent, var(--pf-bg-base))' : 'var(--pf-text-muted)',
+            borderColor: disabled ? 'var(--pf-border)' : pressed ? 'transparent' : 'var(--pf-border-strong)',
+            background: disabled ? 'var(--pf-bg-surface-alt)' : pressed ? 'var(--pf-accent)' : 'var(--pf-bg-surface)',
+            color: disabled || !pressed ? 'var(--pf-text-muted)' : 'var(--pf-on-accent, var(--pf-bg-base))',
             cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.5 : 1,
           }
           return (
             <button

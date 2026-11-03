@@ -61,11 +61,16 @@ describe('PfEmptyState', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it('caps the subtext line length', () => {
+    render(<PfEmptyState heading="H" subtext="Some text" />)
+    expect(screen.getByText('Some text').style.maxWidth).toBe('52ch')
+  })
+
   it('is left-aligned with a dashed border and actions', () => {
-    render(<PfEmptyState heading="No sweeps yet" subtext="Sweeps are free." actions={<button>+ New sweep</button>} data-testid="e" />)
+    render(<PfEmptyState heading="Nothing yet" subtext="Items are free." actions={<button>+ Add item</button>} data-testid="e" />)
     const box = screen.getByTestId('e')
     expect(box.style.alignItems).toBe('flex-start')
     expect(box.style.borderStyle).toBe('dashed')
-    expect(screen.getByRole('button', { name: '+ New sweep' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Add item' })).toBeInTheDocument()
   })
 })

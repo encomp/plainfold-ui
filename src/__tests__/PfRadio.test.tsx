@@ -32,6 +32,20 @@ describe('PfRadio', () => {
     expect(screen.getAllByRole('radio').every((r) => r.getAttribute('name') === 'g')).toBe(true)
   })
 
+  it('draws a disabled checked card grey, not a pale accent', () => {
+    render(<PfRadio card name="g" value="v" checked onChange={() => {}} label="Pick" disabled />)
+    const card = screen.getByRole('radio').closest('label')!
+    expect(card.style.background).toBe('var(--pf-bg-surface-alt)')
+    expect(card.style.color).toBe('var(--pf-text-muted)')
+    expect(card.style.opacity).toBe('')
+  })
+
+  it('sizes the plain radio from pfText', () => {
+    render(<PfRadio name="g" value="v" checked={false} onChange={() => {}} label="Pick" description="d" />)
+    expect(screen.getByText('Pick').style.fontSize).toBe('var(--pf-text-body, 14px)')
+    expect(screen.getByText('d').style.fontSize).toBe('var(--pf-text-label, 12px)')
+  })
+
   it('blocks changes when disabled', () => {
     render(<PfRadio name="g" value="v" checked={false} onChange={() => {}} label="Pick" disabled />)
     // jsdom dispatches synthetic clicks on disabled inputs; browsers do not, so assert the native disabled state

@@ -3,17 +3,17 @@ import { useFormContext, Controller } from 'react-hook-form'
 import { PfSelect } from './PfSelect'
 import { pfText } from '../tokens/type'
 
-interface PfFormSelectProps {
+type PfFormSelectProps = {
   name: string
-  label?: string
   options: Array<{ label: string; value: string }>
   placeholder?: string
   'data-testid'?: string
-}
+} & ({ label: string; 'aria-label'?: never } | { label?: never; 'aria-label': string })
 
 export function PfFormSelect({
   name,
   label,
+  'aria-label': ariaLabel,
   options,
   placeholder,
   'data-testid': dataTestId,
@@ -28,7 +28,7 @@ export function PfFormSelect({
       render={({ field, fieldState }) => (
         <div style={{ marginBottom: '12px' }} data-testid={dataTestId}>
           <PfSelect
-            {...(label ? { label } : { 'aria-label': name })}
+            {...(label ? { label } : { 'aria-label': ariaLabel! })}
             invalid={!!fieldState.error}
             describedBy={fieldState.error ? errorId : undefined}
             value={field.value ?? ''}

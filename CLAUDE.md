@@ -15,9 +15,9 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 ## Public API
 
 ### Core
-- **pfText** — the six text sizes as CSS values with px fallbacks (`page` 24, `section` 17, `card` 15, `body` 14, `meta` 13, `label` 12); components use these and no other font size
-- **PfButton** — variants: primary, secondary, quiet, ghost, danger. Sizes: sm, md, lg. Loading state. `disabled` renders grey surface + muted text (never a pale accent); `reason` shows why it is disabled as text beside the button (linked with `aria-describedby`)
-- **PfActionLink** — the action link, "Place →": accent text, no underline until hover/focus
+- **pfText** — the six text sizes as CSS values with px fallbacks (`page` 24, `section` 17, `card` 15, `body` 14, `meta` 13, `label` 12); new and changed components use these; older components still carry some literal font sizes and are being migrated
+- **PfButton** — variants: primary, secondary, quiet, ghost, danger. Sizes: sm, md, lg. Loading state (spinner beside the label, `aria-busy`). `disabled` renders grey surface + muted text (never a pale accent); `reason` shows why it is disabled as text beside the button, wrapping below it on narrow screens (linked with `aria-describedby`). Also passes `aria-*` attributes (expanded, controls, haspopup, pressed, current)
+- **PfActionLink** — the action link, "Place →": accent text, no underline until hover/focus. `kind="back"` draws "← Parent" in muted text (colour change on hover, no underline); `external` opens a new tab with `rel` and a hidden note
 - **PfPageHeader** — page title row with optional back link ("← Parent"), subtitle and actions; wraps on phones
 - **PfTabs** — tab list that scrolls sideways when it does not fit
 - **PfCard** — surface container with padding sizes and hoverable elevation; optional `title`, `meta` (right-aligned, also without a title) and `footer`
@@ -26,7 +26,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 
 ### Feedback
 - **PfLinearProgress** — determinate progress bar with aria attributes
-- **PfEmptyState** — icon + heading + subtext + optional actions; centered by default, `left` aligns it to the start
+- **PfEmptyState** — icon + heading + subtext + optional actions; always left-aligned inside a dashed box; subtext is capped at 52ch
 - **PfEmptyLine** — one-line empty note for small areas where a full empty state is too large
 - **PfSnackbar** — toast with auto-hide and optional action. Props: `open`, `onClose`
 - **PfTooltip** — Radix Tooltip wrapper; optional controlled `open` / `onOpenChange`
@@ -39,12 +39,12 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 ### Form
 - **PfForm** — FormProvider wrapper with zodResolver
 - **PfFormTextField** — text input connected to react-hook-form
-- **PfSelect** — select with `options=[{label, value}]`, a required `name`, `invalid` and `describedBy`
-- **PfFormSelect** — PfSelect connected to react-hook-form. Props: `options=[{label, value}]`
-- **PfCheckbox** — checkbox with label, accent colour and focus-visible ring; disabled dims the input itself
-- **PfToggleGroup** — group of toggle buttons for choosing among a few options
+- **PfSelect** — select with `options=[{label, value}]`, a required `label` or `aria-label` (the trigger's name), `value` (`''` = no choice), `onChange(value)`, `size`, `placeholder`, `invalid` and `describedBy`
+- **PfFormSelect** — PfSelect connected to react-hook-form. Props: `name`, `options=[{label, value}]`, and a `label` or an `aria-label`
+- **PfCheckbox** — checkbox with label, accent colour and focus-visible ring; disabled draws a grey box with a muted tick; also takes `aria-disabled`
+- **PfToggleGroup** — multi-select group of toggle buttons (`values[]`, `onChange(values)`, kept in option order); disabled toggles go grey like a disabled button
 - **PfFormSlider** — Radix Slider connected to react-hook-form
-- **PfRadio** — native radio input in a label with optional `description`; `onChange(value)`, accent colour, focus-visible ring
+- **PfRadio** — native radio input in a label with optional `description`; `onChange(value)`, accent colour, focus-visible ring. `card` draws it as a selectable card (native input, tick when checked, grey when disabled); `pfRadioGridStyle` lays cards out in a responsive grid
 - **PfFormSwitch** — Radix Switch connected to react-hook-form
 
 ### Navigation
@@ -78,7 +78,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **Three link kinds.** Action link (`PfActionLink`, "Place →"): accent text, no underline until hover/focus. Back link ("← Parent", in `PfPageHeader`). Underlined text link: only inside a sentence. No "Settings ›" style text.
 - **One primary button per view.** Everything else is secondary, ghost or quiet.
 - **Disabled = grey + reason.** A disabled button is a grey surface with muted text, never a pale accent, and says why via `reason`.
-- **Six text sizes.** Use `pfText` (page 24, section 17, card 15, body 14, meta 13, label 12); no literal `fontSize` in components.
+- **Six text sizes.** Use `pfText` (page 24, section 17, card 15, body 14, meta 13, label 12); new and changed components use `pfText` rather than literal sizes.  Older components still carry literal sizes and are being migrated.
 - **Contrast.** `src/__tests__/kitContrast.test.ts` checks the kit's colour pairings (action link, disabled text, checked toggle) against every bundled theme at 4.5:1, with an explicit allow-list of known theme failures.
 
 ## Key Decisions

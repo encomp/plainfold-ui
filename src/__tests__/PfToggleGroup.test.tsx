@@ -33,6 +33,14 @@ describe('PfToggleGroup', () => {
     expect(screen.getByRole('button', { name: 'Tue' }).getAttribute('style')).not.toContain('var(--pf-accent)')
   })
 
+  it('draws a disabled pressed toggle grey, not a pale accent', () => {
+    render(<PfToggleGroup aria-label="Days" options={options} values={['mon']} onChange={() => {}} disabled />)
+    const s = screen.getByRole('button', { name: 'Mon' }).style
+    expect(s.background).toBe('var(--pf-bg-surface-alt)')
+    expect(s.color).toBe('var(--pf-text-muted)')
+    expect(s.opacity).toBe('')
+  })
+
   it('disabled blocks changes', () => {
     const on = vi.fn()
     render(<PfToggleGroup aria-label="Days" options={options} values={[]} onChange={on} disabled data-testid="g" />)

@@ -11,8 +11,14 @@ describe('PfActionLink', () => {
     expect(a.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
   it('back kind puts the arrow first', () => {
-    render(<PfActionLink kind="back" href="/niches">Niches</PfActionLink>)
-    expect(screen.getByRole('link', { name: 'Niches' }).textContent).toBe('← Niches')
+    render(<PfActionLink kind="back" href="/parent">Parent</PfActionLink>)
+    expect(screen.getByRole('link', { name: 'Parent' }).textContent).toBe('← Parent')
+  })
+  it('does not underline a back link on hover', () => {
+    render(<PfActionLink kind="back" href="/x">X</PfActionLink>)
+    const css = document.querySelector('style')!.textContent!
+    expect(css).toContain('.pf-action-link:not(.pf-action-link-back):hover')
+    expect(css).not.toMatch(/(^|,)\.pf-action-link:hover/)
   })
   it('calls onNavigate on a plain click and prevents default', () => {
     const nav = vi.fn()
