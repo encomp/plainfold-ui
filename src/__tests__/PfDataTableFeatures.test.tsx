@@ -163,6 +163,8 @@ describe('selection', () => {
     setup({ selection: sel([], vi.fn(), { allDisabledReason: 'A job is running' }) })
     expect(screen.getByText('A job is running')).toBeVisible()
     expect(screen.getByText('A job is running').style.position).not.toBe('absolute')
+    const label = screen.getByText('Select all')
+    expect(label.compareDocumentPosition(screen.getByText('A job is running')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('count bar shows only when something is selected', () => {

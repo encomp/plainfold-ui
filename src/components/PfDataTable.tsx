@@ -229,13 +229,14 @@ export function PfDataTable<T>({
     selection.onChange(next)
   }
   const allReason = selection?.allDisabledReason
-  const selectAllBox = (extra?: CSSProperties, reasonStyle: CSSProperties = srOnly) => (
+  const selectAllReason = (style: CSSProperties) => allReason && <span id={reasonId} style={style}>{allReason}</span>
+  const selectAllBox = (extra?: CSSProperties, reasonAfter = false) => (
     <>
       <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
         checked={allChecked} onChange={toggleAll} aria-describedby={allReason ? reasonId : undefined} title={allReason}
         disabled={!!allReason || selectable.length === 0 || (atCap && !allChecked && !partial)}
         style={{ ...checkboxStyle, ...extra }} />
-      {allReason && <span id={reasonId} style={reasonStyle}>{allReason}</span>}
+      {!reasonAfter && selectAllReason(srOnly)}
     </>
   )
   const rowBox = (r: T) => {
@@ -396,8 +397,9 @@ export function PfDataTable<T>({
         {selection && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13,
             color: 'var(--pf-text-secondary)' }}>
-            {selectAllBox(undefined, {})}
+            {selectAllBox(undefined, true)}
             <span aria-hidden="true">Select all</span>
+            {selectAllReason({})}
           </label>
         )}
         {sortCols.length > 0 && (
