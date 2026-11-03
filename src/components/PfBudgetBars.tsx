@@ -167,7 +167,10 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
             background: 'var(--pf-bg-surface-alt)', border: '1px solid var(--pf-border)' }}>
           {segs ? segs.map((s, i) => (
             <div key={`${s.label}:${i}`} title={`${s.label} ${format(s.value)}`}
+              data-separator={i < segs.length - 1 ? 'true' : undefined}
               style={{ background: s.color, height: '100%',
+                // surface-coloured divider inside each slice's right edge, so close colours still read as separate
+                boxShadow: i < segs.length - 1 ? 'inset -2px 0 0 var(--pf-bg-surface)' : undefined,
                 width: `${r.actual > 0 ? (Math.max(s.value, 0) / r.actual) * fillPct : 0}%` }} />
           )) : (
             <div style={{ background: over ? 'var(--pf-danger)' : 'var(--pf-positive)', height: '100%',

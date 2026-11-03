@@ -116,6 +116,29 @@ describe('PfBudgetBars segments', () => {
     expect(row('s')).toHaveTextContent('Two $1.00')
     expect(row('s')).toHaveTextContent('$4.00 / $8.00')
   })
+  it('separators only between segments (n-1), none at the bar ends', () => {
+    const three = [...segs, { label: 'Three', value: 0, color: 'green' }]
+    setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4, limit: 8, segments: three }] })
+    const slices = Array.from(bar('Seg spent').children) as HTMLElement[]
+    expect(slices.map((s) => s.hasAttribute('data-separator'))).toEqual([true, true, false])
+    expect(slices[0].style.boxShadow).toContain('var(--pf-bg-surface)')
+    expect(slices[2].style.boxShadow).toBe('')
+  })
+  it('legend swatches have a 1px border token and keep label and amount', () => {
+    setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4, limit: 8, segments: segs }] })
+    const li = within(row('s')).getByText(/One/).closest('li') as HTMLElement
+    expect((li.firstElementChild as HTMLElement).style.border).toContain('1px solid var(--pf-border)')
+    expect(li).toHaveTextContent('One $3.00')
+  })
+  it('single fill and segment-less rows have no separators', () => {
+    setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 5, limit: 8, segments: segs }] })
+    expect(document.querySelector('[data-separator]')).toBeNull()
+    expect(fill('Seg spent').style.boxShadow).toBe('')
+  })
+  it('a single segment has no separator', () => {
+    setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 3, limit: 8, segments: [segs[0]] }] })
+    expect(document.querySelector('[data-separator]')).toBeNull()
+  })
   it('mismatching segments fall back to a single fill', () => {
     setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 5, limit: 8, segments: segs }] })
     expect(bar('Seg spent').children.length).toBe(1)
