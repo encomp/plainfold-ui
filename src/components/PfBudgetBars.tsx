@@ -9,6 +9,8 @@ export interface PfBudgetRow {
   actual: number
   /** null or 0 = no limit */
   limit: number | null
+  /** edit input prefill when it differs from the displayed `limit` (e.g. limit = base + extra, editable = base); default: `limit` */
+  editValue?: number
   /** used only if sum(value) equals actual (within 0.005); otherwise a single fill */
   segments?: PfBudgetSegment[]
   noLimitText?: string
@@ -84,7 +86,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
   }, [editing])
 
   const openEdit = () => {
-    setValue(hasLimit ? String(limit) : '')
+    setValue(r.editValue !== undefined ? String(r.editValue) : hasLimit ? String(limit) : '')
     setError(null)
     setEditing(true)
   }

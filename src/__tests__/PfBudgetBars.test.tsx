@@ -177,6 +177,28 @@ describe('PfBudgetBars editing', () => {
     expect(screen.getByTestId('bb-save')).toHaveTextContent('Save')
   })
 
+  it('prefills with editValue when given, not the displayed limit', () => {
+    setup(props(vi.fn(), editable({ limit: 8, editValue: 5 })))
+    expect(screen.getByTestId('bb-row-a')).toHaveTextContent('$1.00 / $8.00')
+    open()
+    expect((screen.getByTestId('bb-input') as HTMLInputElement).value).toBe('5')
+  })
+
+  it('prefills with the limit when editValue is absent', () => {
+    setup(props(vi.fn(), editable({ limit: 8 })))
+    open()
+    expect((screen.getByTestId('bb-input') as HTMLInputElement).value).toBe('8')
+  })
+
+  it('submit sends what the user typed, not editValue', async () => {
+    const onEditLimit = vi.fn().mockResolvedValue(undefined)
+    setup(props(onEditLimit, editable({ limit: 8, editValue: 5 })))
+    open()
+    fireEvent.change(screen.getByTestId('bb-input'), { target: { value: '6.5' } })
+    fireEvent.click(screen.getByTestId('bb-save'))
+    await waitFor(() => expect(onEditLimit).toHaveBeenCalledWith('a', 6.5))
+  })
+
   it('save calls onEditLimit, closes and returns focus to Edit', async () => {
     const onEditLimit = vi.fn().mockResolvedValue(undefined)
     setup(props(onEditLimit))
