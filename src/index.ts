@@ -7,6 +7,8 @@ export { pfText } from './tokens/type'
 export type { PfTextSize } from './tokens/type'
 
 export { PfButton } from './components/PfButton'
+export { PfActionLink } from './components/PfActionLink'
+export type { PfActionLinkProps } from './components/PfActionLink'
 export { PfRadio } from './components/PfRadio'
 export type { PfRadioProps } from './components/PfRadio'
 export { PfCard } from './components/PfCard'
