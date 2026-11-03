@@ -9,20 +9,25 @@ export interface PfSelectOption {
   disabled?: boolean
 }
 
-export interface PfSelectProps {
+interface PfSelectBaseProps {
   /** '' means "no choice" (e.g. "Any") */
   value: string
   onChange: (value: string) => void
   options: PfSelectOption[]
-  label?: string
-  'aria-label'?: string
   placeholder?: string
   disabled?: boolean
   id?: string
   size?: 'sm' | 'md'
   /** On the trigger */
   'data-testid'?: string
+  invalid?: boolean
+  /** Id of the element describing the field, e.g. its error text */
+  describedBy?: string
 }
+
+/** A visible label or an aria-label is required */
+export type PfSelectProps = PfSelectBaseProps &
+  ({ label: string; 'aria-label'?: never } | { label?: never; 'aria-label': string })
 
 // Radix forbids '' as an item value, so the empty choice travels under this key.
 const EMPTY = '__pf_empty__'
@@ -47,6 +52,8 @@ export function PfSelect({
   id,
   size = 'md',
   'data-testid': dataTestId,
+  invalid = false,
+  describedBy,
 }: PfSelectProps) {
   const uid = useId()
   const triggerId = id ?? uid
@@ -78,6 +85,8 @@ export function PfSelect({
           id={triggerId}
           className="pf-select-trigger"
           aria-label={label ? undefined : ariaLabel}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           data-testid={dataTestId}
           style={{
             display: 'inline-flex',
@@ -91,7 +100,8 @@ export function PfSelect({
             fontFamily: 'var(--pf-font-ui)',
             color: 'var(--pf-text-primary)',
             background: 'var(--pf-bg-surface)',
-            border: '1px solid var(--pf-border-strong)',
+            border: '1px solid',
+            borderColor: invalid ? 'var(--pf-danger)' : 'var(--pf-border-strong)',
             borderRadius: '8px',
             cursor: 'pointer',
           }}

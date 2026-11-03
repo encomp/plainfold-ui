@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -56,5 +56,36 @@ describe('PfFormSelect on PfSelect', () => {
       </TestForm>
     )
     expect(screen.getByRole('combobox', { name: 'Colour' })).toHaveTextContent('Blue')
+  })
+
+  it('names the trigger by the field name when there is no label', () => {
+    render(
+      <TestForm>
+        <PfFormSelect name="color" options={options} />
+      </TestForm>
+    )
+    expect(screen.getByRole('combobox', { name: 'color' })).toBeInTheDocument()
+  })
+
+  it('links the error text to the trigger', async () => {
+    const strict = z.object({ color: z.string().min(1, 'Pick a colour') })
+    function Strict() {
+      const methods = useForm({ resolver: zodResolver(strict), defaultValues: { color: '' } })
+      return (
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(() => {})}>
+            <PfFormSelect name="color" label="Colour" options={options} />
+            <button type="submit">go</button>
+          </form>
+        </FormProvider>
+      )
+    }
+    render(<Strict />)
+    fireEvent.click(screen.getByText('go'))
+    const alert = await waitFor(() => screen.getByRole('alert'))
+    expect(alert).toHaveTextContent('Pick a colour')
+    const trigger = screen.getByRole('combobox', { name: 'Colour' })
+    expect(trigger).toHaveAttribute('aria-invalid', 'true')
+    expect(trigger).toHaveAttribute('aria-describedby', alert.id)
   })
 })

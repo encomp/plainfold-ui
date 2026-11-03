@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { useFormContext, Controller } from 'react-hook-form'
 import { PfSelect } from './PfSelect'
 import { pfText } from '../tokens/type'
@@ -18,6 +19,7 @@ export function PfFormSelect({
   'data-testid': dataTestId,
 }: PfFormSelectProps) {
   const { control } = useFormContext()
+  const errorId = useId()
 
   return (
     <Controller
@@ -26,8 +28,9 @@ export function PfFormSelect({
       render={({ field, fieldState }) => (
         <div style={{ marginBottom: '12px' }} data-testid={dataTestId}>
           <PfSelect
-            label={label}
-            aria-label={label ? undefined : name}
+            {...(label ? { label } : { 'aria-label': name })}
+            invalid={!!fieldState.error}
+            describedBy={fieldState.error ? errorId : undefined}
             value={field.value ?? ''}
             onChange={field.onChange}
             options={options}
@@ -35,6 +38,7 @@ export function PfFormSelect({
           />
           {fieldState.error && (
             <div
+              id={errorId}
               role="alert"
               style={{
                 fontSize: pfText.label,
