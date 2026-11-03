@@ -37,8 +37,20 @@ describe('PfToggleGroup', () => {
     render(<PfToggleGroup aria-label="Days" options={options} values={['mon']} onChange={() => {}} disabled />)
     const s = screen.getByRole('button', { name: 'Mon' }).style
     expect(s.background).toBe('var(--pf-bg-surface-alt)')
-    expect(s.color).toBe('var(--pf-text-muted)')
     expect(s.opacity).toBe('')
+  })
+
+  it('tells a disabled pressed toggle from a disabled unpressed one without accent', () => {
+    render(<PfToggleGroup aria-label="Days" options={options} values={['mon']} onChange={() => {}} disabled />)
+    const on = screen.getByRole('button', { name: 'Mon' })
+    const off = screen.getByRole('button', { name: 'Tue' })
+    expect(on.style.borderColor).toBe('var(--pf-border-strong)')
+    expect(on.style.color).toBe('var(--pf-text-primary)')
+    expect(on.querySelector('[aria-hidden="true"]')?.textContent).toBe('✓ ')
+    expect(off.style.borderColor).toBe('var(--pf-border)')
+    expect(off.style.color).toBe('var(--pf-text-muted)')
+    expect(off.querySelector('[aria-hidden="true"]')).toBeNull()
+    expect(on.getAttribute('style')).not.toContain('var(--pf-accent)')
   })
 
   it('disabled blocks changes', () => {

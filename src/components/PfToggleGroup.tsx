@@ -43,9 +43,11 @@ export function PfToggleGroup({
             borderRadius: '8px',
             borderWidth: '1px',
             borderStyle: 'solid',
-            borderColor: disabled ? 'var(--pf-border)' : pressed ? 'transparent' : 'var(--pf-border-strong)',
+            borderColor: disabled ? (pressed ? 'var(--pf-border-strong)' : 'var(--pf-border)') : pressed ? 'transparent' : 'var(--pf-border-strong)',
             background: disabled ? 'var(--pf-bg-surface-alt)' : pressed ? 'var(--pf-accent)' : 'var(--pf-bg-surface)',
-            color: disabled || !pressed ? 'var(--pf-text-muted)' : 'var(--pf-on-accent, var(--pf-bg-base))',
+            color: disabled
+              ? pressed ? 'var(--pf-text-primary)' : 'var(--pf-text-muted)'
+              : pressed ? 'var(--pf-on-accent, var(--pf-bg-base))' : 'var(--pf-text-muted)',
             cursor: disabled ? 'not-allowed' : 'pointer',
           }
           return (
@@ -58,6 +60,7 @@ export function PfToggleGroup({
               style={style}
               onClick={() => toggle(o.value)}
             >
+              {disabled && pressed && <span aria-hidden="true">✓ </span>}
               {o.label}
             </button>
           )
