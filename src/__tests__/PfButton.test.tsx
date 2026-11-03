@@ -11,7 +11,7 @@ describe('PfButton', () => {
   })
 
   it('renders all variants', () => {
-    const variants = ['primary', 'secondary', 'ghost', 'danger'] as const
+    const variants = ['primary', 'secondary', 'quiet', 'ghost', 'danger'] as const
     for (const variant of variants) {
       const { unmount } = render(
         <PfButton variant={variant} data-testid={`btn-${variant}`}>
@@ -27,7 +27,6 @@ describe('PfButton', () => {
     render(<PfButton disabled>Disabled</PfButton>)
     const button = screen.getByRole('button', { name: 'Disabled' })
     expect(button).toBeDisabled()
-    expect(button.style.opacity).toBe('0.5')
     expect(button.style.cursor).toBe('not-allowed')
   })
 
@@ -94,5 +93,37 @@ describe('PfButton', () => {
     const css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent).join('')
     expect(css).toContain('.pf-button:focus-visible')
     expect(css).toMatch(/\.pf-button:focus-visible\s*\{[^}]*outline: 2px solid var\(--pf-accent-text, var\(--pf-accent\)\) !important/)
+  })
+
+  it('describes the disabled button by its reason', () => {
+    render(<PfButton disabled reason="Pick a decision first.">Save</PfButton>)
+    const b = screen.getByRole('button', { name: 'Save' })
+    expect(b).toHaveAccessibleDescription('Pick a decision first.')
+  })
+
+  it('hides the reason when enabled', () => {
+    render(<PfButton reason="Pick a decision first.">Save</PfButton>)
+    expect(screen.queryByText('Pick a decision first.')).toBeNull()
+  })
+
+  it('draws disabled primary grey, not accent', () => {
+    render(<PfButton variant="primary" disabled>Save</PfButton>)
+    const s = screen.getByRole('button').style
+    expect(s.background).toBe('var(--pf-bg-surface-alt)')
+    expect(s.color).toBe('var(--pf-text-muted)')
+    expect(s.opacity).toBe('')
+  })
+
+  it('quiet uses accent text with no border', () => {
+    render(<PfButton variant="quiet">Find sources</PfButton>)
+    const s = screen.getByRole('button').style
+    expect(s.color).toBe('var(--pf-accent-text, var(--pf-accent))')
+    expect(s.borderColor === 'transparent' || s.border.includes('transparent')).toBe(true)
+  })
+
+  it('takes sm and md font sizes from the type scale', () => {
+    render(<><PfButton size="sm" data-testid="sm">a</PfButton><PfButton data-testid="md">b</PfButton></>)
+    expect(screen.getByTestId('sm').getAttribute('style')).toContain('var(--pf-text-meta, 13px)')
+    expect(screen.getByTestId('md').getAttribute('style')).toContain('var(--pf-text-body, 14px)')
   })
 })
