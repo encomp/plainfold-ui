@@ -29,6 +29,8 @@ export interface PfColumn<T> {
   width?: string
   minWidth?: string
   srOnlyHeader?: boolean
+  /** Adornment (e.g. a hint trigger) rendered in the `<th>` after, not inside, the sort button, and in the card label line. Not part of the sort button's name; may be interactive. */
+  headerExtra?: ReactNode
   hideOnCard?: boolean
 }
 
@@ -266,7 +268,7 @@ export function PfDataTable<T>({
     onClick: onRowClick
       ? (e: React.MouseEvent<HTMLElement>) => {
           const t = e.target as Element
-          const hit = t.closest?.('a, button, input, label, th, [role=menuitem], [data-pf-detail]')
+          const hit = t.closest?.('a, button, input, label, th, [role=menuitem], [role=button], [role=link], [tabindex]:not([tabindex="-1"]), [data-pf-detail]')
           if (hit && e.currentTarget.contains(hit)) return
           onRowClick(r)
         }
@@ -355,7 +357,9 @@ export function PfDataTable<T>({
               )}
               {lines.map((c) => (
                 <div key={c.id} style={{ fontSize: 14, marginTop: 2 }}>
-                  <span style={{ color: 'var(--pf-text-secondary)' }}>{c.header}: </span>
+                  <span style={{ color: 'var(--pf-text-secondary)' }}>{c.header}</span>
+                  {c.headerExtra}
+                  <span style={{ color: 'var(--pf-text-secondary)' }}>: </span>
                   <span>{show(c.cell(r))}</span>
                 </div>
               ))}
@@ -484,6 +488,7 @@ export function PfDataTable<T>({
                         <Arrow dir={sorted?.dir ?? 'asc'} visible={!!sorted} />
                       </button>
                     ) : label}
+                    {c.headerExtra}
                   </th>
                 )
               })}
