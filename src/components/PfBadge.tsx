@@ -4,6 +4,8 @@ type PfBadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'muted'
 
 interface PfBadgeProps {
   variant?: PfBadgeVariant
+  outline?: boolean
+  dashed?: boolean
   children: React.ReactNode
   'data-testid'?: string
 }
@@ -33,6 +35,8 @@ const variantStyles: Record<PfBadgeVariant, React.CSSProperties> = {
 
 export function PfBadge({
   variant = 'default',
+  outline = false,
+  dashed = false,
   children,
   'data-testid': dataTestId,
 }: PfBadgeProps) {
@@ -45,6 +49,13 @@ export function PfBadge({
     alignItems: 'center',
     whiteSpace: 'nowrap',
     ...variantStyles[variant],
+  }
+
+  if (outline || dashed) {
+    style.background = 'transparent'
+    style.borderWidth = '1px'
+    style.borderStyle = dashed ? 'dashed' : 'solid'
+    style.borderColor = variant === 'muted' ? 'var(--pf-border-strong)' : style.color
   }
 
   return (

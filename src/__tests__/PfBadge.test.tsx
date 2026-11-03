@@ -38,4 +38,23 @@ describe('PfBadge', () => {
     render(<PfBadge data-testid="badge">Bold</PfBadge>)
     expect(screen.getByTestId('badge').style.fontWeight).toBe('500')
   })
+
+  it('outline dashed has a transparent background and dashed border', () => {
+    render(<PfBadge outline dashed data-testid="badge">Unverified</PfBadge>)
+    const badge = screen.getByTestId('badge')
+    expect(badge.style.borderStyle).toBe('dashed')
+    expect(badge.style.background).toBe('transparent')
+  })
+
+  it('outline uses a solid border in the variant colour', () => {
+    render(<PfBadge outline variant="danger" data-testid="badge">Bad</PfBadge>)
+    const badge = screen.getByTestId('badge')
+    expect(badge.style.borderStyle).toBe('solid')
+    expect(badge.style.borderColor).toBe('var(--pf-danger)')
+  })
+
+  it('outline muted uses the strong border colour', () => {
+    render(<PfBadge outline variant="muted" data-testid="badge">Idea</PfBadge>)
+    expect(screen.getByTestId('badge').style.borderColor).toBe('var(--pf-border-strong)')
+  })
 })
