@@ -50,7 +50,7 @@ const variantStyles: Record<PfButtonVariant, React.CSSProperties> = {
 const sizeStyles: Record<PfButtonSize, React.CSSProperties> = {
   sm: { padding: '6px 12px', fontSize: pfText.meta, borderRadius: 'var(--pf-radius-sm)' },
   md: { padding: '8px 16px', fontSize: pfText.body, borderRadius: 'var(--pf-radius-md)' },
-  lg: { padding: '12px 20px', fontSize: '16px', borderRadius: 'var(--pf-radius-md)' },
+  lg: { padding: '12px 20px', fontSize: pfText.section, borderRadius: 'var(--pf-radius-md)' },
 }
 
 const hoverStyles: Record<PfButtonVariant, React.CSSProperties> = {
@@ -109,7 +109,7 @@ export function PfButton({
     cursor: isDisabled ? 'not-allowed' : 'pointer',
     ...variantStyles[variant],
     ...sizeStyles[size],
-    ...(isDisabled ? disabledStyle : {}),
+    ...(disabled ? disabledStyle : {}),
     ...(hovered && !isDisabled ? hoverStyles[variant] : {}),
     ...style,
   }

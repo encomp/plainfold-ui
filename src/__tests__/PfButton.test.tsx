@@ -83,7 +83,7 @@ describe('PfButton', () => {
   it('applies size styles', () => {
     render(<PfButton size="lg" data-testid="lg-btn">Large</PfButton>)
     const button = screen.getByTestId('lg-btn')
-    expect(button.style.fontSize).toBe('16px')
+    expect(button.getAttribute('style')).toContain('var(--pf-text-section, 17px)')
     expect(button.style.padding).toBe('12px 20px')
   })
 
@@ -125,5 +125,10 @@ describe('PfButton', () => {
     render(<><PfButton size="sm" data-testid="sm">a</PfButton><PfButton data-testid="md">b</PfButton></>)
     expect(screen.getByTestId('sm').getAttribute('style')).toContain('var(--pf-text-meta, 13px)')
     expect(screen.getByTestId('md').getAttribute('style')).toContain('var(--pf-text-body, 14px)')
+  })
+
+  it('keeps variant colours while loading', () => {
+    render(<PfButton variant="primary" loading>Save</PfButton>)
+    expect(screen.getByRole('button').style.background).toBe('var(--pf-accent)')
   })
 })
