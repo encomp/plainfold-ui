@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type CSSProperties } from 'react'
 import { pfText } from '../tokens/type'
 import { handleNavClick } from '../utils/handleNavClick'
 
@@ -7,8 +7,14 @@ export interface PfActionLinkProps {
   children: React.ReactNode
   kind?: 'action' | 'back'
   onNavigate?: (href: string) => void
+  external?: boolean
   'aria-label'?: string
   'data-testid'?: string
+}
+
+const srOnly: CSSProperties = {
+  position: 'absolute', width: 1, height: 1, margin: -1, padding: 0,
+  overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
 }
 
 const css = `.pf-action-link:hover,.pf-action-link:focus-visible{text-decoration:underline!important;text-underline-offset:3px}.pf-action-link-back:hover{color:var(--pf-text-primary)!important}.pf-action-link:focus-visible{outline:2px solid var(--pf-accent-text, var(--pf-accent));outline-offset:2px}`
@@ -18,6 +24,7 @@ export function PfActionLink({
   children,
   kind = 'action',
   onNavigate,
+  external = false,
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
 }: PfActionLinkProps) {
@@ -35,12 +42,14 @@ export function PfActionLink({
           textDecoration: 'none',
           whiteSpace: 'nowrap',
         }}
-        onClick={(e) => handleNavClick(e, href, onNavigate)}
+        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        onClick={external ? undefined : (e) => handleNavClick(e, href, onNavigate)}
         aria-label={ariaLabel}
         data-testid={dataTestId}
       >
         {back && <span aria-hidden="true">← </span>}
         {children}
+        {external && <span style={srOnly}> (opens in a new tab)</span>}
         {!back && <span aria-hidden="true"> →</span>}
       </a>
     </>
