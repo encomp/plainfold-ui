@@ -1,4 +1,5 @@
-import React, { useId } from 'react'
+import React from 'react'
+import { PfSelect } from './PfSelect'
 
 export interface PfModelOption {
   id: string
@@ -39,27 +40,6 @@ const groupStyle: React.CSSProperties = {
   fontFamily: 'var(--pf-font-ui)',
 }
 
-const hiddenStyle: React.CSSProperties = {
-  position: 'absolute',
-  width: '1px',
-  height: '1px',
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-}
-
-const selectStyle: React.CSSProperties = {
-  minWidth: 0,
-  maxWidth: '100%',
-  padding: '6px 8px',
-  fontSize: '14px',
-  fontFamily: 'inherit',
-  color: 'var(--pf-text-primary)',
-  background: 'var(--pf-bg-surface)',
-  border: '1px solid var(--pf-border)',
-  borderRadius: 'var(--pf-radius-sm)',
-}
-
 export function PfModelPicker({
   providers,
   value,
@@ -67,46 +47,34 @@ export function PfModelPicker({
   label = 'Model',
   'data-testid': dataTestId,
 }: PfModelPickerProps) {
-  const uid = useId()
   const current = providers.find((p) => p.id === value.provider)
 
   return (
     <div role="group" aria-label={label} style={groupStyle} data-testid={dataTestId}>
-      <label htmlFor={`${uid}-p`} style={hiddenStyle}>
-        Provider
-      </label>
-      <select
-        id={`${uid}-p`}
-        style={selectStyle}
+      <PfSelect
+        aria-label="Provider"
         value={value.provider}
         data-testid={dataTestId && `${dataTestId}-provider`}
-        onChange={(e) => {
-          const next = providers.find((p) => p.id === e.target.value)
+        options={providers.map((p) => ({
+          value: p.id,
+          label: p.disabled && p.disabledNote ? `${p.label} (${p.disabledNote})` : p.label,
+          disabled: p.disabled,
+        }))}
+        onChange={(id) => {
+          const next = providers.find((p) => p.id === id)
           if (next?.models[0]) onChange({ provider: next.id, model: next.models[0].id })
         }}
-      >
-        {providers.map((p) => (
-          <option key={p.id} value={p.id} disabled={p.disabled}>
-            {p.disabled && p.disabledNote ? `${p.label} (${p.disabledNote})` : p.label}
-          </option>
-        ))}
-      </select>
-      <label htmlFor={`${uid}-m`} style={hiddenStyle}>
-        Model
-      </label>
-      <select
-        id={`${uid}-m`}
-        style={selectStyle}
+      />
+      <PfSelect
+        aria-label="Model"
         value={value.model}
         data-testid={dataTestId && `${dataTestId}-model`}
-        onChange={(e) => onChange({ provider: value.provider, model: e.target.value })}
-      >
-        {(current?.models ?? []).map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.note ? `${m.label} · ${m.note}` : m.label}
-          </option>
-        ))}
-      </select>
+        options={(current?.models ?? []).map((m) => ({
+          value: m.id,
+          label: m.note ? `${m.label} · ${m.note}` : m.label,
+        }))}
+        onChange={(model) => onChange({ provider: value.provider, model })}
+      />
     </div>
   )
 }

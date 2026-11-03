@@ -34,6 +34,8 @@ export { PfBottomSheet } from './components/PfBottomSheet'
 
 export { PfForm } from './components/PfForm'
 export { PfFormTextField } from './components/PfFormTextField'
+export { PfSelect } from './components/PfSelect'
+export type { PfSelectOption, PfSelectProps } from './components/PfSelect'
 export { PfFormSelect } from './components/PfFormSelect'
 export { PfFormSlider } from './components/PfFormSlider'
 export { PfFormSwitch } from './components/PfFormSwitch'

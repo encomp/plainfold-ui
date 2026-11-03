@@ -47,3 +47,14 @@ describe('PfFormSelect', () => {
     expect(screen.getByText('Choose a color')).toBeInTheDocument()
   })
 })
+
+describe('PfFormSelect on PfSelect', () => {
+  it('shows the chosen option and puts the label on the trigger', () => {
+    render(
+      <TestForm defaultValues={{ color: 'blue' }}>
+        <PfFormSelect name="color" label="Colour" options={options} />
+      </TestForm>
+    )
+    expect(screen.getByRole('combobox', { name: 'Colour' })).toHaveTextContent('Blue')
+  })
+})

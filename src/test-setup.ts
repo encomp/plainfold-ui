@@ -9,6 +9,11 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   } as unknown as typeof ResizeObserver
 }
 
+// jsdom lacks the pointer-capture and scroll APIs Radix Select calls when it opens
+Element.prototype.hasPointerCapture ??= () => false
+Element.prototype.releasePointerCapture ??= () => {}
+Element.prototype.scrollIntoView ??= () => {}
+
 // jsdom does not implement window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

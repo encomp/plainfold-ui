@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import { openSelect, pickOption } from './selectHelpers'
 import { PfModelPicker } from '../components/PfModelPicker'
 import type { PfModelProvider } from '../components/PfModelPicker'
 
@@ -31,8 +32,8 @@ describe('PfModelPicker', () => {
         onChange={() => {}}
       />,
     )
-    expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveValue('a')
-    expect(screen.getByRole('combobox', { name: 'Model' })).toHaveValue('a2')
+    expect(screen.getByRole('combobox', { name: 'Provider' })).toHaveTextContent('Alpha')
+    expect(screen.getByRole('combobox', { name: 'Model' })).toHaveTextContent('Alpha Two')
   })
 
   it('emits the first model of a newly chosen provider', () => {
@@ -44,9 +45,8 @@ describe('PfModelPicker', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.change(screen.getByRole('combobox', { name: 'Provider' }), {
-      target: { value: 'b' },
-    })
+    openSelect(screen.getByRole('combobox', { name: 'Provider' }))
+    pickOption('Beta')
     expect(onChange).toHaveBeenCalledWith({ provider: 'b', model: 'b1' })
   })
 
@@ -59,9 +59,8 @@ describe('PfModelPicker', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.change(screen.getByRole('combobox', { name: 'Model' }), {
-      target: { value: 'a2' },
-    })
+    openSelect(screen.getByRole('combobox', { name: 'Model' }))
+    pickOption('Alpha Two')
     expect(onChange).toHaveBeenCalledWith({ provider: 'a', model: 'a2' })
   })
 
@@ -73,8 +72,9 @@ describe('PfModelPicker', () => {
         onChange={() => {}}
       />,
     )
+    openSelect(screen.getByRole('combobox', { name: 'Provider' }))
     const opt = screen.getByRole('option', { name: /Gamma/ })
-    expect(opt).toBeDisabled()
+    expect(opt).toHaveAttribute('aria-disabled', 'true')
     expect(opt).toHaveTextContent('Gamma (no key)')
   })
 
@@ -86,6 +86,7 @@ describe('PfModelPicker', () => {
         onChange={() => {}}
       />,
     )
+    openSelect(screen.getByRole('combobox', { name: 'Model' }))
     expect(screen.getByRole('option', { name: 'Alpha One · $0.001' })).toBeInTheDocument()
   })
 
@@ -109,7 +110,7 @@ describe('PfModelPicker', () => {
     expect(screen.getByRole('group', { name: 'Everyday' })).toBeInTheDocument()
   })
 
-  it('puts test ids on both selects', () => {
+  it('puts test ids on both triggers', () => {
     render(
       <PfModelPicker
         providers={providers}
@@ -118,7 +119,7 @@ describe('PfModelPicker', () => {
         data-testid="mp"
       />,
     )
-    expect(screen.getByTestId('mp-provider')).toBeInTheDocument()
-    expect(screen.getByTestId('mp-model')).toBeInTheDocument()
+    expect(screen.getByTestId('mp-provider')).toBe(screen.getByRole('combobox', { name: 'Provider' }))
+    expect(screen.getByTestId('mp-model')).toBe(screen.getByRole('combobox', { name: 'Model' }))
   })
 })
