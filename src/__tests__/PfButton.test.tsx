@@ -144,4 +144,11 @@ describe('PfButton', () => {
     expect(b).toHaveAttribute('aria-haspopup', 'menu')
     expect(b).toHaveAttribute('aria-pressed', 'false')
   })
+
+  it('passes aria-current through', () => {
+    const { rerender } = render(<PfButton aria-current="page">Home</PfButton>)
+    expect(screen.getByRole('button')).toHaveAttribute('aria-current', 'page')
+    rerender(<PfButton aria-current={true}>Home</PfButton>)
+    expect(screen.getByRole('button')).toHaveAttribute('aria-current', 'true')
+  })
 })

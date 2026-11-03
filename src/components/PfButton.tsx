@@ -20,6 +20,7 @@ interface PfButtonProps {
   'aria-controls'?: string
   'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog'
   'aria-pressed'?: boolean
+  'aria-current'?: boolean | 'page' | 'step' | 'location' | 'date' | 'time' | 'true' | 'false'
   'data-testid'?: string
 }
 
@@ -97,6 +98,7 @@ export function PfButton({
   'aria-controls': ariaControls,
   'aria-haspopup': ariaHasPopup,
   'aria-pressed': ariaPressed,
+  'aria-current': ariaCurrent,
   'data-testid': dataTestId,
 }: PfButtonProps) {
   const [hovered, setHovered] = useState(false)
@@ -136,6 +138,7 @@ export function PfButton({
       aria-controls={ariaControls}
       aria-haspopup={ariaHasPopup}
       aria-pressed={ariaPressed}
+      aria-current={ariaCurrent}
       aria-describedby={showReason ? reasonId : undefined}
       data-testid={dataTestId}
     >
