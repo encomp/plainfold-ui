@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { useState } from 'react'
 import { PfRadio } from '../components/PfRadio'
+import { pfRadioGridStyle } from '../tokens/radio'
 
 function Group({ onChange = () => {} }: { onChange?: (v: string) => void }) {
   const [v, setV] = useState('a')
@@ -53,5 +54,51 @@ describe('PfRadio', () => {
     expect(input).toHaveClass('pf-radio')
     expect(screen.getByRole('radio', { name: /Pick/ })).toBe(input)
     expect(screen.getByText('Why')).toBeInTheDocument()
+  })
+
+  describe('card mode', () => {
+    function Cards() {
+      const [v, setV] = useState('a')
+      return (
+        <div role="radiogroup" aria-label="Pick one" style={pfRadioGridStyle}>
+          <PfRadio card name="c" value="a" checked={v === 'a'} onChange={setV} label="Alpha" description="First" />
+          <PfRadio card name="c" value="b" checked={v === 'b'} onChange={setV} label="Beta" description="Second" />
+        </div>
+      )
+    }
+
+    it('selects via label click inside a radiogroup grid', () => {
+      render(<Cards />)
+      const group = screen.getByRole('radiogroup', { name: 'Pick one' })
+      expect(group.style.gridTemplateColumns).toContain('auto-fit')
+      fireEvent.click(screen.getByText('Beta'))
+      expect(screen.getByRole('radio', { name: 'Beta' })).toBeChecked()
+      expect(screen.getByRole('radio', { name: 'Alpha' })).not.toBeChecked()
+    })
+
+    it('shows the check mark only on the checked card', () => {
+      render(<Cards />)
+      expect(screen.getAllByTestId('pf-radio-check')).toHaveLength(1)
+      fireEvent.click(screen.getByText('Beta'))
+      const check = screen.getByTestId('pf-radio-check')
+      expect(check.closest('label')).toContainElement(screen.getByRole('radio', { name: 'Beta' }))
+    })
+
+    it('exposes the description as the accessible description', () => {
+      render(<Cards />)
+      expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveAccessibleDescription('First')
+    })
+
+    it('keeps the input in the DOM and ships the card focus rule', () => {
+      render(<Cards />)
+      const css = Array.from(document.querySelectorAll('style')).map((s) => s.textContent).join('')
+      expect(css).toContain('.pf-radio-card:has(:focus-visible)')
+      expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveClass('pf-radio')
+    })
+
+    it('non-card mode has no check mark', () => {
+      render(<Group />)
+      expect(screen.queryByTestId('pf-radio-check')).toBeNull()
+    })
   })
 })
