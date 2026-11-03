@@ -3,6 +3,8 @@ export type { Breakpoint } from './utils/useBreakpoint'
 export { cn } from './utils/cn'
 export { getMotionConfig } from './utils/getMotionConfig'
 export type { MotionConfig } from './utils/getMotionConfig'
+export { pfText } from './tokens/type'
+export type { PfTextSize } from './tokens/type'
 
 export { PfButton } from './components/PfButton'
 export { PfRadio } from './components/PfRadio'
