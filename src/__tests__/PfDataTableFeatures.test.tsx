@@ -155,6 +155,16 @@ describe('selection', () => {
     expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).not.toBeDisabled()
   })
 
+  it('allDisabledReason is visible text on phones and a title on desktop', () => {
+    setup({ selection: sel([], vi.fn(), { allDisabledReason: 'A job is running' }) })
+    expect(all()).toHaveAttribute('title', 'A job is running')
+    cleanup()
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    setup({ selection: sel([], vi.fn(), { allDisabledReason: 'A job is running' }) })
+    expect(screen.getByText('A job is running')).toBeVisible()
+    expect(screen.getByText('A job is running').style.position).not.toBe('absolute')
+  })
+
   it('count bar shows only when something is selected', () => {
     const { rerender } = setup({ selection: sel([], vi.fn(), { bar: (n: number) => <b>bar {n}</b> }) })
     expect(screen.queryByText(/selected/)).toBeNull()

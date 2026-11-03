@@ -466,6 +466,7 @@ describe('PfDataTable phone cards', () => {
         columns={[{ id: 'count', header: 'Count', kind: 'number', cell: (r) => r.count, sortable: true }]}
         getRowId={(r) => r.id} sort={{ id: 'count', dir: 'desc' }} onSortChange={onSortChange} />,
     )
+    expect(screen.getByRole('group', { name: 'Sort direction' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Descending' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Ascending' })).toHaveAttribute('aria-pressed', 'false')
     fireEvent.click(screen.getByRole('button', { name: 'Ascending' }))

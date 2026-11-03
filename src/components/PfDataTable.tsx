@@ -229,13 +229,13 @@ export function PfDataTable<T>({
     selection.onChange(next)
   }
   const allReason = selection?.allDisabledReason
-  const selectAllBox = (extra?: CSSProperties) => (
+  const selectAllBox = (extra?: CSSProperties, reasonStyle: CSSProperties = srOnly) => (
     <>
       <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
-        checked={allChecked} onChange={toggleAll} aria-describedby={allReason ? reasonId : undefined}
+        checked={allChecked} onChange={toggleAll} aria-describedby={allReason ? reasonId : undefined} title={allReason}
         disabled={!!allReason || selectable.length === 0 || (atCap && !allChecked && !partial)}
         style={{ ...checkboxStyle, ...extra }} />
-      {allReason && <span id={reasonId} style={srOnly}>{allReason}</span>}
+      {allReason && <span id={reasonId} style={reasonStyle}>{allReason}</span>}
     </>
   )
   const rowBox = (r: T) => {
@@ -396,7 +396,7 @@ export function PfDataTable<T>({
         {selection && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13,
             color: 'var(--pf-text-secondary)' }}>
-            {selectAllBox()}
+            {selectAllBox(undefined, {})}
             <span aria-hidden="true">Select all</span>
           </label>
         )}
@@ -420,14 +420,18 @@ export function PfDataTable<T>({
                 ))}
               </select>
             </label>
-            {current && sortCols.some((c) => c.id === current.id) && (['asc', 'desc'] as const).map((d) => (
+            {current && sortCols.some((c) => c.id === current.id) && (
+            <div role="group" aria-label="Sort direction" style={{ display: 'flex', gap: 8 }}>
+            {(['asc', 'desc'] as const).map((d) => (
               <button key={d} type="button" aria-pressed={current.dir === d}
                 onClick={() => setSort({ id: current.id, dir: d })}
-                style={{ ...flatButton, fontSize: 13, ...(current.dir === d
+                style={{ ...flatButton, fontSize: 13, minHeight: 40, ...(current.dir === d
                   ? { borderColor: 'var(--pf-accent-text, var(--pf-accent))', fontWeight: 600 } : {}) }}>
                 {d === 'asc' ? 'Ascending' : 'Descending'}
               </button>
             ))}
+            </div>
+            )}
           </div>
         )}
         <div role="list" data-testid={testId} aria-label={ariaLabel}
