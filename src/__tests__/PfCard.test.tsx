@@ -8,7 +8,7 @@ describe('PfCard', () => {
     const card = screen.getByTestId('card')
     expect(card).toBeInTheDocument()
     expect(card).toHaveTextContent('Card content')
-    expect(card.style.padding).toBe('20px')
+    expect(card.style.padding).toBe('16px 18px')
   })
 
   it('applies sm padding', () => {
@@ -18,7 +18,7 @@ describe('PfCard', () => {
 
   it('applies md padding', () => {
     render(<PfCard padding="md" data-testid="card">Content</PfCard>)
-    expect(screen.getByTestId('card').style.padding).toBe('20px')
+    expect(screen.getByTestId('card').style.padding).toBe('16px 18px')
   })
 
   it('applies lg padding', () => {
@@ -45,5 +45,23 @@ describe('PfCard', () => {
 
     fireEvent.mouseEnter(card)
     expect(card.style.transform).toBe('none')
+  })
+
+  it('renders title, meta and footer', () => {
+    render(<PfCard title="Spend this month" meta="November 2026" footer={<a href="/b">Budgets</a>}>x</PfCard>)
+    expect(screen.getByRole('heading', { level: 2, name: 'Spend this month' })).toBeInTheDocument()
+    expect(screen.getByText('November 2026')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Budgets' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Spend this month' })).toBeInTheDocument()
+  })
+
+  it('renders a labelled section from aria-label alone', () => {
+    render(<PfCard aria-label="Totals">x</PfCard>)
+    expect(screen.getByRole('region', { name: 'Totals' })).toBeInTheDocument()
+  })
+
+  it('stays a plain div without title or aria-label', () => {
+    render(<PfCard data-testid="card">x</PfCard>)
+    expect(screen.getByTestId('card').tagName).toBe('DIV')
   })
 })

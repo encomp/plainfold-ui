@@ -11,11 +11,11 @@ describe('PfEmptyState', () => {
     expect(screen.getByText('Try adding some items')).toBeInTheDocument()
   })
 
-  it('renders heading as h3', () => {
+  it('renders heading as h2', () => {
     render(
       <PfEmptyState heading="Empty" subtext="Nothing here" />
     )
-    const heading = screen.getByRole('heading', { level: 3 })
+    const heading = screen.getByRole('heading', { level: 2 })
     expect(heading).toHaveTextContent('Empty')
   })
 
@@ -59,5 +59,13 @@ describe('PfEmptyState', () => {
       <PfEmptyState heading="Empty" subtext="Nothing" />
     )
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('is left-aligned with a dashed border and actions', () => {
+    render(<PfEmptyState heading="No sweeps yet" subtext="Sweeps are free." actions={<button>+ New sweep</button>} data-testid="e" />)
+    const box = screen.getByTestId('e')
+    expect(box.style.alignItems).toBe('flex-start')
+    expect(box.style.borderStyle).toBe('dashed')
+    expect(screen.getByRole('button', { name: '+ New sweep' })).toBeInTheDocument()
   })
 })

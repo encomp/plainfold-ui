@@ -19,6 +19,7 @@ export { PfCard } from './components/PfCard'
 export { PfBadge } from './components/PfBadge'
 export { PfLinearProgress } from './components/PfLinearProgress'
 export { PfEmptyState } from './components/PfEmptyState'
+export { PfEmptyLine } from './components/PfEmptyLine'
 export { PfSnackbar } from './components/PfSnackbar'
 export { PfTooltip } from './components/PfTooltip'
 
