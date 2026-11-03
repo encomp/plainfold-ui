@@ -62,7 +62,7 @@ export function PfRadio({
             aria-describedby={description != null ? descId : undefined}
             data-testid={dataTestId}
           />
-          <span id={labelId} style={{ fontSize: pfText.body, fontWeight: 600, paddingRight: checked ? '20px' : 0 }}>{label}</span>
+          <span id={labelId} style={{ fontSize: pfText.body, fontWeight: 600, paddingRight: '20px' }}>{label}</span>
           {description != null && (
             <span id={descId} style={{ fontSize: pfText.meta, color: 'var(--pf-text-muted)' }}>{description}</span>
           )}
