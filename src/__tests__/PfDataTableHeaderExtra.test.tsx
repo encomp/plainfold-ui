@@ -113,3 +113,12 @@ describe('PfColumn.headerExtra (phone)', () => {
     expect(onRowClick).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('row click with a focusable row', () => {
+  it('still selects when the row itself carries tabindex=0 (rowAttrs)', () => {
+    const onRowClick = vi.fn()
+    setup({ onRowClick, rowAttrs: () => ({ tabindex: '0' }), rowTestId: (r) => `row-${r.id}` })
+    fireEvent.click(within(screen.getByTestId('row-a')).getByText('Bravo'))
+    expect(onRowClick).toHaveBeenCalledTimes(1)
+  })
+})

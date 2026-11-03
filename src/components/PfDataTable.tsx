@@ -269,7 +269,7 @@ export function PfDataTable<T>({
       ? (e: React.MouseEvent<HTMLElement>) => {
           const t = e.target as Element
           const hit = t.closest?.('a, button, input, label, th, [role=menuitem], [role=button], [role=link], [tabindex]:not([tabindex="-1"]), [data-pf-detail]')
-          if (hit && e.currentTarget.contains(hit)) return
+          if (hit && hit !== e.currentTarget && e.currentTarget.contains(hit)) return
           onRowClick(r)
         }
       : undefined,
