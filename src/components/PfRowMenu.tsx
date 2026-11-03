@@ -44,6 +44,7 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
       if (held) trigger.current?.focus()
     }
     const onScroll = (e: Event) => {
+      // a real user scroll inside the settle window is ignored too: the menu may sit detached until the next scroll
       if (Date.now() - openedAt < SETTLE_MS) return
       if (e.target instanceof Node && popup.current?.contains(e.target)) return
       dismiss()
@@ -56,7 +57,7 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
     return () => {
       document.removeEventListener('mousedown', onDown)
       window.removeEventListener('scroll', onScroll, true)
-      window.removeEventListener('resize', onScroll)
+      window.removeEventListener('resize', onResize)
     }
   }, [open])
 

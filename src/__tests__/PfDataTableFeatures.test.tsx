@@ -395,6 +395,21 @@ describe('row menu', () => {
       expect(screen.getByRole('menu')).toBeTruthy()
     })
 
+    it('a scroll inside the menu does not close it', () => {
+      open(); settle()
+      fireEvent.scroll(screen.getByRole('menu'))
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('reopening after a width change leaves no stale resize listener', () => {
+      open(); settle()
+      resizeTo(window.innerWidth + 100, window.innerHeight)
+      expect(screen.queryByRole('menu')).toBeNull()
+      fireEvent.click(trigger('r1')); settle()
+      resizeTo(window.innerWidth, window.innerHeight - 80)
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
     it('a resize that changes width (rotation) closes it', () => {
       open(); settle()
       resizeTo(window.innerWidth + 100, window.innerHeight)
