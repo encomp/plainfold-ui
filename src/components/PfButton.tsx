@@ -16,6 +16,10 @@ interface PfButtonProps {
   type?: 'button' | 'submit' | 'reset'
   style?: React.CSSProperties
   'aria-label'?: string
+  'aria-expanded'?: boolean
+  'aria-controls'?: string
+  'aria-haspopup'?: boolean | 'menu' | 'listbox' | 'dialog'
+  'aria-pressed'?: boolean
   'data-testid'?: string
 }
 
@@ -89,6 +93,10 @@ export function PfButton({
   type = 'button',
   style,
   'aria-label': ariaLabel,
+  'aria-expanded': ariaExpanded,
+  'aria-controls': ariaControls,
+  'aria-haspopup': ariaHasPopup,
+  'aria-pressed': ariaPressed,
   'data-testid': dataTestId,
 }: PfButtonProps) {
   const [hovered, setHovered] = useState(false)
@@ -124,6 +132,10 @@ export function PfButton({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-label={ariaLabel}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
+      aria-haspopup={ariaHasPopup}
+      aria-pressed={ariaPressed}
       aria-describedby={showReason ? reasonId : undefined}
       data-testid={dataTestId}
     >

@@ -131,4 +131,17 @@ describe('PfButton', () => {
     render(<PfButton variant="primary" loading>Save</PfButton>)
     expect(screen.getByRole('button').style.background).toBe('var(--pf-accent)')
   })
+
+  it('passes disclosure aria attributes through', () => {
+    render(
+      <PfButton aria-expanded={true} aria-controls="x" aria-haspopup="menu" aria-pressed={false}>
+        Menu
+      </PfButton>,
+    )
+    const b = screen.getByRole('button')
+    expect(b).toHaveAttribute('aria-expanded', 'true')
+    expect(b).toHaveAttribute('aria-controls', 'x')
+    expect(b).toHaveAttribute('aria-haspopup', 'menu')
+    expect(b).toHaveAttribute('aria-pressed', 'false')
+  })
 })
