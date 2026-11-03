@@ -17,6 +17,8 @@ interface Props {
 
 // Above dialogs and sheets (z-index 100), below snackbars (9999).
 const MENU_Z_INDEX = 1000
+// Scrolls this soon after opening are the browser scrolling the focused item into view, not the user.
+const SETTLE_MS = 150
 
 /** Internal: the "⋯" trigger and menu popup of PfDataTable rows. */
 export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
@@ -28,21 +30,29 @@ export function PfRowMenu({ items, label, testId, popupTestId }: Props) {
   useEffect(() => {
     if (!open) return
     popup.current?.querySelector<HTMLElement>('[role=menuitem]')?.focus()
+    const openedAt = Date.now()
+    const openWidth = window.innerWidth
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node
       if (popup.current?.contains(t) || trigger.current?.contains(t)) return
       setOpen(false)
     }
-    const onScroll = (e: Event) => {
-      if (e.target instanceof Node && popup.current?.contains(e.target)) return
+    const dismiss = () => {
       // the focused item is about to unmount: keep focus on the trigger instead of losing it
       const held = popup.current?.contains(document.activeElement)
       setOpen(false)
       if (held) trigger.current?.focus()
     }
+    const onScroll = (e: Event) => {
+      if (Date.now() - openedAt < SETTLE_MS) return
+      if (e.target instanceof Node && popup.current?.contains(e.target)) return
+      dismiss()
+    }
+    // phone URL bar / keyboard only change the height; rotation changes the width
+    const onResize = () => { if (window.innerWidth !== openWidth) dismiss() }
     document.addEventListener('mousedown', onDown)
     window.addEventListener('scroll', onScroll, true)
-    window.addEventListener('resize', onScroll)
+    window.addEventListener('resize', onResize)
     return () => {
       document.removeEventListener('mousedown', onDown)
       window.removeEventListener('scroll', onScroll, true)

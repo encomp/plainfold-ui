@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import React from 'react'
-import { render, screen, within, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, within, fireEvent, cleanup, act } from '@testing-library/react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfDataTable } from '../components/PfDataTable'
 import type { PfDataTableProps } from '../components/PfDataTable'
@@ -365,16 +365,42 @@ describe('row menu', () => {
     expect(document.activeElement).toBe(trigger('r1'))
   })
 
-  it('scroll and resize close the menu and keep focus on the trigger', () => {
-    setup(props())
-    fireEvent.click(trigger('r1'))
-    fireEvent.scroll(window)
-    expect(screen.queryByRole('menu')).toBeNull()
-    expect(document.activeElement).toBe(trigger('r1'))
-    fireEvent.click(trigger('r1'))
-    fireEvent(window, new Event('resize'))
-    expect(screen.queryByRole('menu')).toBeNull()
-    expect(document.activeElement).toBe(trigger('r1'))
+  describe('scroll and resize while the menu is open', () => {
+    beforeEach(() => { vi.useFakeTimers() })
+    const { innerWidth: w0, innerHeight: h0 } = window
+    afterEach(() => { vi.useRealTimers(); Object.assign(window, { innerWidth: w0, innerHeight: h0 }) })
+    const open = () => { setup(props()); fireEvent.click(trigger('r1')) }
+    const settle = () => { act(() => { vi.advanceTimersByTime(300) }) }
+    const resizeTo = (w: number, h: number) => {
+      Object.assign(window, { innerWidth: w, innerHeight: h })
+      fireEvent(window, new Event('resize'))
+    }
+
+    it('a page scroll after the settle window closes the menu and keeps focus on the trigger', () => {
+      open(); settle()
+      fireEvent.scroll(window)
+      expect(screen.queryByRole('menu')).toBeNull()
+      expect(document.activeElement).toBe(trigger('r1'))
+    })
+
+    it('a scroll during the open settle window (focus scroll) keeps it open', () => {
+      open()
+      fireEvent.scroll(window)
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('a resize that only changes height (URL bar, keyboard) keeps it open', () => {
+      open(); settle()
+      resizeTo(window.innerWidth, window.innerHeight - 80)
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('a resize that changes width (rotation) closes it', () => {
+      open(); settle()
+      resizeTo(window.innerWidth + 100, window.innerHeight)
+      expect(screen.queryByRole('menu')).toBeNull()
+      expect(document.activeElement).toBe(trigger('r1'))
+    })
   })
 
   it('flips above the trigger near the bottom of the viewport', () => {
