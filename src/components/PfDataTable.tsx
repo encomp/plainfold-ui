@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfRowMenu } from './PfRowMenu'
@@ -67,6 +67,8 @@ export interface PfDataTableProps<T> {
     bar?: (count: number) => ReactNode
     testId?: (r: T) => string
     allTestId?: string
+    /** disables select-all and announces this text as its description (e.g. rows locked while a job runs) */
+    allDisabledReason?: string
   }
   /** omit the checkbox of rows `selection.isSelectable` rules out (cap-disabled boxes stay) */
   hideDisabledSelection?: boolean
@@ -200,6 +202,7 @@ export function PfDataTable<T>({
   const allChecked = selectable.length > 0 && pageSelected.length === selectable.length
   const partial = pageSelected.length > 0 && !allChecked
   const allRef = useRef<HTMLInputElement>(null)
+  const reasonId = useId()
   useEffect(() => {
     if (allRef.current) allRef.current.indeterminate = partial
   })
@@ -225,10 +228,15 @@ export function PfDataTable<T>({
     else next.add(id)
     selection.onChange(next)
   }
+  const allReason = selection?.allDisabledReason
   const selectAllBox = (extra?: CSSProperties) => (
-    <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
-      checked={allChecked} disabled={selectable.length === 0 || (atCap && !allChecked && !partial)} onChange={toggleAll}
-      style={{ ...checkboxStyle, ...extra }} />
+    <>
+      <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
+        checked={allChecked} onChange={toggleAll} aria-describedby={allReason ? reasonId : undefined}
+        disabled={!!allReason || selectable.length === 0 || (atCap && !allChecked && !partial)}
+        style={{ ...checkboxStyle, ...extra }} />
+      {allReason && <span id={reasonId} style={srOnly}>{allReason}</span>}
+    </>
   )
   const rowBox = (r: T) => {
     if (hideDisabledSelection && !(selection?.isSelectable?.(r) ?? true)) return null

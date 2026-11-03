@@ -146,6 +146,15 @@ describe('selection', () => {
     expect(screen.getByRole('checkbox', { name: 'Select Name 4' })).toBeDisabled()
   })
 
+  it.each(['desktop', 'mobile'] as const)('allDisabledReason disables select-all and describes why (%s)', (bp) => {
+    vi.mocked(useBreakpoint).mockReturnValue(bp)
+    const onChange = vi.fn()
+    setup({ selection: sel([], onChange, { allDisabledReason: 'A job is running' }) })
+    expect(all()).toBeDisabled()
+    expect(all()).toHaveAccessibleDescription('A job is running')
+    expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).not.toBeDisabled()
+  })
+
   it('count bar shows only when something is selected', () => {
     const { rerender } = setup({ selection: sel([], vi.fn(), { bar: (n: number) => <b>bar {n}</b> }) })
     expect(screen.queryByText(/selected/)).toBeNull()
