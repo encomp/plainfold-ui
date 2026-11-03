@@ -47,6 +47,11 @@ describe('PfCard', () => {
     expect(card.style.transform).toBe('none')
   })
 
+  it('meta without a title still sits on the right', () => {
+    render(<PfCard meta="November 2026">x</PfCard>)
+    expect(screen.getByText('November 2026').style.marginLeft).toBe('auto')
+  })
+
   it('renders title, meta and footer', () => {
     render(<PfCard title="Spend this month" meta="November 2026" footer={<a href="/b">Budgets</a>}>x</PfCard>)
     expect(screen.getByRole('heading', { level: 2, name: 'Spend this month' })).toBeInTheDocument()

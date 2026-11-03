@@ -1,4 +1,5 @@
 import React from 'react'
+import { pfText } from '../tokens/type'
 
 type PfBadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'muted'
 
@@ -42,7 +43,7 @@ export function PfBadge({
 }: PfBadgeProps) {
   const style: React.CSSProperties = {
     borderRadius: 'var(--pf-radius-sm)',
-    fontSize: '11px',
+    fontSize: pfText.label,
     padding: '2px 8px',
     fontWeight: 500,
     display: 'inline-flex',

@@ -1,6 +1,6 @@
 # @plainfold/ui
 
-Material Design 3 component library for the Plainfold ecosystem. 28 components covering core, feedback, overlay, form, navigation, data display, and utility categories.
+Material Design 3 component library for the Plainfold ecosystem. Components covering core, feedback, overlay, form, navigation, data display, and utility categories.
 
 ## Architecture
 
@@ -15,13 +15,19 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 ## Public API
 
 ### Core
-- **PfButton** — variants: primary, secondary, ghost, danger. Sizes: sm, md, lg. Loading state.
-- **PfCard** — surface container with padding sizes and hoverable elevation
-- **PfBadge** — status labels: default, success, warning, danger, muted
+- **pfText** — the six text sizes as CSS values with px fallbacks (`page` 24, `section` 17, `card` 15, `body` 14, `meta` 13, `label` 12); components use these and no other font size
+- **PfButton** — variants: primary, secondary, quiet, ghost, danger. Sizes: sm, md, lg. Loading state. `disabled` renders grey surface + muted text (never a pale accent); `reason` shows why it is disabled as text beside the button (linked with `aria-describedby`)
+- **PfActionLink** — the action link, "Place →": accent text, no underline until hover/focus
+- **PfPageHeader** — page title row with optional back link ("← Parent"), subtitle and actions; wraps on phones
+- **PfTabs** — tab list that scrolls sideways when it does not fit
+- **PfCard** — surface container with padding sizes and hoverable elevation; optional `title`, `meta` (right-aligned, also without a title) and `footer`
+- **PfBadge** — status labels: default, success, warning, danger, muted; `outline` and `dashed` variations
+- **PfStatus** — status text with a `tone` (`ok`, `warn`, `off`, `danger`, `busy`)
 
 ### Feedback
 - **PfLinearProgress** — determinate progress bar with aria attributes
-- **PfEmptyState** — centered icon + heading + subtext + optional action
+- **PfEmptyState** — icon + heading + subtext + optional actions; centered by default, `left` aligns it to the start
+- **PfEmptyLine** — one-line empty note for small areas where a full empty state is too large
 - **PfSnackbar** — toast with auto-hide and optional action. Props: `open`, `onClose`
 - **PfTooltip** — Radix Tooltip wrapper; optional controlled `open` / `onOpenChange`
 
@@ -33,7 +39,10 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 ### Form
 - **PfForm** — FormProvider wrapper with zodResolver
 - **PfFormTextField** — text input connected to react-hook-form
-- **PfFormSelect** — Radix Select connected to react-hook-form. Props: `options=[{label, value}]`
+- **PfSelect** — select with `options=[{label, value}]`, a required `name`, `invalid` and `describedBy`
+- **PfFormSelect** — PfSelect connected to react-hook-form. Props: `options=[{label, value}]`
+- **PfCheckbox** — checkbox with label, accent colour and focus-visible ring; disabled dims the input itself
+- **PfToggleGroup** — group of toggle buttons for choosing among a few options
 - **PfFormSlider** — Radix Slider connected to react-hook-form
 - **PfRadio** — native radio input in a label with optional `description`; `onChange(value)`, accent colour, focus-visible ring
 - **PfFormSwitch** — Radix Switch connected to react-hook-form
@@ -52,7 +61,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfStageBar** — stateless stage bar: one segment per step (`done`, `current` with `progress` 0–1, `todo`, `optional`), optional `currentLabel` after the bar; `role="list"` with per-step aria-labels and `aria-current="step"`
 - **PfStepCards** — stateless step cards in a responsive grid: per step `title`, `state` (`done`, `current`, `todo`, `skipped`), optional `tag`, `count`, `cost`, `note` and an `action` slot; `currentId` picks the highlighted card (`aria-current="step"`); `role="list"` with `"<title>, <state>"` aria-labels
 - **PfCompareTable** — stateless comparison table, generic over the column type: `columns`, `getColumnId`, `renderColumnHeader`, `rows` (`id`, `label`, optional `group` heading per run, `get`, optional `value`, `best` `max`/`min`, `tone`). Real `<table>` in an `overflow-x: auto` container, sticky first column; best cells bold positive with hidden "best", `bad` cells negative with hidden "fails" (never colour alone). `onlyDifferences` (controlled) hides rows equal across columns; `emptyState` for no columns or when `onlyDifferences` hides every row; NaN counts as null; optional `aria-label` names the scroll region (then a focusable `role="region"`; without it the container is neither focusable nor a landmark) and is not repeated on the table; `ok`/`warning` tones also carry a hidden word per cell
-- **PfModelPicker** — controlled provider + model pair of native selects in a `role="group"` (`label`, default "Model"); changing the provider emits its first model; `disabled` providers show `disabledNote`; model `note` (e.g. a price) follows the label
+- **PfModelPicker** — controlled provider + model pair of PfSelects in a `role="group"` (`label`, default "Model"); changing the provider emits its first model; `disabled` providers show `disabledNote`; model `note` (e.g. a price) follows the label
 - **PfChatPanel** — controlled chat column: `mode` `hidden` (renders nothing) / `docked` (resizable, `width` 280–720 via `role="separator"`, pointer or ←/→) / `expanded` (shows `summary`); docked is full-screen on phones. Messages in a `role="log"` (meta, sources, pending, error, `renderMessageActions`), composer (Enter sends, Shift+Enter newline), `⋯` menu from `menuItems`, slots `header`/`context`/`footer`/`emptyState`. Escape stays inside the panel. Optional per-message `steps` (`{id,label,state: running|done|error}`: live `role="status"` list while pending, folded into a closed "<n> steps" details when done, an error step stays visible), `sourcesLabel` (default "Sources"), `question` (`{text, choices?, onChoose?}`: one button per choice, disabled after the first pick) and `stopped` (`{message, onContinue}`: message plus a Continue button, `data-testid="chat-panel-continue"`). Optional `costMeter` (`{spentUsd, ceilingUsd, label?}`: `role="meter"` above the messages, "$0.07 of $0.25", warning colour from 80%, danger at 100%, bar and `aria-valuenow` clamp at the ceiling). Optional `slashItems` (`{id,name,description,whoLabel}[]`) + `onSlashSelect`: a draft matching `^/\S*$` opens a listbox above the composer of items whose name starts with the typed text; ↑/↓ move, Enter or click sets the draft to `/name ` and calls `onSlashSelect`, Escape closes; the textarea stays a plain textarea (no `role="combobox"`; only `aria-controls` + `aria-autocomplete="list"`) and a visually hidden polite `role="status"` announces the highlighted item; without `slashItems` (or with none matching) `/` is plain text. Small lines (meta, sources, steps) use the secondary text colour (not the muted one) for AA contrast: a deliberate default change. Plain-text answers; no markdown Header title never shrinks (`flexShrink:0`, `nowrap`); the `header` slot sits in a flex-wrap container taking the remaining space.
 
 ### Misc
@@ -63,6 +72,14 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **useBreakpoint()** — returns 'mobile' | 'tablet' | 'desktop'
 - **cn()** — clsx wrapper
 - **getMotionConfig()** — respects prefers-reduced-motion + --pf-motion-intensity
+
+## Design rules
+
+- **Three link kinds.** Action link (`PfActionLink`, "Place →"): accent text, no underline until hover/focus. Back link ("← Parent", in `PfPageHeader`). Underlined text link: only inside a sentence. No "Settings ›" style text.
+- **One primary button per view.** Everything else is secondary, ghost or quiet.
+- **Disabled = grey + reason.** A disabled button is a grey surface with muted text, never a pale accent, and says why via `reason`.
+- **Six text sizes.** Use `pfText` (page 24, section 17, card 15, body 14, meta 13, label 12); no literal `fontSize` in components.
+- **Contrast.** `src/__tests__/kitContrast.test.ts` checks the kit's colour pairings (action link, disabled text, checked toggle) against every bundled theme at 4.5:1, with an explicit allow-list of known theme failures.
 
 ## Key Decisions
 

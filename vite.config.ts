@@ -23,5 +23,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
+    // design-tokens pulls in @plainfold/store, whose optional peer dexie is not installed; no test uses the store
+    server: { deps: { inline: [/@plainfold\//] } },
+    alias: { dexie: resolve(__dirname, 'src/__tests__/dexieStub.ts') },
   },
 })

@@ -8,7 +8,7 @@ describe('PfBadge', () => {
     const badge = screen.getByTestId('badge')
     expect(badge).toBeInTheDocument()
     expect(badge).toHaveTextContent('Active')
-    expect(badge.style.fontSize).toBe('11px')
+    expect(badge.style.fontSize).toBe('var(--pf-text-label, 12px)')
   })
 
   it('renders all variants', () => {
