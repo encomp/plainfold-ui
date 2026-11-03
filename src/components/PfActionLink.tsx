@@ -44,7 +44,7 @@ export function PfActionLink({
         }}
         {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         onClick={external ? undefined : (e) => handleNavClick(e, href, onNavigate)}
-        aria-label={ariaLabel}
+        aria-label={ariaLabel && external ? `${ariaLabel} (opens in a new tab)` : ariaLabel}
         data-testid={dataTestId}
       >
         {back && <span aria-hidden="true">← </span>}

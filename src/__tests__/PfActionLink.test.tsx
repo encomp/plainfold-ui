@@ -62,4 +62,8 @@ describe('PfActionLink', () => {
     expect(a).not.toHaveAttribute('rel')
     expect(a.textContent).not.toContain('new tab')
   })
+  it('external appends the new-tab note to an aria-label', () => {
+    render(<PfActionLink external href="#d" aria-label="Read the docs">Docs</PfActionLink>)
+    expect(screen.getByRole('link')).toHaveAttribute('aria-label', 'Read the docs (opens in a new tab)')
+  })
 })
