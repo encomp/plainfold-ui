@@ -37,6 +37,13 @@ describe('PfCheckbox', () => {
     expect(style).not.toContain('opacity')
   })
 
+  it('aligns the box to the first line of a multi-line label', () => {
+    render(<PfCheckbox checked onChange={() => {}} label={<span>Line one{'\n'}line two</span>} />)
+    const label = screen.getByText('Line one', { exact: false }).closest('label')!
+    expect(label.getAttribute('style')).toContain('align-items: flex-start')
+    expect(screen.getByRole('checkbox')).toHaveStyle({ marginTop: '1px' })
+  })
+
   it('passes aria-disabled and aria-describedby to the input', () => {
     render(<PfCheckbox checked onChange={() => {}} aria-label="x" aria-disabled aria-describedby="why" />)
     const input = screen.getByRole('checkbox')

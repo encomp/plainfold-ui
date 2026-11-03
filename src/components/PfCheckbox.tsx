@@ -43,6 +43,7 @@ export function PfCheckbox({
     if (ref.current) ref.current.indeterminate = indeterminate
   }, [indeterminate])
 
+  const labelled = label != null
   const input = (
     <input
       ref={ref}
@@ -55,6 +56,7 @@ export function PfCheckbox({
       aria-disabled={ariaDisabled}
       aria-describedby={ariaDescribedBy}
       data-testid={dataTestId}
+      style={labelled ? { marginTop: '1px' } : undefined}
       onChange={(e) => onChange(e.target.checked)}
     />
   )
@@ -62,13 +64,13 @@ export function PfCheckbox({
   return (
     <>
       <style>{css}</style>
-      {label == null ? (
+      {!labelled ? (
         input
       ) : (
         <label
           style={{
             display: 'inline-flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             gap: '8px',
             fontFamily: 'var(--pf-font-ui)',
             fontSize: pfText.body,
