@@ -163,8 +163,11 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
         <div role="progressbar" aria-label={`${r.label} spent`} aria-valuemin={0} aria-valuemax={limit}
           aria-valuenow={Math.min(Math.max(r.actual, 0), limit)}
           aria-valuetext={`${format(r.actual)} of ${format(limit)}`}
+          // segmented fills keep their caller colours, so an over-limit track is marked by a danger outline instead
+          data-over={over && segs ? 'true' : undefined}
           style={{ display: 'flex', height: 10, overflow: 'hidden', borderRadius: 5,
-            background: 'var(--pf-bg-surface-alt)', border: '1px solid var(--pf-border)' }}>
+            background: 'var(--pf-bg-surface-alt)',
+            border: over && segs ? '2px solid var(--pf-danger)' : '1px solid var(--pf-border)' }}>
           {segs ? segs.map((s, i) => (
             <div key={`${s.label}:${i}`} title={`${s.label} ${format(s.value)}`}
               data-separator={i < segs.length - 1 ? 'true' : undefined}

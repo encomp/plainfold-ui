@@ -164,6 +164,15 @@ describe('PfBudgetBars segments', () => {
     expect(w.reduce((a, b) => a + b, 0)).toBeCloseTo(100)
     expect(row('s')).toHaveTextContent('⚠')
   })
+  it('over limit with segments: the track gets a danger outline; within limit it does not', () => {
+    const { unmount } = setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4, limit: 2, segments: segs }] })
+    expect(bar('Seg spent').style.border).toContain('var(--pf-danger)')
+    expect(bar('Seg spent')).toHaveAttribute('data-over', 'true')
+    unmount()
+    setup({ testIdPrefix: 'bb', rows: [{ id: 's', label: 'Seg', actual: 4, limit: 8, segments: segs }] })
+    expect(bar('Seg spent').style.border).not.toContain('var(--pf-danger)')
+    expect(bar('Seg spent')).not.toHaveAttribute('data-over')
+  })
 })
 
 describe('PfBudgetBars editing', () => {
