@@ -52,7 +52,7 @@ export function PfPageHeader({
           {title}
         </h1>
         {context && (
-          <span style={{ fontSize: pfText.meta, color: 'var(--pf-text-muted)' }}>{context}</span>
+          <span style={{ fontSize: pfText.meta, color: 'var(--pf-text-secondary)' }}>{context}</span>
         )}
       </div>
       {actions && <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>{actions}</div>}

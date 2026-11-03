@@ -38,7 +38,7 @@ export function PfFormSwitch({
 
   const descriptionStyle: React.CSSProperties = {
     fontSize: '12px',
-    color: 'var(--pf-text-muted)',
+    color: 'var(--pf-text-secondary)',
     fontFamily: 'var(--pf-font-ui)',
     marginTop: '2px',
   }

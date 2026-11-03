@@ -46,7 +46,7 @@ describe('PfActionLink', () => {
     expect(a.getAttribute('style')).toContain('text-decoration: none')
     expect(container.querySelector('style')?.textContent).toContain(':focus-visible')
     rerender(<PfActionLink kind="back" href="/a">A</PfActionLink>)
-    expect(screen.getByRole('link').getAttribute('style')).toContain('--pf-text-muted')
+    expect(screen.getByRole('link').getAttribute('style')).toContain('--pf-text-secondary')
   })
   it('external opens a new tab safely, never calls onNavigate, and announces it', () => {
     const nav = vi.fn()

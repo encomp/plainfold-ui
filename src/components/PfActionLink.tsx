@@ -36,7 +36,7 @@ export function PfActionLink({
         href={href}
         className={back ? 'pf-action-link pf-action-link-back' : 'pf-action-link'}
         style={{
-          color: back ? 'var(--pf-text-muted)' : 'var(--pf-accent-text, var(--pf-accent))',
+          color: back ? 'var(--pf-text-secondary)' : 'var(--pf-accent-text, var(--pf-accent))',
           fontSize: pfText.meta,
           fontWeight: 500,
           textDecoration: 'none',

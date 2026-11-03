@@ -30,7 +30,7 @@ const variantStyles: Record<PfBadgeVariant, React.CSSProperties> = {
   },
   muted: {
     background: 'var(--pf-bg-surface-alt)',
-    color: 'var(--pf-text-muted)',
+    color: 'var(--pf-text-secondary)',
   },
 }
 

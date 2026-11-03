@@ -156,7 +156,7 @@ export function PfButton({
       {showReason ? (
         <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
           {button}
-          <span id={reasonId} style={{ fontSize: pfText.meta, color: 'var(--pf-text-muted)' }}>
+          <span id={reasonId} style={{ fontSize: pfText.meta, color: 'var(--pf-text-secondary)' }}>
             {reason}
           </span>
         </span>

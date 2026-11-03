@@ -36,6 +36,8 @@ function contrastRatio(hexA: string, hexB: string): number {
 const PAIRS = [
   { name: 'action link on surface', fg: 'var(--pf-accent-text, var(--pf-accent))', bg: 'var(--pf-bg-surface)' },
   { name: 'action link on base', fg: 'var(--pf-accent-text, var(--pf-accent))', bg: 'var(--pf-bg-base)' },
+  { name: 'secondary text on surface', fg: 'var(--pf-text-secondary)', bg: 'var(--pf-bg-surface)' },
+  { name: 'secondary text on base', fg: 'var(--pf-text-secondary)', bg: 'var(--pf-bg-base)' },
   { name: 'disabled button text', fg: 'var(--pf-text-muted)', bg: 'var(--pf-bg-surface-alt)' },
   { name: 'checked toggle text', fg: 'var(--pf-on-accent, var(--pf-bg-base))', bg: 'var(--pf-accent)' },
 ] as const

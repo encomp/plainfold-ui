@@ -46,7 +46,7 @@ export function PfNavBar({
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: isActive ? 'var(--pf-accent-text, var(--pf-accent))' : 'var(--pf-text-muted)',
+    color: isActive ? 'var(--pf-accent-text, var(--pf-accent))' : 'var(--pf-text-secondary)',
     fontFamily: 'var(--pf-font-ui)',
     fontSize: '0.65rem',
     fontWeight: isActive ? 600 : 400,

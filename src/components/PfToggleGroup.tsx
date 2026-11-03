@@ -47,7 +47,7 @@ export function PfToggleGroup({
             background: disabled ? 'var(--pf-bg-surface-alt)' : pressed ? 'var(--pf-accent)' : 'var(--pf-bg-surface)',
             color: disabled
               ? pressed ? 'var(--pf-text-primary)' : 'var(--pf-text-muted)'
-              : pressed ? 'var(--pf-on-accent, var(--pf-bg-base))' : 'var(--pf-text-muted)',
+              : pressed ? 'var(--pf-on-accent, var(--pf-bg-base))' : 'var(--pf-text-secondary)',
             cursor: disabled ? 'not-allowed' : 'pointer',
           }
           return (

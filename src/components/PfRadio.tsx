@@ -65,7 +65,7 @@ export function PfRadio({
           />
           <span id={labelId} style={{ fontSize: pfText.body, fontWeight: 600, paddingRight: '20px' }}>{label}</span>
           {description != null && (
-            <span id={descId} style={{ fontSize: pfText.meta, color: 'var(--pf-text-muted)' }}>{description}</span>
+            <span id={descId} style={{ fontSize: pfText.meta, color: 'var(--pf-text-secondary)' }}>{description}</span>
           )}
           {checked && (
             <svg

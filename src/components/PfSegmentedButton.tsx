@@ -31,7 +31,7 @@ export function PfSegmentedButton({
     return {
       ...sizeStyles[size],
       background: isActive ? 'var(--pf-accent)' : 'transparent',
-      color: isActive ? 'var(--pf-on-accent, var(--pf-bg-base))' : 'var(--pf-text-muted)',
+      color: isActive ? 'var(--pf-on-accent, var(--pf-bg-base))' : 'var(--pf-text-secondary)',
       fontWeight: isActive ? 600 : 400,
       border: '1px solid var(--pf-border)',
       borderRadius: 'var(--pf-radius-sm)',

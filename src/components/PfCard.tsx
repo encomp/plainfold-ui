@@ -63,7 +63,7 @@ export function PfCard({
               {title}
             </h2>
           )}
-          {meta && <span style={{ fontSize: pfText.meta, color: 'var(--pf-text-muted)', ...(title ? {} : { marginLeft: 'auto' }) }}>{meta}</span>}
+          {meta && <span style={{ fontSize: pfText.meta, color: 'var(--pf-text-secondary)', ...(title ? {} : { marginLeft: 'auto' }) }}>{meta}</span>}
         </div>
       )}
       {children}

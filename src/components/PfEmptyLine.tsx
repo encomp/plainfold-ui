@@ -10,7 +10,7 @@ export function PfEmptyLine({ children, 'data-testid': dataTestId }: PfEmptyLine
   return (
     <p
       data-testid={dataTestId}
-      style={{ margin: 0, fontSize: pfText.body, color: 'var(--pf-text-muted)' }}
+      style={{ margin: 0, fontSize: pfText.body, color: 'var(--pf-text-secondary)' }}
     >
       {children}
     </p>

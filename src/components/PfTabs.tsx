@@ -47,7 +47,7 @@ export function PfTabs({ items, current, 'aria-label': ariaLabel, onNavigate }: 
               fontSize: pfText.body,
               fontWeight: 500,
               textDecoration: 'none',
-              color: active ? 'var(--pf-text-primary)' : 'var(--pf-text-muted)',
+              color: active ? 'var(--pf-text-primary)' : 'var(--pf-text-secondary)',
               borderBottom: active ? '2px solid var(--pf-accent-text, var(--pf-accent))' : '2px solid transparent',
               marginBottom: '-1px',
             }}
