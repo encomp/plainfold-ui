@@ -130,4 +130,12 @@ describe('PfNavDrawer', () => {
       expect(screen.queryByText('Foot')).toBeNull()
     })
   })
+
+  it('switching the active item logs no mixed-border style warning', () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { rerender } = render(<PfNavDrawer items={items} onNavigate={() => {}} activeItemId="home" />)
+    rerender(<PfNavDrawer items={items} onNavigate={() => {}} activeItemId="settings" />)
+    expect(err.mock.calls.flat().join(' ')).not.toMatch(/conflicting property/)
+    err.mockRestore()
+  })
 })

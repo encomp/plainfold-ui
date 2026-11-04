@@ -57,4 +57,12 @@ describe('PfNavBar', () => {
     )
     expect(screen.queryByTestId('nav-more')).not.toBeInTheDocument()
   })
+
+  it('switching the active item logs no mixed-border style warning', () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { rerender } = render(<PfNavBar items={items} onNavigate={() => {}} activeItemId="home" />)
+    rerender(<PfNavBar items={items} onNavigate={() => {}} activeItemId="settings" />)
+    expect(err.mock.calls.flat().join(' ')).not.toMatch(/conflicting property/)
+    err.mockRestore()
+  })
 })
