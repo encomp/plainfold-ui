@@ -42,13 +42,9 @@ const PAIRS = [
   { name: 'checked toggle text', fg: 'var(--pf-on-accent, var(--pf-bg-base))', bg: 'var(--pf-accent)' },
 ] as const
 
-// Known failures in the bundled themes (public theme contrast is tracker item t-pf-contrast).
+// Known failures in the bundled themes (none: the bundled themes pass).
 // Themes are not edited here; any failure not listed fails the test, and a listed pair that now passes fails too.
-const KNOWN_FAILURES: Record<string, string[]> = {
-  midnight: ['disabled button text'],
-  focus: ['disabled button text'],
-  linen: ['disabled button text'],
-}
+const KNOWN_FAILURES: Record<string, string[]> = {}
 
 describe('kit contrast on bundled themes', () => {
   it('has bundled themes', () => {
