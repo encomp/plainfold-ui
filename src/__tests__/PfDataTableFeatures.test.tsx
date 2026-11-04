@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import React from 'react'
-import { render, screen, within, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, within, fireEvent, cleanup, act } from '@testing-library/react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfDataTable } from '../components/PfDataTable'
 import type { PfDataTableProps } from '../components/PfDataTable'
@@ -131,6 +131,40 @@ describe('selection', () => {
     setup({ selection: sel([], vi.fn(), { isSelectable: (r: Row) => r.id !== 'r2' }) })
     expect(screen.getByRole('checkbox', { name: 'Select Name 2' })).toBeDisabled()
     expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).not.toBeDisabled()
+  })
+
+  it.each(['desktop', 'mobile'] as const)('hideDisabledSelection omits unselectable rows\' checkboxes (%s)', (bp) => {
+    vi.mocked(useBreakpoint).mockReturnValue(bp)
+    setup({ hideDisabledSelection: true, selection: sel([], vi.fn(), { isSelectable: (r: Row) => r.id !== 'r2' }) })
+    expect(screen.queryByRole('checkbox', { name: 'Select Name 2' })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).toBeInTheDocument()
+    expect(screen.getByTestId('row-r2')).toBeInTheDocument()
+  })
+
+  it('hideDisabledSelection keeps cap-disabled checkboxes', () => {
+    setup({ rows: mk(5), hideDisabledSelection: true, selection: sel(['r1', 'r2', 'r3'], vi.fn(), { cap: 3 }) })
+    expect(screen.getByRole('checkbox', { name: 'Select Name 4' })).toBeDisabled()
+  })
+
+  it.each(['desktop', 'mobile'] as const)('allDisabledReason disables select-all and describes why (%s)', (bp) => {
+    vi.mocked(useBreakpoint).mockReturnValue(bp)
+    const onChange = vi.fn()
+    setup({ selection: sel([], onChange, { allDisabledReason: 'A job is running' }) })
+    expect(all()).toBeDisabled()
+    expect(all()).toHaveAccessibleDescription('A job is running')
+    expect(screen.getByRole('checkbox', { name: 'Select Name 1' })).not.toBeDisabled()
+  })
+
+  it('allDisabledReason is visible text on phones and a title on desktop', () => {
+    setup({ selection: sel([], vi.fn(), { allDisabledReason: 'A job is running' }) })
+    expect(all()).toHaveAttribute('title', 'A job is running')
+    cleanup()
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    setup({ selection: sel([], vi.fn(), { allDisabledReason: 'A job is running' }) })
+    expect(screen.getByText('A job is running')).toBeVisible()
+    expect(screen.getByText('A job is running').style.position).not.toBe('absolute')
+    const label = screen.getByText('Select all')
+    expect(label.compareDocumentPosition(screen.getByText('A job is running')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('count bar shows only when something is selected', () => {
@@ -331,16 +365,57 @@ describe('row menu', () => {
     expect(document.activeElement).toBe(trigger('r1'))
   })
 
-  it('scroll and resize close the menu and keep focus on the trigger', () => {
-    setup(props())
-    fireEvent.click(trigger('r1'))
-    fireEvent.scroll(window)
-    expect(screen.queryByRole('menu')).toBeNull()
-    expect(document.activeElement).toBe(trigger('r1'))
-    fireEvent.click(trigger('r1'))
-    fireEvent(window, new Event('resize'))
-    expect(screen.queryByRole('menu')).toBeNull()
-    expect(document.activeElement).toBe(trigger('r1'))
+  describe('scroll and resize while the menu is open', () => {
+    beforeEach(() => { vi.useFakeTimers() })
+    const { innerWidth: w0, innerHeight: h0 } = window
+    afterEach(() => { vi.useRealTimers(); Object.assign(window, { innerWidth: w0, innerHeight: h0 }) })
+    const open = () => { setup(props()); fireEvent.click(trigger('r1')) }
+    const settle = () => { act(() => { vi.advanceTimersByTime(300) }) }
+    const resizeTo = (w: number, h: number) => {
+      Object.assign(window, { innerWidth: w, innerHeight: h })
+      fireEvent(window, new Event('resize'))
+    }
+
+    it('a page scroll after the settle window closes the menu and keeps focus on the trigger', () => {
+      open(); settle()
+      fireEvent.scroll(window)
+      expect(screen.queryByRole('menu')).toBeNull()
+      expect(document.activeElement).toBe(trigger('r1'))
+    })
+
+    it('a scroll during the open settle window (focus scroll) keeps it open', () => {
+      open()
+      fireEvent.scroll(window)
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('a resize that only changes height (URL bar, keyboard) keeps it open', () => {
+      open(); settle()
+      resizeTo(window.innerWidth, window.innerHeight - 80)
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('a scroll inside the menu does not close it', () => {
+      open(); settle()
+      fireEvent.scroll(screen.getByRole('menu'))
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('reopening after a width change leaves no stale resize listener', () => {
+      open(); settle()
+      resizeTo(window.innerWidth + 100, window.innerHeight)
+      expect(screen.queryByRole('menu')).toBeNull()
+      fireEvent.click(trigger('r1')); settle()
+      resizeTo(window.innerWidth, window.innerHeight - 80)
+      expect(screen.getByRole('menu')).toBeTruthy()
+    })
+
+    it('a resize that changes width (rotation) closes it', () => {
+      open(); settle()
+      resizeTo(window.innerWidth + 100, window.innerHeight)
+      expect(screen.queryByRole('menu')).toBeNull()
+      expect(document.activeElement).toBe(trigger('r1'))
+    })
   })
 
   it('flips above the trigger near the bottom of the viewport', () => {

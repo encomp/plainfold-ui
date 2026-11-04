@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfRowMenu } from './PfRowMenu'
@@ -38,7 +38,7 @@ export interface PfColumn<T> {
  * Generic table (cards on phones). Sorting: client mode sorts by `sortValue`; passing
  * `onSortChange` switches to controlled (server) mode where the table never reorders.
  * On phones the "Sort by" select picks a column and uses that column's first direction
- * (`firstDir`, or desc for number/money/date, asc otherwise); there is no direction toggle.
+ * (`firstDir`, or desc for number/money/date, asc otherwise); Ascending/Descending buttons then flip it.
  */
 export interface PfDataTableProps<T> {
   rows: T[]
@@ -67,7 +67,11 @@ export interface PfDataTableProps<T> {
     bar?: (count: number) => ReactNode
     testId?: (r: T) => string
     allTestId?: string
+    /** disables select-all and announces this text as its description (e.g. rows locked while a job runs) */
+    allDisabledReason?: string
   }
+  /** omit the checkbox of rows `selection.isSelectable` rules out (cap-disabled boxes stay) */
+  hideDisabledSelection?: boolean
   selectedId?: string | null
   onRowClick?: (r: T) => void
   /** dimmed rows use the secondary text colour at full opacity */
@@ -170,7 +174,7 @@ export function PfDataTable<T>({
   rows, columns, getRowId, 'data-testid': testId, rowTestId, 'aria-label': ariaLabel,
   emptyState, loading, loadingState, sort, onSortChange, renderCard,
   selection, selectedId, onRowClick, isDimmed, rowAttrs, rowMenu, rowMenuLabel, rowMenuTestId,
-  popupTestId, renderDetail, groupBy, page, onPageChange, total, pageSize, loadMore,
+  popupTestId, renderDetail, groupBy, hideDisabledSelection, page, onPageChange, total, pageSize, loadMore,
 }: PfDataTableProps<T>) {
   const bp = useBreakpoint()
   const controlled = onSortChange !== undefined
@@ -198,6 +202,7 @@ export function PfDataTable<T>({
   const allChecked = selectable.length > 0 && pageSelected.length === selectable.length
   const partial = pageSelected.length > 0 && !allChecked
   const allRef = useRef<HTMLInputElement>(null)
+  const reasonId = useId()
   useEffect(() => {
     if (allRef.current) allRef.current.indeterminate = partial
   })
@@ -223,12 +228,19 @@ export function PfDataTable<T>({
     else next.add(id)
     selection.onChange(next)
   }
-  const selectAllBox = (extra?: CSSProperties) => (
-    <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
-      checked={allChecked} disabled={selectable.length === 0 || (atCap && !allChecked && !partial)} onChange={toggleAll}
-      style={{ ...checkboxStyle, ...extra }} />
+  const allReason = selection?.allDisabledReason
+  const selectAllReason = (style: CSSProperties) => allReason && <span id={reasonId} style={style}>{allReason}</span>
+  const selectAllBox = (extra?: CSSProperties, reasonAfter = false) => (
+    <>
+      <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
+        checked={allChecked} onChange={toggleAll} aria-describedby={allReason ? reasonId : undefined} title={allReason}
+        disabled={!!allReason || selectable.length === 0 || (atCap && !allChecked && !partial)}
+        style={{ ...checkboxStyle, ...extra }} />
+      {!reasonAfter && selectAllReason(srOnly)}
+    </>
   )
   const rowBox = (r: T) => {
+    if (hideDisabledSelection && !(selection?.isSelectable?.(r) ?? true)) return null
     const checked = !!selIds?.has(getRowId(r))
     const disabled = !(selection?.isSelectable?.(r) ?? true) || (!checked && atCap)
     return (
@@ -385,29 +397,44 @@ export function PfDataTable<T>({
         {selection && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13,
             color: 'var(--pf-text-secondary)' }}>
-            {selectAllBox()}
+            {selectAllBox(undefined, true)}
             <span aria-hidden="true">Select all</span>
+            {selectAllReason({})}
           </label>
         )}
         {sortCols.length > 0 && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap',
             fontSize: 13, color: 'var(--pf-text-secondary)' }}>
-            Sort by
-            <select
-              value={current && sortCols.some((c) => c.id === current.id) ? current.id : ''}
-              onChange={(e) => {
-                const col = sortCols.find((c) => c.id === e.target.value)
-                setSort(col ? { id: col.id, dir: firstDirOf(col) } : null)
-              }}
-              style={{ font: 'inherit', padding: '6px 8px', color: 'var(--pf-text-primary)',
-                background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6 }}
-            >
-              <option value="">Default order</option>
-              {sortCols.map((c) => (
-                <option key={c.id} value={c.id}>{typeof c.header === 'string' ? c.header : c.id}</option>
-              ))}
-            </select>
-          </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Sort by
+              <select
+                value={current && sortCols.some((c) => c.id === current.id) ? current.id : ''}
+                onChange={(e) => {
+                  const col = sortCols.find((c) => c.id === e.target.value)
+                  setSort(col ? { id: col.id, dir: firstDirOf(col) } : null)
+                }}
+                style={{ font: 'inherit', padding: '6px 8px', color: 'var(--pf-text-primary)',
+                  background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6 }}
+              >
+                <option value="">Default order</option>
+                {sortCols.map((c) => (
+                  <option key={c.id} value={c.id}>{typeof c.header === 'string' ? c.header : c.id}</option>
+                ))}
+              </select>
+            </label>
+            {current && sortCols.some((c) => c.id === current.id) && (
+            <div role="group" aria-label="Sort direction" style={{ display: 'flex', gap: 8 }}>
+            {(['asc', 'desc'] as const).map((d) => (
+              <button key={d} type="button" aria-pressed={current.dir === d}
+                onClick={() => setSort({ id: current.id, dir: d })}
+                style={{ ...flatButton, fontSize: 13, minHeight: 40, ...(current.dir === d
+                  ? { borderColor: 'var(--pf-accent-text, var(--pf-accent))', fontWeight: 600 } : {}) }}>
+                {d === 'asc' ? 'Ascending' : 'Descending'}
+              </button>
+            ))}
+            </div>
+            )}
+          </div>
         )}
         <div role="list" data-testid={testId} aria-label={ariaLabel}
           style={{ display: 'flex', flexDirection: 'column', gap: 8, ...dimmed }}>
