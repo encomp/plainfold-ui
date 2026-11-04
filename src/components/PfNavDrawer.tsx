@@ -78,16 +78,15 @@ export function PfNavDrawer({
       padding: collapsed ? '10px 0' : '10px 12px',
       justifyContent: collapsed ? 'center' : 'flex-start',
       background: isActive ? 'var(--pf-accent-muted)' : 'transparent',
-      borderLeft: isActive ? '2px solid var(--pf-accent-text, var(--pf-accent))' : '2px solid transparent',
       color: isActive
         ? 'var(--pf-accent-text, var(--pf-accent))'
         : isHovered
           ? 'var(--pf-text-primary)'
           : 'var(--pf-text-secondary)',
-      border: 'none',
-      borderLeftWidth: '2px',
-      borderLeftStyle: 'solid',
-      borderLeftColor: isActive ? 'var(--pf-accent-text, var(--pf-accent))' : 'transparent',
+      // one set of border properties (width, style, colour) so React never mixes a shorthand with its parts
+      borderWidth: '0 0 0 2px',
+      borderStyle: 'solid',
+      borderColor: `transparent transparent transparent ${isActive ? 'var(--pf-accent-text, var(--pf-accent))' : 'transparent'}`,
       cursor: 'pointer',
       borderRadius: 'var(--pf-radius-sm)',
       fontFamily: 'var(--pf-font-ui)',
