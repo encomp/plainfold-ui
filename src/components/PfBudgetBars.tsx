@@ -20,6 +20,8 @@ export interface PfBudgetRow {
   editable?: boolean
   highlighted?: boolean
   note?: ReactNode
+  /** drawn in secondary text with a quieter fill; no limit actions; amount stays readable */
+  muted?: boolean
 }
 
 export interface PfBudgetBarsProps {
@@ -61,7 +63,8 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
   const hasLimit = r.limit !== null && r.limit > 0
   const limit = r.limit ?? 0
   const over = hasLimit && r.actual > limit
-  const canEdit = !!r.editable && !compact && !!onEditLimit
+  const muted = !!r.muted
+  const canEdit = !!r.editable && !muted && !compact && !!onEditLimit
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -123,7 +126,7 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
   const fillPct = hasLimit && r.actual > 0 ? Math.min(100, (r.actual / limit) * 100) : 0
   const tid = (s: string) => (p ? `${p}-${s}` : undefined)
 
-  const action = !hasLimit && (canEdit ? (
+  const action = !hasLimit && !muted && (canEdit ? (
     <button ref={triggerRef} type="button" data-testid={tid(`edit-${r.id}`)} style={linkButton}
       aria-label={o.editAriaLabel?.(r)} onClick={openEdit}>
       {r.setLimitText ?? 'Set a limit'}
@@ -136,19 +139,21 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
 
   return (
     <div data-testid={tid(`row-${r.id}`)} data-highlight={r.highlighted ? 'true' : undefined}
+      data-muted={muted ? 'true' : undefined}
       style={{ padding: compact ? 0 : '12px 0', overflowWrap: 'anywhere', minWidth: 0,
         borderBottom: compact ? undefined : '1px solid var(--pf-border)',
         ...(r.highlighted ? { outline: '2px solid var(--pf-accent-text, var(--pf-accent))', outlineOffset: 2, borderRadius: 6 } : {}) }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-        gap: 12, flexWrap: 'wrap', marginBottom: 6, color: 'var(--pf-text-primary)', fontSize: 14 }}>
-        <span style={{ fontWeight: 600 }}>{r.label}</span>
+        gap: 12, flexWrap: 'wrap', marginBottom: 6, fontSize: 14,
+        color: muted ? 'var(--pf-text-secondary)' : 'var(--pf-text-primary)' }}>
+        <span style={{ fontWeight: muted ? 500 : 600 }}>{r.label}</span>
         <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
           {over && (
             <span style={{ color: 'var(--pf-danger)' }}>
               <span aria-hidden="true">⚠</span><span style={srOnly}>{o.overLimitText ?? 'Over limit'}</span>
             </span>
           )}
-          <span style={over ? { color: 'var(--pf-danger)' } : undefined}>
+          <span style={over ? { color: 'var(--pf-danger)' } : muted ? { color: 'var(--pf-text-secondary)' } : undefined}>
             {hasLimit ? `${format(r.actual)} / ${format(limit)}` : format(r.actual)}
           </span>
           {canEdit && hasLimit && !editing && (
@@ -171,12 +176,12 @@ function BudgetRow({ r, o }: { r: PfBudgetRow; o: PfBudgetBarsProps }) {
           {segs ? segs.map((s, i) => (
             <div key={`${s.label}:${i}`} title={`${s.label} ${format(s.value)}`}
               data-separator={i < segs.length - 1 ? 'true' : undefined}
-              style={{ background: s.color, height: '100%',
+              style={{ background: s.color, height: '100%', opacity: muted ? 0.55 : undefined,
                 // surface-coloured divider inside each slice's right edge, so close colours still read as separate
                 boxShadow: i < segs.length - 1 ? 'inset -2px 0 0 var(--pf-bg-surface)' : undefined,
                 width: `${r.actual > 0 ? (Math.max(s.value, 0) / r.actual) * fillPct : 0}%` }} />
           )) : (
-            <div style={{ background: over ? 'var(--pf-danger)' : 'var(--pf-positive)', height: '100%',
+            <div style={{ background: over ? 'var(--pf-danger)' : muted ? 'var(--pf-border-strong)' : 'var(--pf-positive)', height: '100%',
               width: `${fillPct}%` }} />
           )}
         </div>

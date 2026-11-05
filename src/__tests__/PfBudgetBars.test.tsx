@@ -410,3 +410,52 @@ describe('PfBudgetBars editing', () => {
     expect(screen.queryByTestId('bb-row-a')).toBeNull()
   })
 })
+
+describe('PfBudgetBars muted rows', () => {
+  const segs = [{ label: 'One', value: 4, color: 'red' }, { label: 'Two', value: 6, color: 'blue' }]
+  const rows = (m: Partial<PfBudgetRow>): PfBudgetRow[] => [{ id: 'm', label: 'Shared', actual: 10, limit: null, ...m }]
+
+  it('muted row has data-muted and no limit action', () => {
+    setup({ rows: rows({ muted: true, editable: true, setLimitHref: '/x' }), onEditLimit: vi.fn(), testIdPrefix: 'bb' })
+    expect(row('m')).toHaveAttribute('data-muted', 'true')
+    expect(screen.queryByTestId('bb-edit-m')).toBeNull()
+    expect(within(row('m')).queryByRole('link')).toBeNull()
+    expect(within(row('m')).queryByRole('button')).toBeNull()
+  })
+
+  it('muted row with a limit has no Edit button either', () => {
+    setup({ rows: rows({ muted: true, editable: true, limit: 50 }), onEditLimit: vi.fn(), testIdPrefix: 'bb' })
+    expect(screen.queryByTestId('bb-edit-m')).toBeNull()
+  })
+
+  it('muted row keeps its label, amount and note in readable colours', () => {
+    setup({ rows: rows({ muted: true, note: 'context' }), testIdPrefix: 'bb' })
+    expect(within(row('m')).getByText('Shared').parentElement!.style.color).toBe('var(--pf-text-secondary)')
+    expect(within(row('m')).getByText('$10.00').style.color).toBe('var(--pf-text-secondary)')
+    expect(within(row('m')).getByText('context').style.color).toBe('var(--pf-text-secondary)')
+    expect(row('m').innerHTML).not.toContain('--pf-text-muted')
+  })
+
+  it("muted row's fill and segments use a quieter fill", () => {
+    const { unmount } = setup({ rows: rows({ muted: true, limit: 20 }), testIdPrefix: 'bb' })
+    expect(fill('Shared spent').style.background).toBe('var(--pf-border-strong)')
+    unmount()
+    setup({ rows: rows({ muted: true, limit: 20, segments: segs }), testIdPrefix: 'bb' })
+    const parts = Array.from(bar('Shared spent').children) as HTMLElement[]
+    expect(parts.map((s) => s.style.background)).toEqual(['red', 'blue'])
+    expect(parts.every((s) => s.style.opacity === '0.55')).toBe(true)
+  })
+
+  it('a non-muted row is unchanged', () => {
+    setup({ testIdPrefix: 'bb' })
+    expect(row('a')).not.toHaveAttribute('data-muted')
+    expect(fill('Alpha spent').style.background).toBe('var(--pf-positive)')
+    expect(fill('Alpha spent').style.opacity).toBe('')
+  })
+
+  it('muted row still shows its legend', () => {
+    setup({ rows: rows({ muted: true, limit: 20, segments: segs }), testIdPrefix: 'bb' })
+    expect(row('m')).toHaveTextContent('One $4.00')
+    expect(row('m')).toHaveTextContent('Two $6.00')
+  })
+})
