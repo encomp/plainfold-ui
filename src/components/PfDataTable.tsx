@@ -92,7 +92,7 @@ export interface PfDataTableProps<T> {
   onPageChange?: (p: number) => void
   total?: number
   pageSize?: number
-  /** with `page`, `total` and `pageSize`: adds "Showing a–b of N" and a "Rows per page" select (needs `onPageSizeChange`) */
+  /** with `page`, `total` and `pageSize`: adds "Showing a–b of N" and a "Rows per page" select (needs `onPageSizeChange`); `pageSize` must be one of the options */
   pageSizeOptions?: number[]
   onPageSizeChange?: (n: number) => void
   /** "Load more" button; the caller renders errors and keeps hasMore true to allow a retry */
@@ -276,13 +276,14 @@ export function PfDataTable<T>({
     ? Math.max(1, Math.ceil(total / pageSize)) : 1
   // a page past the end (total shrank) still shows the pager so the user can go back
   const picker = !!pageSizeOptions && !!onPageSizeChange && pageSize !== undefined && total !== undefined
+    && rows.length > 0
   const showPager = page !== undefined && onPageChange && (pages > 1 || page > 1
-    || (pageSizeOptions && total !== undefined && total > Math.min(...pageSizeOptions)))
+    || (picker && total > Math.min(...pageSizeOptions)))
   const pager = showPager && (
     <nav aria-label={ariaLabel ? `${ariaLabel} pagination` : 'Pagination'}
       style={{ display: 'flex', alignItems: 'center', justifyContent: picker ? 'space-between' : 'center',
         flexWrap: 'wrap', gap: 12, padding: '12px 0', color: 'var(--pf-text-primary)', fontSize: 14 }}>
-      {picker && rows.length > 0 && (
+      {picker && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ color: 'var(--pf-text-secondary)' }}>
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}

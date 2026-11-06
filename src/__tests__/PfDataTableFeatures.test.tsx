@@ -631,6 +631,13 @@ describe('rows per page', () => {
     expect(screen.queryByRole('navigation')).toBeNull()
   })
 
+  it('shows no pager for options without a handler, or with empty rows on page 1', () => {
+    const { rerender } = setup({ ...opts, pageSize: 100, onPageSizeChange: undefined })
+    expect(screen.queryByRole('navigation')).toBeNull()
+    rerender(table({ ...opts, pageSize: 100, rows: [], emptyState: <p>Nothing here</p> }))
+    expect(screen.queryByRole('navigation')).toBeNull()
+  })
+
   it('shows the range with an en dash', () => {
     const { rerender } = setup(opts)
     expect(screen.getByText('Showing 1\u201325 of 86')).toBeInTheDocument()
