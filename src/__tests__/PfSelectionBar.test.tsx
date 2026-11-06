@@ -12,7 +12,7 @@ const bar = (count: number, onClear = vi.fn()) => (
 describe('PfSelectionBar', () => {
   it('count 0 shows the hint, no Clear button, not highlighted', () => {
     render(bar(0))
-    expect(screen.getByText('Tick fruits to act on them')).toBeInTheDocument()
+    expect(screen.getAllByText('Tick fruits to act on them').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
     expect(screen.getByTestId('bar')).toHaveAttribute('data-active', 'false')
   })
@@ -38,13 +38,15 @@ describe('PfSelectionBar', () => {
     expect(screen.getByRole('button', { name: 'Eat selected' })).toBeDisabled()
   })
 
-  it('a polite status region announces the count and "Nothing selected"', () => {
+  it('the status region says the hint when nothing is selected, and the count once when rows are ticked', () => {
     const { rerender } = render(bar(2))
     const status = screen.getByRole('status')
     expect(status).toHaveAttribute('aria-live', 'polite')
     expect(status).toHaveTextContent('2 fruits selected')
     rerender(bar(0))
-    expect(screen.getByRole('status')).toHaveTextContent('Nothing selected')
+    expect(screen.getByRole('status')).toHaveTextContent('Tick fruits to act on them')
+    rerender(bar(2))
+    expect(screen.getAllByText('2 fruits selected', { ignore: '[aria-hidden="true"]' })).toHaveLength(1)
   })
 
   it('wraps on a narrow width and honours clearText', () => {

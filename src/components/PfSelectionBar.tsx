@@ -19,7 +19,7 @@ export interface PfSelectionBarProps {
 
 export function PfSelectionBar(p: PfSelectionBarProps) {
   const active = p.count > 0
-  const text = active ? `${p.count} ${p.noun} selected` : 'Nothing selected'
+  const text = active ? `${p.count} ${p.noun} selected` : p.hint
   return (
     <div data-testid={p['data-testid']} data-active={active ? 'true' : 'false'}
       style={{
@@ -29,7 +29,7 @@ export function PfSelectionBar(p: PfSelectionBarProps) {
         borderLeft: `3px solid ${active ? 'var(--pf-accent-text, var(--pf-accent))' : 'transparent'}`,
         color: active ? 'var(--pf-text-primary)' : 'var(--pf-text-secondary)',
       }}>
-      <span aria-hidden="true">{active ? text : p.hint}</span>
+      <span aria-hidden="true">{text}</span>
       <span role="status" aria-live="polite"
         style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
         {text}
