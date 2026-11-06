@@ -3,17 +3,18 @@ import { useEffect, useRef, useState } from 'react'
 const SHOW_DELAY_MS = 250
 const MIN_VISIBLE_MS = 300
 
-/** True while skeleton bones should show: only on a first load with nothing on screen. */
+/**
+ * True while skeleton bones should show. `hasData` means content was already on screen when the
+ * load started: such a load never shows bones. Bones that did show outlive the load by the minimum.
+ */
 export function useSkeletonGate(loading: boolean, hasData: boolean): boolean {
   const [shown, setShown] = useState(false)
   const shownAt = useRef(0)
-  const active = loading && !hasData
 
+  // Only a change of `loading` starts or ends a load; `hasData` is read as it was at that moment.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    // Rows on screen end the skeleton at once, so a later empty state never inherits a stale `shown`.
-    if (hasData) setShown(false)
-    if (active) {
+    let timer: ReturnType<typeof setTimeout>
+    if (loading && !hasData) {
       timer = setTimeout(() => {
         shownAt.current = Date.now()
         setShown(true)
@@ -25,7 +26,8 @@ export function useSkeletonGate(loading: boolean, hasData: boolean): boolean {
       )
     }
     return () => clearTimeout(timer)
-  }, [active, hasData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading])
 
-  return shown && !hasData
+  return shown
 }

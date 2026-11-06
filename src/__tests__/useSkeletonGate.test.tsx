@@ -34,17 +34,29 @@ describe('useSkeletonGate', () => {
     expect(result.current).toBe(false)
   })
 
-  it('gate: hasData true never shows, even while loading', () => {
+  it('gate: a load that starts with data on screen never shows, even while loading', () => {
     const { result } = setup({ loading: true, hasData: true })
     at(1000)
     expect(result.current).toBe(false)
   })
 
-  it('gate: rows arriving while shown hide it at once', () => {
+  it('gate: bones showing at 250 ms and data at 260 ms stay until 550 ms', () => {
     const { result, rerender } = setup({ loading: true, hasData: false })
     at(250)
     expect(result.current).toBe(true)
-    rerender({ loading: true, hasData: true })
+    at(10)
+    rerender({ loading: false, hasData: true })
+    at(289)
+    expect(result.current).toBe(true)
+    at(1)
+    expect(result.current).toBe(false)
+  })
+
+  it('gate: data at 100 ms shows nothing', () => {
+    const { result, rerender } = setup({ loading: true, hasData: false })
+    at(100)
+    rerender({ loading: false, hasData: true })
+    at(1000)
     expect(result.current).toBe(false)
   })
 
@@ -61,20 +73,29 @@ describe('useSkeletonGate', () => {
     expect(result.current).toBe(true)
   })
 
-  it('gate: data arriving then emptying inside the 300 ms window shows no bones and restarts the 250 ms delay', () => {
+  it('gate: data then an emptied list after release does not re-show; a new load waits 250 ms again', () => {
     const { result, rerender } = setup({ loading: true, hasData: false })
     at(250)
-    expect(result.current).toBe(true)
     rerender({ loading: false, hasData: true })
-    at(100)
-    rerender({ loading: false, hasData: false })
+    at(300)
     expect(result.current).toBe(false)
-    at(100)
+    rerender({ loading: false, hasData: false })
+    at(1000)
     expect(result.current).toBe(false)
     rerender({ loading: true, hasData: false })
     at(100)
     expect(result.current).toBe(false)
     at(150)
     expect(result.current).toBe(true)
+  })
+
+  it('gate: a refetch with data on screen during the minimum window ends the bones on time', () => {
+    const { result, rerender } = setup({ loading: true, hasData: false })
+    at(250)
+    rerender({ loading: false, hasData: true })
+    at(100)
+    rerender({ loading: true, hasData: true })
+    at(200)
+    expect(result.current).toBe(false)
   })
 })

@@ -349,9 +349,9 @@ export function PfDataTable<T>({
     </div>
   )
 
-  if (rows.length === 0) {
-    if (loadingState && loading) return <>{loadingState}</>
-    // bones outlive `loading` by the gate's minimum, so a quick empty result does not flash
+  if (rows.length === 0 || showBones) {
+    if (rows.length === 0 && loadingState && loading) return <>{loadingState}</>
+    // bones outlive `loading` by the gate's minimum, so arriving rows (or a quick empty result) do not flash
     if (showBones) {
       return (
         <PfSkeletonRegion label={ariaLabel ?? 'rows'}>

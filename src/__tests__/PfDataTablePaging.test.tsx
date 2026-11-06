@@ -200,6 +200,19 @@ describe('skeleton minimum and controlled sort', () => {
     expect(screen.getByText('Nothing here')).toBeInTheDocument()
   })
 
+  it('rows arriving at 260 ms keep the bones until 550 ms, then the rows appear', () => {
+    vi.useFakeTimers()
+    const { container, rerender } = setup({ rows: [], loading: true })
+    act(() => { vi.advanceTimersByTime(260) })
+    rerender(table({ rows: mk(5), loading: false }))
+    act(() => { vi.advanceTimersByTime(289) })
+    expect(container.querySelector('[data-pf-bone]')).not.toBeNull()
+    expect(screen.queryByTestId('tbl')).toBeNull()
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(container.querySelector('[data-pf-bone]')).toBeNull()
+    expect(screen.getByTestId('tbl')).toBeInTheDocument()
+  })
+
   it('a controlled sort change on a client-paged table goes to page 1', () => {
     const cols = [{ ...columns[1], sortable: true }]
     const onSortChange = vi.fn()
