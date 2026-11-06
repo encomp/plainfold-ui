@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
+import { sortRows } from './sortRows'
 import { PfRowMenu } from './PfRowMenu'
 import type { PfRowMenuItem } from './PfRowMenu'
 import {
@@ -91,6 +92,9 @@ export interface PfDataTableProps<T> {
   onPageChange?: (p: number) => void
   total?: number
   pageSize?: number
+  /** with `page`, `total` and `pageSize`: adds "Showing a–b of N" and a "Rows per page" select (needs `onPageSizeChange`) */
+  pageSizeOptions?: number[]
+  onPageSizeChange?: (n: number) => void
   /** "Load more" button; the caller renders errors and keeps hasMore true to allow a retry */
   loadMore?: { hasMore: boolean; loading?: boolean; onLoadMore(): void }
 }
@@ -105,38 +109,6 @@ function firstDirOf<T>(c: PfColumn<T>): 'asc' | 'desc' {
 
 function show(v: ReactNode): ReactNode {
   return v === null || v === undefined || v === '' ? EMPTY : v
-}
-
-type Scalar = string | number | Date | null
-
-function scalar(v: Scalar | undefined): string | number | null {
-  if (v === null || v === undefined) return null
-  if (v instanceof Date) {
-    const t = v.getTime()
-    return Number.isNaN(t) ? null : t
-  }
-  if (typeof v === 'number' && Number.isNaN(v)) return null
-  return v
-}
-
-function compare(a: string | number, b: string | number): number {
-  if (typeof a === 'number' && typeof b === 'number') return a - b
-  // shortcut: plain localeCompare, no numeric collation ("a10" < "a2"), upgrade if a text column holds numbered names
-  return String(a).localeCompare(String(b))
-}
-
-function sortRows<T>(rows: T[], col: PfColumn<T> | undefined, dir: 'asc' | 'desc'): T[] {
-  if (!col?.sortValue) return rows
-  const get = col.sortValue
-  const keyed = rows.map((row, i) => ({ row, i, v: scalar(get(row)) }))
-  const sign = dir === 'asc' ? 1 : -1
-  keyed.sort((x, y) => {
-    if (x.v === null && y.v === null) return x.i - y.i
-    if (x.v === null) return 1 // nulls last in both directions
-    if (y.v === null) return -1
-    return sign * compare(x.v, y.v) || x.i - y.i
-  })
-  return keyed.map((k) => k.row)
 }
 
 const srOnly: CSSProperties = {
@@ -174,7 +146,7 @@ export function PfDataTable<T>({
   rows, columns, getRowId, 'data-testid': testId, rowTestId, 'aria-label': ariaLabel,
   emptyState, loading, loadingState, sort, onSortChange, renderCard,
   selection, selectedId, onRowClick, isDimmed, rowAttrs, rowMenu, rowMenuLabel, rowMenuTestId,
-  popupTestId, renderDetail, groupBy, hideDisabledSelection, page, onPageChange, total, pageSize, loadMore,
+  popupTestId, renderDetail, groupBy, hideDisabledSelection, page, onPageChange, total, pageSize, pageSizeOptions, onPageSizeChange, loadMore,
 }: PfDataTableProps<T>) {
   const bp = useBreakpoint()
   const controlled = onSortChange !== undefined
@@ -303,15 +275,37 @@ export function PfDataTable<T>({
   const pages = page !== undefined && total !== undefined && pageSize
     ? Math.max(1, Math.ceil(total / pageSize)) : 1
   // a page past the end (total shrank) still shows the pager so the user can go back
-  const pager = page !== undefined && onPageChange && (pages > 1 || page > 1) && (
+  const picker = !!pageSizeOptions && !!onPageSizeChange && pageSize !== undefined && total !== undefined
+  const showPager = page !== undefined && onPageChange && (pages > 1 || page > 1
+    || (pageSizeOptions && total !== undefined && total > Math.min(...pageSizeOptions)))
+  const pager = showPager && (
     <nav aria-label={ariaLabel ? `${ariaLabel} pagination` : 'Pagination'}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
-        gap: 12, padding: '12px 0', color: 'var(--pf-text-primary)', fontSize: 14 }}>
-      <button type="button" style={flatButton} aria-disabled={page <= 1 || !!loading}
-        onClick={() => { if (page > 1 && !loading) onPageChange(page - 1) }}>Previous</button>
-      <span>Page {page} of {pages}</span>
-      <button type="button" style={flatButton} aria-disabled={page >= pages || !!loading}
-        onClick={() => { if (page < pages && !loading) onPageChange(page + 1) }}>Next</button>
+      style={{ display: 'flex', alignItems: 'center', justifyContent: picker ? 'space-between' : 'center',
+        flexWrap: 'wrap', gap: 12, padding: '12px 0', color: 'var(--pf-text-primary)', fontSize: 14 }}>
+      {picker && rows.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ color: 'var(--pf-text-secondary)' }}>
+            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+          </span>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Rows per page
+            <select value={pageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              style={{ font: 'inherit', padding: '6px 8px', color: 'var(--pf-text-primary)',
+                background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6 }}>
+              {pageSizeOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
+        </div>
+      )}
+      {(pages > 1 || page > 1) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button type="button" style={flatButton} aria-disabled={page <= 1 || !!loading}
+            onClick={() => { if (page > 1 && !loading) onPageChange(page - 1) }}>Previous</button>
+          <span>Page {page} of {pages}</span>
+          <button type="button" style={flatButton} aria-disabled={page >= pages || !!loading}
+            onClick={() => { if (page < pages && !loading) onPageChange(page + 1) }}>Next</button>
+        </div>
+      )}
     </nav>
   )
   // aria-disabled (not disabled) so a focused button keeps keyboard focus while loading

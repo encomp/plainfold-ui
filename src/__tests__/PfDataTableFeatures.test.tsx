@@ -3,6 +3,7 @@ import React from 'react'
 import { render, screen, within, fireEvent, cleanup, act } from '@testing-library/react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfDataTable } from '../components/PfDataTable'
+import { sortRows } from '../components/sortRows'
 import type { PfDataTableProps } from '../components/PfDataTable'
 
 vi.mock('../utils/useBreakpoint', () => ({
@@ -591,6 +592,61 @@ describe('server paging', () => {
   it('keeps the table wrapper free of the pager', () => {
     setup({ page: 1, total: 30, pageSize: 10, onPageChange: vi.fn() })
     expect(screen.getByTestId('tbl').parentElement!.children.length).toBe(1)
+  })
+})
+
+describe('rows per page', () => {
+  const opts = { pageSizeOptions: [25, 50, 100], pageSize: 25, total: 86, page: 1, onPageChange: vi.fn(), onPageSizeChange: vi.fn() }
+
+  it('shows a Rows per page select with the options and the current size selected', () => {
+    setup({ ...opts, pageSize: 50, onPageSizeChange: vi.fn() })
+    const sel = screen.getByRole('combobox', { name: 'Rows per page' }) as HTMLSelectElement
+    expect(Array.from(sel.options).map((o) => o.value)).toEqual(['25', '50', '100'])
+    expect(sel.value).toBe('50')
+  })
+
+  it('choosing 50 calls onPageSizeChange(50) and not onPageChange', () => {
+    const onPageSizeChange = vi.fn()
+    const onPageChange = vi.fn()
+    setup({ ...opts, onPageChange, onPageSizeChange })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '50' } })
+    expect(onPageSizeChange).toHaveBeenCalledWith(50)
+    expect(onPageChange).not.toHaveBeenCalled()
+  })
+
+  it('renders no select without pageSizeOptions', () => {
+    setup({ page: 1, total: 20, pageSize: 10, onPageChange: vi.fn() })
+    expect(screen.queryByRole('combobox')).toBeNull()
+    expect(screen.queryByText(/Showing/)).toBeNull()
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
+  })
+
+  it('renders no select when rows is empty', () => {
+    setup({ ...opts, rows: [], page: 3, emptyState: <p>Nothing here</p> })
+    expect(screen.queryByRole('combobox')).toBeNull()
+  })
+
+  it('shows no pager when the total fits the smallest option', () => {
+    setup({ ...opts, total: 25 })
+    expect(screen.queryByRole('navigation')).toBeNull()
+  })
+
+  it('shows the range with an en dash', () => {
+    const { rerender } = setup(opts)
+    expect(screen.getByText('Showing 1\u201325 of 86')).toBeInTheDocument()
+    rerender(table({ ...opts, page: 2 }))
+    expect(screen.getByText('Showing 26\u201350 of 86')).toBeInTheDocument()
+    rerender(table({ ...opts, page: 4 }))
+    expect(screen.getByText('Showing 76\u201386 of 86')).toBeInTheDocument()
+  })
+})
+
+describe('sortRows', () => {
+  it('sorts like the table: nulls last, stable, either direction', () => {
+    const col = { id: 'n', header: 'N', cell: () => null, sortValue: (r: { n: number | null }) => r.n }
+    const rows = [{ n: 2 }, { n: null }, { n: 1 }]
+    expect(sortRows(rows, col, 'asc').map((r) => r.n)).toEqual([1, 2, null])
+    expect(sortRows(rows, col, 'desc').map((r) => r.n)).toEqual([2, 1, null])
   })
 })
 

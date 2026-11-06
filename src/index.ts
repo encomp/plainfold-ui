@@ -48,6 +48,7 @@ export type { PfNavItem } from './components/PfNavDrawer'
 
 export { PfSegmentedButton } from './components/PfSegmentedButton'
 export { PfDataTable } from './components/PfDataTable'
+export { sortRows } from './components/sortRows'
 export type { PfRowMenuItem } from './components/PfRowMenu'
 export { pfTableHeaderStyle, pfTableCellStyle } from './components/tableStyles'
 export type {
