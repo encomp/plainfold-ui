@@ -33,6 +33,13 @@ describe('PfSearchMultiSelect', () => {
     expect(input).toHaveAttribute('aria-autocomplete', 'list')
   })
 
+  it('keeps focus when the list itself (padding, scrollbar) is pressed', () => {
+    const { input } = setup()
+    fireEvent.click(input)
+    expect(fireEvent.mouseDown(screen.getByRole('listbox'))).toBe(false)
+    expect(fireEvent.mouseDown(screen.getByRole('option', { name: /Apples/ }))).toBe(false)
+  })
+
   it('opens on typing and narrows by case-insensitive substring', () => {
     const { input } = setup()
     fireEvent.change(input, { target: { value: 'PL' } })

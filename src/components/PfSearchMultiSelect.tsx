@@ -198,6 +198,7 @@ export function PfSearchMultiSelect({
           id={listId}
           aria-label={label}
           aria-multiselectable="true"
+          onMouseDown={(e) => e.preventDefault()}
           style={{
             // shortcut: absolute list, no portal or flip (clipped by an overflow:hidden ancestor, may pass the viewport bottom), upgrade when used in a clipped container
             position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 10, margin: '4px 0 0', padding: 4, listStyle: 'none',
@@ -216,7 +217,6 @@ export function PfSearchMultiSelect({
                 aria-selected={on}
                 aria-disabled={o.disabled || undefined}
                 aria-label={o.count === undefined ? undefined : `${o.label}, ${countLabel(o.count)}`}
-                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => toggle(o)}
                 style={{
                   display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 12px', fontSize: pfText.body,
