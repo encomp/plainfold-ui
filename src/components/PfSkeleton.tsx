@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const STYLE_ID = 'pf-skeleton-style'
 const ANIMATION = 'pf-skeleton-shimmer'
+const PERIOD_MS = 1600
 const BONE = 'var(--pf-bg-surface-alt)'
 const SHEEN = 'color-mix(in srgb, var(--pf-bg-surface-alt), var(--pf-bg-surface) 60%)'
 
@@ -11,7 +12,7 @@ function useShimmerStyle() {
     if (document.getElementById(STYLE_ID)) return
     const el = document.createElement('style')
     el.id = STYLE_ID
-    el.textContent = `@keyframes ${ANIMATION} { from { background-position: 100% 0 } to { background-position: -100% 0 } }`
+    el.textContent = `@keyframes ${ANIMATION} { from { background-position: 100% 0 } to { background-position: -100% 0 } } @media (prefers-reduced-motion: reduce) { [data-pf-bone] { animation: none !important; background: ${BONE} !important } }`
     document.head.appendChild(el)
   }, [])
 }
@@ -24,24 +25,19 @@ interface BoneProps {
 
 function Bone({ width = '100%', height = 12, radius = 'var(--pf-radius-sm)' }: BoneProps) {
   useShimmerStyle()
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  // A negative delay puts a late-mounted bone on the document timeline's phase, so all bones stay in step.
+  const [phase] = useState(() => -(performance.now() % PERIOD_MS))
   const style: React.CSSProperties = {
     display: 'block',
     width,
     height,
     borderRadius: radius,
-    background: still
-      ? BONE
-      : `linear-gradient(90deg, ${BONE} 0%, ${SHEEN} 50%, ${BONE} 100%) 0 0 / 200% 100%`,
-    ...(still
-      ? {}
-      : {
-          animationName: ANIMATION,
-          animationDuration: '1.6s',
-          animationTimingFunction: 'linear',
-          animationDelay: '0s',
-          animationIterationCount: 'infinite',
-        }),
+    background: `linear-gradient(90deg, ${BONE} 0%, ${SHEEN} 50%, ${BONE} 100%) 0 0 / 200% 100%`,
+    animationName: ANIMATION,
+    animationDuration: `${PERIOD_MS}ms`,
+    animationTimingFunction: 'linear',
+    animationDelay: `${phase}ms`,
+    animationIterationCount: 'infinite',
   }
   return <span data-pf-bone="" aria-hidden="true" style={style} />
 }

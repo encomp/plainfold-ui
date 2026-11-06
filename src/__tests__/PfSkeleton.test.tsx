@@ -51,7 +51,7 @@ describe('PfSkeleton', () => {
     expect(new Set(all.map((b) => b.style.width)).size).toBeGreaterThan(1)
   })
 
-  it('all bones share one animation name and delay 0s', () => {
+  it('all bones share one animation name', () => {
     const { container } = render(
       <>
         <PfSkeleton.Line />
@@ -59,24 +59,27 @@ describe('PfSkeleton', () => {
         <PfSkeleton.TableRows columns={2} rows={2} />
       </>,
     )
-    const names = new Set<string>()
-    for (const b of bones(container)) {
-      expect(b.style.animationDelay).toBe('0s')
-      names.add(b.style.animationName)
-    }
+    const names = new Set(bones(container).map((b) => b.style.animationName))
     expect([...names]).toEqual(['pf-skeleton-shimmer'])
     expect(document.querySelectorAll('style#pf-skeleton-style')).toHaveLength(1)
     expect(document.getElementById('pf-skeleton-style')?.textContent).toContain('@keyframes pf-skeleton-shimmer')
   })
 
-  it('reduced motion: no animation property', () => {
-    vi.spyOn(window, 'matchMedia').mockImplementation(
-      (q) => ({ matches: true, media: q }) as MediaQueryList,
-    )
-    const { container } = render(<PfSkeleton.TableRows columns={2} rows={1} />)
-    for (const b of bones(container)) {
-      expect(b.style.animationName).toBe('')
-      expect(b.getAttribute('style')).not.toContain('animation')
+  it('bones mounted at different times land in the same phase', () => {
+    const now = vi.spyOn(performance, 'now')
+    const phaseAt = (t: number) => {
+      now.mockReturnValue(t)
+      const { container, unmount } = render(<PfSkeleton.Line />)
+      const delay = parseFloat(bones(container)[0].style.animationDelay)
+      unmount()
+      return (20_000 - t - delay) % 1600 // animation phase at one shared later moment
     }
+    expect(phaseAt(10_000)).toBeCloseTo(phaseAt(12_345), 6)
+  })
+
+  it('reduced motion: the injected style turns the animation off', () => {
+    render(<PfSkeleton.Line />)
+    const css = document.getElementById('pf-skeleton-style')?.textContent ?? ''
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[^}]*\{[^}]*animation: none/)
   })
 })
