@@ -185,6 +185,33 @@ describe('default loading look', () => {
   })
 })
 
+describe('skeleton minimum and controlled sort', () => {
+  it('bones stay 300 ms once shown, then the empty state replaces them', () => {
+    vi.useFakeTimers()
+    const { container, rerender } = setup({ rows: [], loading: true, emptyState: <p>Nothing here</p> })
+    act(() => { vi.advanceTimersByTime(250) })
+    expect(container.querySelector('[data-pf-bone]')).not.toBeNull()
+    act(() => { vi.advanceTimersByTime(50) })
+    rerender(table({ rows: [], loading: false, emptyState: <p>Nothing here</p> }))
+    expect(container.querySelector('[data-pf-bone]')).not.toBeNull()
+    expect(screen.queryByText('Nothing here')).toBeNull()
+    act(() => { vi.advanceTimersByTime(260) })
+    expect(container.querySelector('[data-pf-bone]')).toBeNull()
+    expect(screen.getByText('Nothing here')).toBeInTheDocument()
+  })
+
+  it('a controlled sort change on a client-paged table goes to page 1', () => {
+    const cols = [{ ...columns[1], sortable: true }]
+    const onSortChange = vi.fn()
+    setup({ rows: mk(40), columns: cols, sort: null, onSortChange })
+    next()
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Qty/ }))
+    expect(onSortChange).toHaveBeenCalled()
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
+  })
+})
+
 describe('pageRows', () => {
   it('chunks by size', () => {
     expect(pageRows([1, 2, 3, 4, 5], 2).map((p) => p.length)).toEqual([2, 2, 1])

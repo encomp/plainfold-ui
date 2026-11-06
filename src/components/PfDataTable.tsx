@@ -3,6 +3,9 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { sortRows } from './sortRows'
 import { pageRows, PF_PAGE_SIZES } from './pageRows'
+
+// the smallest size is also the threshold: a list that fits one smallest page needs no pager
+const PAGER_MIN = PF_PAGE_SIZES[0]
 import { PfSkeleton, PfSkeletonRegion } from './PfSkeleton'
 import { useSkeletonGate } from '../utils/useSkeletonGate'
 import { PfRowMenu } from './PfRowMenu'
@@ -16,7 +19,6 @@ import {
 
 export type PfCellKind =
   | 'text' | 'link' | 'pill' | 'money' | 'number' | 'date' | 'stage' | 'checkbox' | 'actions'
-const PAGER_MIN = 15
 export type PfSort = { id: string; dir: 'asc' | 'desc' }
 
 export interface PfColumn<T> {
@@ -166,10 +168,8 @@ export function PfDataTable<T>({
   const [clientSize, setClientSize] = useState(pageSize ?? 25)
   const setSort = (s: PfSort | null) => {
     if (controlled) onSortChange?.(s)
-    else {
-      setInnerSort(s)
-      setClientPage(1)
-    }
+    else setInnerSort(s)
+    setClientPage(1)
   }
   const cycle = (c: PfColumn<T>) => {
     const first = firstDirOf(c)
@@ -348,9 +348,9 @@ export function PfDataTable<T>({
   )
 
   if (rows.length === 0) {
-    if (loading) {
-      if (loadingState) return <>{loadingState}</>
-      if (!showBones) return null
+    if (loadingState && loading) return <>{loadingState}</>
+    // bones outlive `loading` by the gate's minimum, so a quick empty result does not flash
+    if (showBones) {
       return (
         <PfSkeletonRegion label={ariaLabel ?? 'rows'}>
           <div style={{ display: 'flex', gap: 16, padding: '8px 0', ...pfTableHeaderStyle }}>
@@ -362,6 +362,7 @@ export function PfDataTable<T>({
         </PfSkeletonRegion>
       )
     }
+    if (loading) return null
     return <>{emptyState ?? null}{pager}{more}</>
   }
 
