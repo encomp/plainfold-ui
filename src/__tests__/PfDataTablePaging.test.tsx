@@ -212,6 +212,24 @@ describe('skeleton minimum and controlled sort', () => {
   })
 })
 
+describe('client paging with a parent-owned size', () => {
+  it('changing Rows per page calls onPageSizeChange with the new size', () => {
+    const onPageSizeChange = vi.fn()
+    setup({ rows: mk(80), onPageSizeChange })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Rows per page' }), { target: { value: '50' } })
+    expect(onPageSizeChange).toHaveBeenCalledWith(50)
+    expect(rowCount()).toBe(50)
+  })
+
+  it('a parent that re-renders with a new pageSize shows that size', () => {
+    const { rerender } = setup({ rows: mk(80), pageSize: 25 })
+    expect(rowCount()).toBe(25)
+    rerender(table({ rows: mk(80), pageSize: 50 }))
+    expect(rowCount()).toBe(50)
+    expect((screen.getByRole('combobox', { name: 'Rows per page' }) as HTMLSelectElement).value).toBe('50')
+  })
+})
+
 describe('pageRows', () => {
   it('chunks by size', () => {
     expect(pageRows([1, 2, 3, 4, 5], 2).map((p) => p.length)).toEqual([2, 2, 1])

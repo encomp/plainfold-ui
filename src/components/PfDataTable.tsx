@@ -165,7 +165,7 @@ export function PfDataTable<T>({
   const isSortable = (c: PfColumn<T>) => (controlled ? !!c.sortable : !!c.sortValue)
   const clientPaged = page === undefined && !loadMore && paging !== false
   const [clientPage, setClientPage] = useState(1)
-  const [clientSize, setClientSize] = useState(pageSize ?? 25)
+  const [clientSize, setClientSize] = useState(25)
   const setSort = (s: PfSort | null) => {
     if (controlled) onSortChange?.(s)
     else setInnerSort(s)
@@ -290,14 +290,16 @@ export function PfDataTable<T>({
   const sortCol = current ? columns.find((c) => c.id === current.id) : undefined
   const shown = !controlled && current && sortCol ? sortRows(rows, sortCol, current.dir) : rows
   // shortcut: re-slices on every render, fine for lists of a few thousand rows, memoise if a table holds far more
-  const slices = clientPaged ? pageRows(shown, clientSize, groupBy && ((r) => groupBy(r).id)) : []
+  // a parent-supplied pageSize wins, so a size store the parent owns stays the source of truth
+  const clientPageSize = pageSize ?? clientSize
+  const slices = clientPaged ? pageRows(shown, clientPageSize, groupBy && ((r) => groupBy(r).id)) : []
   // the page clamps on read so a list that shrank lands on its last page
   const curPage = clientPaged ? Math.min(clientPage, Math.max(1, slices.length)) : page
   const visible = clientPaged ? (slices[curPage! - 1] ?? []) : shown
   const allTotal = clientPaged ? rows.length : total
-  const size = clientPaged ? clientSize : pageSize
+  const size = clientPaged ? clientPageSize : pageSize
   const sizeOptions = clientPaged ? (pageSizeOptions ?? PF_PAGE_SIZES) : pageSizeOptions
-  const changeSize = clientPaged ? (n: number) => { setClientSize(n); setClientPage(1) } : onPageSizeChange
+  const changeSize = clientPaged ? (n: number) => { setClientSize(n); setClientPage(1); onPageSizeChange?.(n) } : onPageSizeChange
   const goTo = clientPaged ? setClientPage : onPageChange
   const offset = clientPaged ? slices.slice(0, curPage! - 1).reduce((n, s) => n + s.length, 0) : (page ?? 1) * (size ?? 0) - (size ?? 0)
   const pages = clientPaged ? Math.max(1, slices.length)
