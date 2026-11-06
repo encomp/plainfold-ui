@@ -489,7 +489,7 @@ export function PfDataTable<T>({
     <>
       {selectionBar}
       {limitNote}
-      <div style={{ overflowX: 'auto', ...dimmed }}>
+      <div style={{ overflowX: 'auto', position: 'relative', ...dimmed }}>
         <table style={pfTableStyle} data-testid={testId} aria-label={ariaLabel}>
           <thead>
             <tr>

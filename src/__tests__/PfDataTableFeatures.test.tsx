@@ -657,6 +657,17 @@ describe('sortRows', () => {
   })
 })
 
+describe('hidden header text', () => {
+  it('stays inside the scroll wrapper (a positioned ancestor within it)', () => {
+    setup({ rowMenu: () => [{ label: 'Edit', onSelect: vi.fn() }] })
+    const hidden = screen.getByText('Actions')
+    const wrapper = screen.getByTestId('tbl').parentElement as HTMLElement
+    let el = hidden.parentElement
+    while (el && ['', 'static'].includes(getComputedStyle(el).position)) el = el.parentElement
+    expect(el && wrapper.contains(el)).toBe(true)
+  })
+})
+
 describe('load more', () => {
   it('no button when hasMore is false', () => {
     setup({ loadMore: { hasMore: false, onLoadMore: vi.fn() } })
