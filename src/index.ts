@@ -26,6 +26,8 @@ export { PfStatus } from './components/PfStatus'
 export { PfLinearProgress } from './components/PfLinearProgress'
 export { PfEmptyState } from './components/PfEmptyState'
 export { PfEmptyLine } from './components/PfEmptyLine'
+export { PfSkeleton, PfSkeletonRegion } from './components/PfSkeleton'
+export { useSkeletonGate } from './utils/useSkeletonGate'
 export { PfSnackbar } from './components/PfSnackbar'
 export { PfTooltip } from './components/PfTooltip'
 
