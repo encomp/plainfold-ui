@@ -293,6 +293,12 @@ export function PfDataTable<T>({
   // a parent-supplied pageSize wins, so a size store the parent owns stays the source of truth
   const clientPageSize = pageSize ?? clientSize
   const slices = clientPaged ? pageRows(shown, clientPageSize, groupBy && ((r) => groupBy(r).id)) : []
+  // only a selection change moves the page, so manual paging is never overridden
+  useEffect(() => {
+    const at = slices.findIndex((sl) => sl.some((r) => getRowId(r) === selectedId))
+    if (at >= 0) setClientPage(at + 1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
   // the page clamps on read so a list that shrank lands on its last page
   const curPage = clientPaged ? Math.min(clientPage, Math.max(1, slices.length)) : page
   const visible = clientPaged ? (slices[curPage! - 1] ?? []) : shown

@@ -40,6 +40,15 @@ describe('client paging', () => {
     expect(screen.getByText('Showing 26–40 of 40')).toBeInTheDocument()
   })
 
+  it('selectedId on page 2 brings page 2 into view, and later paging is left alone', () => {
+    const { rerender } = setup({ rows: mk(40) })
+    expect(screen.queryByTestId('row-o30')).toBeNull()
+    rerender(table({ rows: mk(40), selectedId: 'o30' }))
+    expect(screen.getByTestId('row-o30')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }))
+    expect(screen.queryByTestId('row-o30')).toBeNull()
+  })
+
   it('15 rows: no pager; 16 rows: pager', () => {
     const { rerender } = setup({ rows: mk(15) })
     expect(screen.queryByRole('navigation')).toBeNull()
