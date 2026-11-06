@@ -66,10 +66,13 @@ export function PfSearchMultiSelect({
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const [said, setSaid] = useState('')
+  // After typing, the status reports the rendered list (so server results are announced when they arrive, not the stale list).
+  const [typing, setTyping] = useState(false)
 
   const needle = text.trim().toLowerCase()
   const shown = onSearch || !needle ? options : options.filter((o) => o.label.toLowerCase().includes(needle))
   const n = shown.length
+  const status = typing && text.trim() ? (loading ? '' : n ? `${n} ${n === 1 ? 'result' : 'results'}` : noResultsText) : said
   const at = Math.min(active, n - 1)
   const labelOf = (v: string) => options.find((o) => o.value === v)?.label ?? v
 
@@ -78,8 +81,7 @@ export function PfSearchMultiSelect({
     setOpen(true)
     setActive(0)
     onSearch?.(v)
-    const k = onSearch || !v.trim() ? options.length : options.filter((o) => o.label.toLowerCase().includes(v.trim().toLowerCase())).length
-    setSaid(k ? `${k} ${k === 1 ? 'result' : 'results'}` : noResultsText)
+    setTyping(true)
   }
   const close = () => {
     setOpen(false)
@@ -89,10 +91,12 @@ export function PfSearchMultiSelect({
     if (o.disabled) return
     const on = values.includes(o.value)
     onChange(on ? values.filter((v) => v !== o.value) : [...values, o.value])
+    setTyping(false)
     setSaid(`${o.label} ${on ? 'removed' : 'selected'}`)
   }
   const remove = (v: string) => {
     onChange(values.filter((x) => x !== v))
+    setTyping(false)
     setSaid(`${labelOf(v)} removed`)
     inputRef.current?.focus()
   }
@@ -124,6 +128,7 @@ export function PfSearchMultiSelect({
         setText('')
         onSearch?.('')
       }
+      setTyping(false)
       setSaid('')
     } else if (e.key === 'Backspace' && !text && values.length) {
       remove(values[values.length - 1])
@@ -186,7 +191,7 @@ export function PfSearchMultiSelect({
           </PfButton>
         )}
       </div>
-      <div role="status" aria-live="polite" style={hiddenStyle}>{said}</div>
+      <div role="status" aria-live="polite" style={hiddenStyle}>{status}</div>
       {open && (
         <ul
           role="listbox"
@@ -194,11 +199,13 @@ export function PfSearchMultiSelect({
           aria-label={label}
           aria-multiselectable="true"
           style={{
+            // shortcut: absolute list, no portal or flip (clipped by an overflow:hidden ancestor, may pass the viewport bottom), upgrade when used in a clipped container
             position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 10, margin: '4px 0 0', padding: 4, listStyle: 'none',
             maxHeight: '40vh', overflowY: 'auto', background: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
             border: '1px solid var(--pf-border)', borderRadius: 'var(--pf-radius-md)',
           }}
         >
+          {/* shortcut: renders every option and no onSearch debounce, upgrade to server search plus a debounce for large lists; strings are English only */}
           {shown.map((o, i) => {
             const on = values.includes(o.value)
             return (

@@ -149,6 +149,19 @@ describe('PfSearchMultiSelect', () => {
     expect(screen.getAllByRole('option')).toHaveLength(4)
   })
 
+  it('onSearch announces the options that arrive, not the stale list', () => {
+    const onChange = vi.fn()
+    const { input, rerender } = setup({ onSearch: vi.fn() })
+    fireEvent.change(input, { target: { value: 'pl' } })
+    expect(screen.getByRole('status')).toHaveTextContent('4 results') // the options on screen so far
+    rerender(<PfSearchMultiSelect options={options.slice(0, 2)} values={[]} onChange={onChange} label="Fruit" onSearch={vi.fn()} />)
+    expect(screen.getByRole('status')).toHaveTextContent('2 results')
+    rerender(<PfSearchMultiSelect options={options.slice(0, 2)} values={[]} onChange={onChange} label="Fruit" onSearch={vi.fn()} loading />)
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+    rerender(<PfSearchMultiSelect options={[]} values={[]} onChange={onChange} label="Fruit" onSearch={vi.fn()} />)
+    expect(screen.getByRole('status')).toHaveTextContent('No matches')
+  })
+
   it('loading marks the box busy and shows a Loading row', () => {
     const { input, container } = setup({ loading: true })
     fireEvent.click(input)
