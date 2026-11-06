@@ -11,6 +11,8 @@ export function useSkeletonGate(loading: boolean, hasData: boolean): boolean {
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
+    // Rows on screen end the skeleton at once, so a later empty state never inherits a stale `shown`.
+    if (hasData) setShown(false)
     if (active) {
       timer = setTimeout(() => {
         shownAt.current = Date.now()
@@ -23,7 +25,7 @@ export function useSkeletonGate(loading: boolean, hasData: boolean): boolean {
       )
     }
     return () => clearTimeout(timer)
-  }, [active])
+  }, [active, hasData])
 
   return shown && !hasData
 }

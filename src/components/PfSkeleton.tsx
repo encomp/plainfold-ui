@@ -78,11 +78,15 @@ export const PfSkeleton = {
 export function PfSkeletonRegion({ label, children }: { label: string; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
-  // A region is only busy while bones are inside it; re-check after every render, setBusy bails out when unchanged.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Busy only while bones are inside; an observer catches children that mount bones from their own state.
   useLayoutEffect(() => {
-    setBusy(!!ref.current?.querySelector('[data-pf-bone]'))
-  })
+    const el = ref.current!
+    const check = () => setBusy(!!el.querySelector('[data-pf-bone]'))
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(el, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
   return (
     <div ref={ref} role="status" aria-busy={busy} aria-label={`Loading ${label}`}>
       {children}

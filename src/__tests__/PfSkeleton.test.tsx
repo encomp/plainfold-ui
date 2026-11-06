@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { useState } from 'react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { PfSkeleton, PfSkeletonRegion } from '../components/PfSkeleton'
 
 const bones = (c: HTMLElement) => Array.from(c.querySelectorAll<HTMLElement>('[data-pf-bone]'))
@@ -42,6 +43,29 @@ describe('PfSkeleton', () => {
       expect(css).toContain('color-mix(in srgb, var(--pf-bg-surface-alt), var(--pf-bg-surface) 60%)')
       expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/i)
     }
+  })
+
+  it('aria-busy follows bones that a child mounts from its own state', async () => {
+    function Child() {
+      const [on, setOn] = useState(false)
+      return (
+        <>
+          <button onClick={() => setOn(!on)}>toggle</button>
+          {on && <PfSkeleton.Line />}
+        </>
+      )
+    }
+    render(
+      <PfSkeletonRegion label="orders">
+        <Child />
+      </PfSkeletonRegion>,
+    )
+    const region = screen.getByRole('status')
+    expect(region).toHaveAttribute('aria-busy', 'false')
+    fireEvent.click(screen.getByText('toggle'))
+    await waitFor(() => expect(region).toHaveAttribute('aria-busy', 'true'))
+    fireEvent.click(screen.getByText('toggle'))
+    await waitFor(() => expect(region).toHaveAttribute('aria-busy', 'false'))
   })
 
   it('TableRows renders columns x rows bones with varied widths', () => {

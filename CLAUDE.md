@@ -28,6 +28,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfLinearProgress** — determinate progress bar with aria attributes
 - **PfEmptyState** — icon + heading + subtext + optional actions; always left-aligned inside a dashed box; subtext is capped at 52ch
 - **PfEmptyLine** — one-line empty note for small areas where a full empty state is too large
+- **PfSkeleton** / **PfSkeletonRegion** / `useSkeletonGate` — loading placeholder bones (`Line`, `Block`, `Circle`, `CardBody`, `TableRows`, `ChartArea`) on one shared shimmer; the region is a `role="status"` named "Loading <label>" and `aria-busy` while bones are inside; the hook `useSkeletonGate(loading, hasData)` shows bones only on a first empty load (after 250 ms, for at least 300 ms)
 - **PfSnackbar** — toast with auto-hide and optional action. Props: `open`, `onClose`
 - **PfTooltip** — Radix Tooltip wrapper; optional controlled `open` / `onOpenChange`
 
