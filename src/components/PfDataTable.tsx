@@ -2,6 +2,9 @@ import React, { useEffect, useId, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { sortRows } from './sortRows'
+import { pageRows, PF_PAGE_SIZES } from './pageRows'
+import { PfSkeleton, PfSkeletonRegion } from './PfSkeleton'
+import { useSkeletonGate } from '../utils/useSkeletonGate'
 import { PfRowMenu } from './PfRowMenu'
 import type { PfRowMenuItem } from './PfRowMenu'
 import {
@@ -13,6 +16,7 @@ import {
 
 export type PfCellKind =
   | 'text' | 'link' | 'pill' | 'money' | 'number' | 'date' | 'stage' | 'checkbox' | 'actions'
+const PAGER_MIN = 15
 export type PfSort = { id: string; dir: 'asc' | 'desc' }
 
 export interface PfColumn<T> {
@@ -87,12 +91,14 @@ export interface PfDataTableProps<T> {
   renderDetail?: (r: T) => ReactNode | null
   /** consecutive rows with one id share a group heading */
   groupBy?: (r: T) => { id: string; label: ReactNode }
-  /** server numbered paging: `rows` is one page; hidden with a single page */
+  /** Without `page` or `loadMore` the table pages the full `rows` list itself (size 25, options PF_PAGE_SIZES); `false` shows every row. */
+  paging?: false
+  /** server numbered paging: `rows` is one page */
   page?: number
   onPageChange?: (p: number) => void
   total?: number
   pageSize?: number
-  /** with `page`, `total` and `pageSize`: adds "Showing a–b of N" and a "Rows per page" select (needs `onPageSizeChange`); `pageSize` must be one of the options */
+  /** server paging: with `page`, `total` and `pageSize`, adds "Showing a–b of N" and a "Rows per page" select (needs `onPageSizeChange`); `pageSize` must be one of the options */
   pageSizeOptions?: number[]
   onPageSizeChange?: (n: number) => void
   /** "Load more" button; the caller renders errors and keeps hasMore true to allow a retry */
@@ -146,17 +152,24 @@ export function PfDataTable<T>({
   rows, columns, getRowId, 'data-testid': testId, rowTestId, 'aria-label': ariaLabel,
   emptyState, loading, loadingState, sort, onSortChange, renderCard,
   selection, selectedId, onRowClick, isDimmed, rowAttrs, rowMenu, rowMenuLabel, rowMenuTestId,
-  popupTestId, renderDetail, groupBy, hideDisabledSelection, page, onPageChange, total, pageSize, pageSizeOptions, onPageSizeChange, loadMore,
+  popupTestId, renderDetail, groupBy, hideDisabledSelection, paging, page, onPageChange, total, pageSize, pageSizeOptions, onPageSizeChange, loadMore,
 }: PfDataTableProps<T>) {
   const bp = useBreakpoint()
+  const showBones = useSkeletonGate(!!loading, rows.length > 0)
   const controlled = onSortChange !== undefined
   const [innerSort, setInnerSort] = useState<PfSort | null>(sort ?? null)
   const current = controlled ? (sort ?? null) : innerSort
 
   const isSortable = (c: PfColumn<T>) => (controlled ? !!c.sortable : !!c.sortValue)
+  const clientPaged = page === undefined && !loadMore && paging !== false
+  const [clientPage, setClientPage] = useState(1)
+  const [clientSize, setClientSize] = useState(pageSize ?? 25)
   const setSort = (s: PfSort | null) => {
     if (controlled) onSortChange?.(s)
-    else setInnerSort(s)
+    else {
+      setInnerSort(s)
+      setClientPage(1)
+    }
   }
   const cycle = (c: PfColumn<T>) => {
     const first = firstDirOf(c)
@@ -200,11 +213,13 @@ export function PfDataTable<T>({
     else next.add(id)
     selection.onChange(next)
   }
+  // the whole list, not the page, so the count tells people how far "all" reaches
+  const selectAllLabel = clientPaged && selectable.length > PAGER_MIN ? `Select all ${selectable.length}` : 'Select all'
   const allReason = selection?.allDisabledReason
   const selectAllReason = (style: CSSProperties) => allReason && <span id={reasonId} style={style}>{allReason}</span>
   const selectAllBox = (extra?: CSSProperties, reasonAfter = false) => (
     <>
-      <input ref={allRef} type="checkbox" aria-label="Select all" data-testid={selection?.allTestId}
+      <input ref={allRef} type="checkbox" aria-label={selectAllLabel} data-testid={selection?.allTestId}
         checked={allChecked} onChange={toggleAll} aria-describedby={allReason ? reasonId : undefined} title={allReason}
         disabled={!!allReason || selectable.length === 0 || (atCap && !allChecked && !partial)}
         style={{ ...checkboxStyle, ...extra }} />
@@ -272,13 +287,26 @@ export function PfDataTable<T>({
       ? { outline: '2px solid var(--pf-accent-text, var(--pf-accent))', outlineOffset: -2 } : {}
   const cursor: CSSProperties = onRowClick ? { cursor: 'pointer' } : {}
 
-  const pages = page !== undefined && total !== undefined && pageSize
-    ? Math.max(1, Math.ceil(total / pageSize)) : 1
+  const sortCol = current ? columns.find((c) => c.id === current.id) : undefined
+  const shown = !controlled && current && sortCol ? sortRows(rows, sortCol, current.dir) : rows
+  // shortcut: re-slices on every render, fine for lists of a few thousand rows, memoise if a table holds far more
+  const slices = clientPaged ? pageRows(shown, clientSize, groupBy && ((r) => groupBy(r).id)) : []
+  // the page clamps on read so a list that shrank lands on its last page
+  const curPage = clientPaged ? Math.min(clientPage, Math.max(1, slices.length)) : page
+  const visible = clientPaged ? (slices[curPage! - 1] ?? []) : shown
+  const allTotal = clientPaged ? rows.length : total
+  const size = clientPaged ? clientSize : pageSize
+  const sizeOptions = clientPaged ? (pageSizeOptions ?? PF_PAGE_SIZES) : pageSizeOptions
+  const changeSize = clientPaged ? (n: number) => { setClientSize(n); setClientPage(1) } : onPageSizeChange
+  const goTo = clientPaged ? setClientPage : onPageChange
+  const offset = clientPaged ? slices.slice(0, curPage! - 1).reduce((n, s) => n + s.length, 0) : (page ?? 1) * (size ?? 0) - (size ?? 0)
+  const pages = clientPaged ? Math.max(1, slices.length)
+    : page !== undefined && total !== undefined && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1
   // a page past the end (total shrank) still shows the pager so the user can go back
-  const picker = !!pageSizeOptions && !!onPageSizeChange && pageSize !== undefined && total !== undefined
+  const picker = !!sizeOptions && !!changeSize && size !== undefined && allTotal !== undefined
     && rows.length > 0
-  const showPager = page !== undefined && onPageChange && (pages > 1 || page > 1
-    || (picker && total > Math.min(...pageSizeOptions)))
+  const showPager = curPage !== undefined && goTo && (pages > 1 || curPage > 1
+    || (picker && allTotal > PAGER_MIN))
   const pager = showPager && (
     <nav aria-label={ariaLabel ? `${ariaLabel} pagination` : 'Pagination'}
       style={{ display: 'flex', alignItems: 'center', justifyContent: picker ? 'space-between' : 'center',
@@ -286,25 +314,25 @@ export function PfDataTable<T>({
       {picker && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ color: 'var(--pf-text-secondary)' }}>
-            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+            Showing {offset + 1}–{clientPaged ? offset + visible.length : Math.min(offset + size, allTotal)} of {allTotal}
           </span>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             Rows per page
-            <select value={pageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            <select value={size} onChange={(e) => changeSize(Number(e.target.value))}
               style={{ font: 'inherit', padding: '6px 8px', color: 'var(--pf-text-primary)',
                 background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6 }}>
-              {pageSizeOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+              {sizeOptions.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </label>
         </div>
       )}
-      {(pages > 1 || page > 1) && (
+      {(pages > 1 || curPage > 1) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button type="button" style={flatButton} aria-disabled={page <= 1 || !!loading}
-            onClick={() => { if (page > 1 && !loading) onPageChange(page - 1) }}>Previous</button>
-          <span>Page {page} of {pages}</span>
-          <button type="button" style={flatButton} aria-disabled={page >= pages || !!loading}
-            onClick={() => { if (page < pages && !loading) onPageChange(page + 1) }}>Next</button>
+          <button type="button" style={flatButton} aria-disabled={curPage <= 1 || !!loading}
+            onClick={() => { if (curPage > 1 && !loading) goTo(curPage - 1) }}>Previous</button>
+          <span>Page {curPage} of {pages}</span>
+          <button type="button" style={flatButton} aria-disabled={curPage >= pages || !!loading}
+            onClick={() => { if (curPage < pages && !loading) goTo(curPage + 1) }}>Next</button>
         </div>
       )}
     </nav>
@@ -321,19 +349,26 @@ export function PfDataTable<T>({
 
   if (rows.length === 0) {
     if (loading) {
+      if (loadingState) return <>{loadingState}</>
+      if (!showBones) return null
       return (
-        <>{loadingState ?? <div role="status" style={{ padding: 16, color: 'var(--pf-text-secondary)' }}>Loading...</div>}</>
+        <PfSkeletonRegion label={ariaLabel ?? 'rows'}>
+          <div style={{ display: 'flex', gap: 16, padding: '8px 0', ...pfTableHeaderStyle }}>
+            {columns.map((c) => (
+              <div key={c.id} style={{ flex: 1 }}>{c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header}</div>
+            ))}
+          </div>
+          <PfSkeleton.TableRows columns={columns.length} rows={Math.min(size ?? 25, 8)} />
+        </PfSkeletonRegion>
       )
     }
     return <>{emptyState ?? null}{pager}{more}</>
   }
 
-  const sortCol = current ? columns.find((c) => c.id === current.id) : undefined
-  const shown = !controlled && current && sortCol ? sortRows(rows, sortCol, current.dir) : rows
   const dimmed: CSSProperties = loading ? { opacity: 0.5 } : {}
 
   const groups: Array<{ id: string; label: ReactNode; rows: T[] }> = []
-  for (const r of shown) {
+  for (const r of visible) {
     const g = groupBy?.(r)
     const last = groups[groups.length - 1]
     if (last && last.id === (g?.id ?? '')) last.rows.push(r)
@@ -393,7 +428,7 @@ export function PfDataTable<T>({
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13,
             color: 'var(--pf-text-secondary)' }}>
             {selectAllBox(undefined, true)}
-            <span aria-hidden="true">Select all</span>
+            <span aria-hidden="true">{selectAllLabel}</span>
             {selectAllReason({})}
           </label>
         )}
@@ -432,7 +467,7 @@ export function PfDataTable<T>({
           </div>
         )}
         <div role="list" data-testid={testId} aria-label={ariaLabel}
-          style={{ display: 'flex', flexDirection: 'column', gap: 8, ...dimmed }}>
+          aria-busy={loading || undefined} style={{ display: 'flex', flexDirection: 'column', gap: 8, ...dimmed }}>
           {groupBy
             ? groups.map((g, i) => (
                 <div key={`${g.id}:${i}`} role="listitem" style={{ minWidth: 0 }}>
@@ -445,7 +480,7 @@ export function PfDataTable<T>({
                   </div>
                 </div>
               ))
-            : shown.map(card)}
+            : visible.map(card)}
         </div>
         {pager}
         {more}
@@ -489,7 +524,7 @@ export function PfDataTable<T>({
     <>
       {selectionBar}
       {limitNote}
-      <div style={{ overflowX: 'auto', position: 'relative', ...dimmed }}>
+      <div aria-busy={loading || undefined} style={{ overflowX: 'auto', position: 'relative', ...dimmed }}>
         <table style={pfTableStyle} data-testid={testId} aria-label={ariaLabel}>
           <thead>
             <tr>

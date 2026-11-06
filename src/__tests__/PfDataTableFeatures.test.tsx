@@ -626,9 +626,11 @@ describe('rows per page', () => {
     expect(screen.queryByRole('combobox')).toBeNull()
   })
 
-  it('shows no pager when the total fits the smallest option', () => {
-    setup({ ...opts, total: 25 })
+  it('shows no pager at 15 rows or fewer, and shows it at 16', () => {
+    const { rerender } = setup({ ...opts, total: 15 })
     expect(screen.queryByRole('navigation')).toBeNull()
+    rerender(table({ ...opts, total: 16 }))
+    expect(screen.getByRole('navigation')).toBeInTheDocument()
   })
 
   it('shows no pager for options without a handler, or with empty rows on page 1', () => {

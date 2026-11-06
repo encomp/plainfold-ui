@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import React from 'react'
-import { render, screen, within, fireEvent } from '@testing-library/react'
+import { render, screen, within, fireEvent, act } from '@testing-library/react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { PfDataTable } from '../components/PfDataTable'
 import type { PfColumn, PfSort } from '../components/PfDataTable'
+
+afterEach(() => { vi.useRealTimers() })
 
 vi.mock('../utils/useBreakpoint', () => ({
   useBreakpoint: vi.fn(() => 'desktop'),
@@ -131,10 +133,14 @@ describe('PfDataTable core (desktop)', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('shows a Loading status when loading without rows', () => {
+  it('shows skeleton rows, not text, when loading without rows', () => {
+    vi.useFakeTimers()
     setup({ rows: [], loading: true, emptyState: <p>Nothing here</p> })
-    expect(screen.getByRole('status')).toHaveTextContent('Loading...')
+    act(() => { vi.advanceTimersByTime(260) })
+    expect(screen.getByRole('status', { name: 'Loading rows' })).toBeInTheDocument()
+    expect(screen.queryByText(/Loading\.\.\./)).toBeNull()
     expect(screen.queryByText('Nothing here')).toBeNull()
+    vi.useRealTimers()
   })
 
   it('shows loadingState instead of the default when given', () => {
@@ -397,8 +403,11 @@ describe('PfDataTable phone cards', () => {
     expect(screen.getByText('Nothing here')).toBeInTheDocument()
     expect(screen.queryByRole('list')).toBeNull()
     unmount()
+    vi.useFakeTimers()
     setup({ rows: [], loading: true })
-    expect(screen.getByRole('status')).toHaveTextContent('Loading...')
+    act(() => { vi.advanceTimersByTime(260) })
+    expect(screen.getByRole('status', { name: 'Loading rows' })).toBeInTheDocument()
+    vi.useRealTimers()
   })
 
   it('dims the cards while loading with rows', () => {
