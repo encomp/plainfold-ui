@@ -72,6 +72,8 @@ export interface PfDataTableProps<T> {
     isSelectable?(r: T): boolean
     label(r: T): string
     bar?: (count: number) => ReactNode
+    /** true: the table's own "N selected" row is not drawn (the page shows a selection bar above the table); the limit note stays */
+    hideBar?: boolean
     testId?: (r: T) => string
     allTestId?: string
     /** disables select-all and announces this text as its description (e.g. rows locked while a job runs) */
@@ -237,7 +239,7 @@ export function PfDataTable<T>({
         checked={checked} disabled={disabled} onChange={() => toggleRow(r)} style={checkboxStyle} />
     )
   }
-  const selectionBar = selection && selIds && selIds.size > 0 && (
+  const selectionBar = selection && !selection.hideBar && selIds && selIds.size > 0 && (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '8px 0',
       color: 'var(--pf-text-primary)', fontSize: 14 }}>
       <span>{selIds.size} selected</span>

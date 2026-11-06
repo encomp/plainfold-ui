@@ -176,6 +176,13 @@ describe('selection', () => {
     expect(screen.getByText('bar 2')).toBeInTheDocument()
   })
 
+  it('hideBar removes the built-in "N selected" row and keeps the limit note', () => {
+    setup({ selection: sel(['r1', 'r2'], vi.fn(), { hideBar: true, cap: 2, bar: (n: number) => <b>bar {n}</b> }) })
+    expect(screen.queryByText('2 selected')).toBeNull()
+    expect(screen.queryByText('bar 2')).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent('Limit of 2 reached')
+  })
+
   it('test ids for checkboxes', () => {
     setup({ selection: sel([], vi.fn(), { testId: (r: Row) => `chk-${r.id}`, allTestId: 'chk-all' }) })
     expect(screen.getByTestId('chk-r1')).toBeInTheDocument()
