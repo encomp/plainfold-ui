@@ -24,6 +24,15 @@ describe('PfSelectionBar', () => {
     expect(screen.getByTestId('bar')).toHaveAttribute('data-active', 'true')
   })
 
+  it('count 1 reads in the singular: derived by default, or from nounOne', () => {
+    const { rerender } = render(bar(1))
+    expect(screen.getAllByText('1 fruit selected').length).toBeGreaterThan(0)
+    rerender(<PfSelectionBar count={1} noun="mice" nounOne="mouse" hint="h" onClear={vi.fn()} />)
+    expect(screen.getAllByText('1 mouse selected').length).toBeGreaterThan(0)
+    rerender(<PfSelectionBar count={2} noun="mice" nounOne="mouse" hint="h" onClear={vi.fn()} />)
+    expect(screen.getAllByText('2 mice selected').length).toBeGreaterThan(0)
+  })
+
   it('Clear calls onClear', () => {
     const onClear = vi.fn()
     render(bar(2, onClear))

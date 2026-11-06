@@ -7,6 +7,8 @@ export interface PfSelectionBarProps {
   count: number
   /** plural noun: "N fruits selected" */
   noun: string
+  /** singular noun for a count of 1: "1 fruit selected"; default the plural without its final s; pass it for an irregular noun */
+  nounOne?: string
   /** shown while count is 0 */
   hint: string
   onClear(): void
@@ -19,7 +21,8 @@ export interface PfSelectionBarProps {
 
 export function PfSelectionBar(p: PfSelectionBarProps) {
   const active = p.count > 0
-  const text = active ? `${p.count} ${p.noun} selected` : p.hint
+  const one = p.nounOne ?? p.noun.replace(/s$/, '')
+  const text = active ? `${p.count} ${p.count === 1 ? one : p.noun} selected` : p.hint
   return (
     <div data-testid={p['data-testid']} data-active={active ? 'true' : 'false'}
       style={{
