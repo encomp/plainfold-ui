@@ -133,6 +133,30 @@ describe('PfDataTable core (desktop)', () => {
     expect(container.innerHTML).toBe('')
   })
 
+  it('loading bones keep the loaded header: same cells, labels and widths, with the checkbox and menu columns', () => {
+    const extra = { selection: { selectedIds: new Set<string>(), onChange: vi.fn(), label: (r: Row) => `Pick ${r.id}` }, rowMenu: () => [{ label: 'Edit', onSelect: vi.fn() }] }
+    const head = () => Array.from(document.querySelectorAll('thead th')).map((th) => [th.textContent, (th as HTMLElement).style.width, (th as HTMLElement).style.textAlign])
+    const { unmount } = setup(extra)
+    const loaded = head()
+    unmount()
+    vi.useFakeTimers()
+    setup({ ...extra, rows: [], loading: true })
+    act(() => { vi.advanceTimersByTime(260) })
+    const status = screen.getByRole('status', { name: 'Loading rows' })
+    expect(head()).toEqual(loaded)
+    expect(loaded).toHaveLength(columns.length + 2)
+    expect(within(status).queryAllByRole('button')).toHaveLength(0) // the bones' header is inert
+    expect(within(status).getAllByRole('row')[1].querySelectorAll('td')).toHaveLength(columns.length + 2)
+  })
+
+  it('loading bones on phones are cards, with no header row', () => {
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    vi.useFakeTimers()
+    setup({ rows: [], loading: true })
+    act(() => { vi.advanceTimersByTime(260) })
+    expect(screen.getByRole('status', { name: 'Loading rows' }).querySelector('table')).toBeNull()
+  })
+
   it('shows skeleton rows, not text, when loading without rows', () => {
     vi.useFakeTimers()
     setup({ rows: [], loading: true, emptyState: <p>Nothing here</p> })

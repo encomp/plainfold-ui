@@ -133,6 +133,8 @@ function Arrow({ dir, visible }: { dir: 'asc' | 'desc'; visible: boolean }) {
   )
 }
 
+const BONE_WIDTHS = ['60%', '85%', '45%', '70%']
+
 const sortButtonStyle: CSSProperties = {
   background: 'none',
   border: 0,
@@ -355,18 +357,68 @@ export function PfDataTable<T>({
     </div>
   )
 
+  // one header row for the table and its loading bones, so columns do not shift when rows arrive; the bones' copy is inert
+  const colCount = columns.length + (selection ? 1 : 0) + (rowMenu ? 1 : 0)
+  const boneRows = Math.min(size ?? 25, 8)
+  const headRow = (live: boolean) => (
+    <tr>
+      {selection && (
+        <th scope="col" style={{ ...pfTableHeaderStyle, width: 36 }}>{live && selectAllBox()}</th>
+      )}
+      {columns.map((c) => {
+        const sorted = current?.id === c.id && isSortable(c) ? current : null
+        const label = c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header
+        return (
+          <th key={c.id} scope="col"
+            aria-sort={sorted ? (sorted.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+            style={{ ...pfTableHeaderStyle, ...(isNumeric(c) ? { textAlign: 'right' } : {}),
+              width: c.width, minWidth: c.minWidth }}>
+            {isSortable(c) && live ? (
+              <button type="button" onClick={() => cycle(c)} style={sortButtonStyle}>
+                {label}
+                <Arrow dir={sorted?.dir ?? 'asc'} visible={!!sorted} />
+              </button>
+            ) : isSortable(c) ? <span style={sortButtonStyle}>{label}<Arrow dir="asc" visible={false} /></span> : label}
+            {c.headerExtra}
+          </th>
+        )
+      })}
+      {rowMenu && (
+        <th scope="col" style={pfTableHeaderStyle}><span style={srOnly}>Actions</span></th>
+      )}
+    </tr>
+  )
+
   if (rows.length === 0 || showBones) {
     if (rows.length === 0 && loadingState && loading) return <>{loadingState}</>
     // bones outlive `loading` by the gate's minimum, so arriving rows (or a quick empty result) do not flash
     if (showBones) {
       return (
         <PfSkeletonRegion label={ariaLabel ?? 'rows'}>
-          <div style={{ display: 'flex', gap: 16, padding: '8px 0', ...pfTableHeaderStyle }}>
-            {columns.map((c) => (
-              <div key={c.id} style={{ flex: 1 }}>{c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header}</div>
-            ))}
-          </div>
-          <PfSkeleton.TableRows columns={columns.length} rows={Math.min(size ?? 25, 8)} />
+          {bp === 'mobile' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {Array.from({ length: boneRows }, (_, i) => (
+                <div key={i} style={{ border: '1px solid var(--pf-border)', borderRadius: 8, padding: 12, background: 'var(--pf-bg-surface)' }}>
+                  <PfSkeleton.CardBody />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={pfTableStyle}>
+                <thead>{headRow(false)}</thead>
+                <tbody>
+                  {Array.from({ length: boneRows }, (_, r) => (
+                    <tr key={r}>
+                      {Array.from({ length: colCount }, (_, c) => (
+                        <td key={c} style={pfTableCellStyle}><PfSkeleton.Line width={BONE_WIDTHS[(r + c) % BONE_WIDTHS.length]} /></td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </PfSkeletonRegion>
       )
     }
@@ -497,7 +549,6 @@ export function PfDataTable<T>({
     )
   }
 
-  const colCount = columns.length + (selection ? 1 : 0) + (rowMenu ? 1 : 0)
   const renderRow = (r: T) => {
     const detail = renderDetail?.(r)
     const dim = isDimmed?.(r)
@@ -535,34 +586,7 @@ export function PfDataTable<T>({
       {limitNote}
       <div aria-busy={loading || undefined} style={{ overflowX: 'auto', position: 'relative', ...dimmed }}>
         <table style={pfTableStyle} data-testid={testId} aria-label={ariaLabel}>
-          <thead>
-            <tr>
-              {selection && (
-                <th scope="col" style={{ ...pfTableHeaderStyle, width: 36 }}>{selectAllBox()}</th>
-              )}
-              {columns.map((c) => {
-                const sorted = current?.id === c.id && isSortable(c) ? current : null
-                const label = c.srOnlyHeader ? <span style={srOnly}>{c.header}</span> : c.header
-                return (
-                  <th key={c.id} scope="col"
-                    aria-sort={sorted ? (sorted.dir === 'asc' ? 'ascending' : 'descending') : undefined}
-                    style={{ ...pfTableHeaderStyle, ...(isNumeric(c) ? { textAlign: 'right' } : {}),
-                      width: c.width, minWidth: c.minWidth }}>
-                    {isSortable(c) ? (
-                      <button type="button" onClick={() => cycle(c)} style={sortButtonStyle}>
-                        {label}
-                        <Arrow dir={sorted?.dir ?? 'asc'} visible={!!sorted} />
-                      </button>
-                    ) : label}
-                    {c.headerExtra}
-                  </th>
-                )
-              })}
-              {rowMenu && (
-                <th scope="col" style={pfTableHeaderStyle}><span style={srOnly}>Actions</span></th>
-              )}
-            </tr>
-          </thead>
+          <thead>{headRow(true)}</thead>
           {groups.map((g, i) => (
             <tbody key={`${g.id}:${i}`}>
               {groupBy && (
