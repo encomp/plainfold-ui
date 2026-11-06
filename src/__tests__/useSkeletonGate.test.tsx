@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createElement } from 'react'
+import { createRoot } from 'react-dom/client'
+import { flushSync } from 'react-dom'
 import { useSkeletonGate } from '../utils/useSkeletonGate'
 
 type Props = { loading: boolean; hasData: boolean }
@@ -97,5 +100,27 @@ describe('useSkeletonGate', () => {
     rerender({ loading: true, hasData: true })
     at(200)
     expect(result.current).toBe(false)
+  })
+
+  it('gate: a show timer cannot fire after loading ended (guards the layout-effect cleanup)', () => {
+    // outside act, as in a browser, where passive effects may be deferred
+    const env = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    env.IS_REACT_ACT_ENVIRONMENT = false
+    let seen = false
+    function Probe({ loading }: { loading: boolean }) {
+      seen = useSkeletonGate(loading, false)
+      return null
+    }
+    const root = createRoot(document.createElement('div'))
+    try {
+      flushSync(() => root.render(createElement(Probe, { loading: true })))
+      vi.advanceTimersByTime(100)
+      flushSync(() => root.render(createElement(Probe, { loading: false })))
+      vi.advanceTimersByTime(250)
+      expect(seen).toBe(false)
+    } finally {
+      flushSync(() => root.unmount())
+      env.IS_REACT_ACT_ENVIRONMENT = true
+    }
   })
 })
