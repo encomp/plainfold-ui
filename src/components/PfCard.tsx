@@ -10,6 +10,8 @@ interface PfCardProps {
   title?: React.ReactNode
   meta?: React.ReactNode
   footer?: React.ReactNode
+  /** Any CSS color: a 3px top border and the title text take it. */
+  accent?: string
   'aria-label'?: string
   'data-testid'?: string
 }
@@ -27,15 +29,19 @@ export function PfCard({
   title,
   meta,
   footer,
+  accent,
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
 }: PfCardProps) {
   const [hovered, setHovered] = useState(false)
   const titleId = useId()
 
+  const edge = `1px solid ${hovered && hoverable ? 'var(--pf-border-strong)' : 'var(--pf-border)'}`
+
   const style: React.CSSProperties = {
     background: 'var(--pf-bg-surface)',
-    border: `1px solid ${hovered && hoverable ? 'var(--pf-border-strong)' : 'var(--pf-border)'}`,
+    // Per-side longhands with accent: a hover change to the `border` shorthand would otherwise wipe the top border.
+    ...(accent ? { borderTop: `3px solid ${accent}`, borderRight: edge, borderBottom: edge, borderLeft: edge } : { border: edge }),
     borderRadius: 'var(--pf-radius-md)',
     padding: paddingValues[padding],
     display: 'flex',
@@ -59,7 +65,7 @@ export function PfCard({
       {(title || meta) && (
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
           {title && (
-            <h2 id={titleId} style={{ margin: 0, fontSize: pfText.card, fontWeight: 600, color: 'var(--pf-text-primary)' }}>
+            <h2 id={titleId} style={{ margin: 0, fontSize: pfText.card, fontWeight: 600, color: accent ?? 'var(--pf-text-primary)' }}>
               {title}
             </h2>
           )}

@@ -20,7 +20,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfActionLink** — the action link, "Place →": accent text, no underline until hover/focus. `kind="back"` draws "← Parent" in muted text (colour change on hover, no underline); `external` opens a new tab with `rel` and a hidden note
 - **PfPageHeader** — page title row with optional back link ("← Parent"), subtitle and actions; wraps on phones
 - **PfTabs** — tab list that scrolls sideways when it does not fit
-- **PfCard** — surface container with padding sizes and hoverable elevation; optional `title`, `meta` (right-aligned, also without a title) and `footer`
+- **PfCard** — surface container with padding sizes and hoverable elevation; optional `accent` (CSS color: 3px top border and title color), `title`, `meta` (right-aligned, also without a title) and `footer`
 - **PfBadge** — status labels: default, success, warning, danger, muted; `outline` and `dashed` variations
 - **PfStatus** — status text with a `tone` (`ok`, `warn`, `off`, `danger`, `busy`)
 

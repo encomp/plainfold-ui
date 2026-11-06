@@ -69,4 +69,39 @@ describe('PfCard', () => {
     render(<PfCard data-testid="card">x</PfCard>)
     expect(screen.getByTestId('card').tagName).toBe('DIV')
   })
+
+  it('accent sets a 3px top border and the title color', () => {
+    render(<PfCard accent="rgb(1, 2, 3)" title="T" data-testid="card">x</PfCard>)
+    expect(screen.getByTestId('card').style.borderTop).toBe('3px solid rgb(1, 2, 3)')
+    expect(screen.getByRole('heading', { name: 'T' }).style.color).toBe('rgb(1, 2, 3)')
+  })
+
+  it('no accent: styles identical to today', () => {
+    render(<PfCard title="T" data-testid="card">x</PfCard>)
+    const card = screen.getByTestId('card')
+    expect(card.style.border).toBe('1px solid var(--pf-border)')
+    expect(screen.getByRole('heading', { name: 'T' }).style.color).toBe('var(--pf-text-primary)')
+  })
+
+  it('the card keeps its fill, side borders and radius with accent', () => {
+    render(<PfCard accent="rgb(1, 2, 3)" data-testid="card">x</PfCard>)
+    const card = screen.getByTestId('card')
+    expect(card.style.background).toBe('var(--pf-bg-surface)')
+    expect(card.style.borderBottom).toBe('1px solid var(--pf-border)')
+    expect(card.style.borderRadius).toBe('var(--pf-radius-md)')
+  })
+
+  it('accent keeps its top border while hovered', () => {
+    render(<PfCard accent="rgb(1, 2, 3)" hoverable data-testid="card">x</PfCard>)
+    const card = screen.getByTestId('card')
+    fireEvent.mouseEnter(card)
+    expect(card.style.borderTop).toBe('3px solid rgb(1, 2, 3)')
+    expect(card.style.borderBottom).toBe('1px solid var(--pf-border-strong)')
+  })
+
+  it('the meta slot still renders beside the title with accent', () => {
+    render(<PfCard accent="rgb(1, 2, 3)" title="T" meta="M">x</PfCard>)
+    expect(screen.getByText('M')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'T' })).toBeInTheDocument()
+  })
 })
