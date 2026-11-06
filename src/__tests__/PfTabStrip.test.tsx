@@ -51,6 +51,11 @@ describe('PfTabStrip', () => {
     expect(screen.getAllByRole('tab').map((t) => t.tabIndex)).toEqual([-1, 0, -1])
   })
 
+  it('when value matches no item the first tab is tabbable', () => {
+    render(<PfTabStrip items={items} value="none" onChange={() => {}} aria-label="Fruit" />)
+    expect(screen.getAllByRole('tab').map((t) => t.tabIndex)).toEqual([0, -1, -1])
+  })
+
   it('level="sub" uses a smaller font size and padding than level="page"', () => {
     const { unmount } = render(<Harness />)
     const page = screen.getByRole('tab', { name: 'Apples' }).style
@@ -62,6 +67,14 @@ describe('PfTabStrip', () => {
     expect(sub.padding).not.toBe(pagePad)
     expect(pageFont).toContain('14px')
     expect(sub.fontSize).toContain('13px')
+  })
+
+  it('level="sub" has a lighter list rule than level="page"', () => {
+    const { unmount } = render(<Harness />)
+    const page = screen.getByRole('tablist').style.borderBottom
+    unmount()
+    render(<Harness level="sub" />)
+    expect(screen.getByRole('tablist').style.borderBottom).not.toBe(page)
   })
 
   it('overflow-x is auto on the strip', () => {

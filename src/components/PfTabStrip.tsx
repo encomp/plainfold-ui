@@ -18,6 +18,7 @@ export interface PfTabStripProps {
 }
 
 export function PfTabStrip({ items, value, onChange, 'aria-label': ariaLabel, level = 'page', 'data-testid': testId }: PfTabStripProps) {
+  const tabbable = items.some((x) => x.id === value) ? value : items[0]?.id
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
   function onKey(e: KeyboardEvent, i: number) {
     const n = items.length
@@ -41,7 +42,7 @@ export function PfTabStrip({ items, value, onChange, 'aria-label': ariaLabel, le
             type="button"
             className="pf-tab"
             aria-selected={active}
-            tabIndex={active ? 0 : -1}
+            tabIndex={item.id === tabbable ? 0 : -1}
             data-testid={item['data-testid']}
             onClick={() => onChange(item.id)}
             onKeyDown={(e) => onKey(e, i)}

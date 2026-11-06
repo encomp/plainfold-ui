@@ -13,7 +13,7 @@ export function tabListStyle(level: TabLevel = 'page'): CSSProperties {
     flexWrap: 'nowrap',
     overflowX: 'auto',
     whiteSpace: 'nowrap',
-    borderBottom: level === 'sub' ? '1px solid var(--pf-border-subtle, var(--pf-border))' : '1px solid var(--pf-border)',
+    borderBottom: level === 'sub' ? '1px solid color-mix(in srgb, var(--pf-border) 50%, transparent)' : '1px solid var(--pf-border)',
     fontFamily: 'var(--pf-font-ui)',
   }
 }
