@@ -216,4 +216,65 @@ describe('PfCompareTable', () => {
     expect(label.style.minWidth).toBe('96px')
     expect(label.style.maxWidth).toBe('160px')
   })
+
+  it('default output without the new props is pinned', () => {
+    const { container } = renderTable([
+      row({ best: 'max', tone: (c) => (c.score === 80 ? 'neutral' : 'warn') }),
+      row({ id: 'cost', label: 'Cost', get: (c) => `$${c.cost}`, value: (c) => c.cost, tone: (c) => (c.cost === 5 ? 'bad' : 'ok') }),
+      row({ id: 'tag', label: 'Tag', group: 'G', get: (c) => c.tag, value: (c) => c.tag }),
+    ])
+    expect(container).toMatchSnapshot()
+  })
+
+  it('a best ok cell reads best once and no ok', () => {
+    renderTable([row({ best: 'max', tone: () => 'ok' })])
+    const cell = screen.getAllByRole('cell')[0]
+    expect(cell.textContent).toBe('80 best')
+    expect(within(cell).queryByText(/ok$/)).toBeNull()
+  })
+
+  it('bad stays fails', () => {
+    renderTable([row({ tone: (c) => (c.score === 80 ? 'bad' : 'neutral') })])
+    expect(screen.getAllByRole('cell')[0].textContent).toBe('80 fails')
+  })
+
+  it('toneWords renames and an empty word renders nothing', () => {
+    renderTable([row({ tone: (c) => (c.score === 80 ? 'ok' : 'warn') })], cols, { toneWords: { warn: 'close', ok: '' } })
+    const [a, b] = screen.getAllByRole('cell')
+    expect(a.textContent).toBe('80')
+    expect(b.textContent).toBe('60 close')
+  })
+
+  it('wordsVisible draws one badge per cell with the same style in linked and plain cells', () => {
+    renderTable(
+      [
+        row({
+          get: (c) => (c.id === 'a' ? <a href="#x">80</a> : '60'),
+          best: 'max',
+          tone: (c) => (c.id === 'a' ? 'neutral' : 'bad'),
+        }),
+      ],
+      cols,
+      { wordsVisible: true },
+    )
+    const [a, b] = screen.getAllByRole('cell')
+    const best = within(a).getByText('best')
+    const fails = within(b).getByText('fails')
+    expect(a.children.length).toBe(2)
+    expect(b.children.length).toBe(1)
+    expect(best.getAttribute('style')).toContain('--pf-positive')
+    expect(fails.getAttribute('style')).toContain('--pf-danger')
+    expect(best.style.position).not.toBe('absolute')
+  })
+
+  it('leadColumn renders after the label and does not change best or only differences', () => {
+    renderTable([row({ best: 'max' }), row({ id: 'd', label: 'D', value: () => 1 })], cols, {
+      onlyDifferences: true,
+      leadColumn: { header: 'Pass at', get: () => 'L' },
+    })
+    expect(screen.getAllByRole('rowheader')).toHaveLength(1)
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Item', 'Pass at', 'Alpha', 'Beta'])
+    const cells = screen.getAllByRole('cell')
+    expect(cells.map((c) => c.textContent)).toEqual(['L', '80 best', '60'])
+  })
 })

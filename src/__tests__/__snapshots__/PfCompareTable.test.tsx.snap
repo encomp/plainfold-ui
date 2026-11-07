@@ -1,0 +1,128 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PfCompareTable > default output without the new props is pinned 1`] = `
+<div>
+  <div
+    data-testid="t"
+    style="overflow-x: auto; max-width: 100%; position: relative;"
+  >
+    <table
+      style="border-collapse: separate; border-spacing: 0px; width: 100%; font-size: 14px; color: var(--pf-text-primary); min-width: 316px;"
+    >
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; position: sticky; left: 0px; background: var(--pf-bg-surface); font-weight: 600; min-width: 96px; max-width: 160px;"
+          >
+            <span
+              style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0px; overflow: hidden; white-space: nowrap; border: 0px;"
+            >
+              Item
+            </span>
+          </th>
+          <th
+            scope="col"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; font-weight: 600;"
+          >
+            Alpha
+          </th>
+          <th
+            scope="col"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; font-weight: 600;"
+          >
+            Beta
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th
+            scope="row"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; position: sticky; left: 0px; background: var(--pf-bg-surface); font-weight: 600; min-width: 96px; max-width: 160px;"
+          >
+            Score
+          </th>
+          <td
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; color: var(--pf-positive); font-weight: 600;"
+          >
+            80
+            <span
+              style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0px; overflow: hidden; white-space: nowrap; border: 0px;"
+            >
+               best
+            </span>
+          </td>
+          <td
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; color: var(--pf-warning);"
+          >
+            60
+            <span
+              style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0px; overflow: hidden; white-space: nowrap; border: 0px;"
+            >
+               warning
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; position: sticky; left: 0px; background: var(--pf-bg-surface); font-weight: 600; min-width: 96px; max-width: 160px;"
+          >
+            Cost
+          </th>
+          <td
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; color: var(--pf-negative);"
+          >
+            $5
+            <span
+              style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0px; overflow: hidden; white-space: nowrap; border: 0px;"
+            >
+               fails
+            </span>
+          </td>
+          <td
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px; color: var(--pf-positive);"
+          >
+            $3
+            <span
+              style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0px; overflow: hidden; white-space: nowrap; border: 0px;"
+            >
+               ok
+            </span>
+          </td>
+        </tr>
+      </tbody>
+      <tbody>
+        <tr>
+          <th
+            colspan="3"
+            scope="rowgroup"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; background: var(--pf-bg-surface-alt); color: var(--pf-text-secondary); font-size: 12px; font-weight: 600;"
+          >
+            G
+          </th>
+        </tr>
+        <tr>
+          <th
+            scope="row"
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; position: sticky; left: 0px; background: var(--pf-bg-surface); font-weight: 600; min-width: 96px; max-width: 160px;"
+          >
+            Tag
+          </th>
+          <td
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px;"
+          >
+            x
+          </td>
+          <td
+            style="padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: left; vertical-align: top; overflow-wrap: anywhere; min-width: 110px;"
+          >
+            x
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

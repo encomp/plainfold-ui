@@ -1,4 +1,5 @@
 import React from 'react'
+import { PfBadge } from './PfBadge'
 
 export type PfCompareTone = 'ok' | 'warn' | 'bad' | 'neutral'
 
@@ -30,7 +31,16 @@ export interface PfCompareTableProps<T> {
   /** Names the scroll region around the table (a focusable region landmark); without it the region is neither focusable nor a landmark */
   'aria-label'?: string
   'data-testid'?: string
+  /** Overrides the one word a cell carries (defaults "best", "fails", "warning", "ok"). An empty word renders nothing. */
+  toneWords?: Partial<Record<'best' | PfCompareTone, string>>
+  /** Show the word as a PfBadge instead of visually hidden text */
+  wordsVisible?: boolean
+  /** An extra column after the row label. Not part of best or onlyDifferences. */
+  leadColumn?: { header: React.ReactNode; get(row: PfCompareRow<T>): React.ReactNode }
 }
+
+const DEFAULT_WORDS = { best: 'best', bad: 'fails', warn: 'warning', ok: 'ok', neutral: '' }
+const BADGE_VARIANT = { best: 'success', ok: 'success', bad: 'danger', warn: 'warning' } as const
 
 // position: relative is the containing block for the visually hidden spans, so they stay inside the clip
 const wrapStyle: React.CSSProperties = {
@@ -125,6 +135,9 @@ export function PfCompareTable<T>({
   emptyState,
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
+  toneWords,
+  wordsVisible,
+  leadColumn,
 }: PfCompareTableProps<T>) {
   if (columns.length === 0) {
     return emptyState != null ? <div data-testid={dataTestId}>{emptyState}</div> : null
@@ -132,7 +145,7 @@ export function PfCompareTable<T>({
 
   const visible = onlyDifferences ? rows.filter((r) => isDifferent(r, columns)) : rows
   if (visible.length === 0 && emptyState != null) return <div data-testid={dataTestId}>{emptyState}</div>
-  const span = columns.length + 1
+  const span = columns.length + (leadColumn ? 2 : 1)
   // Consecutive rows with the same group share one tbody and heading
   const runs: { group?: string; rows: PfCompareRow<T>[] }[] = []
   visible.forEach((r, i) => {
@@ -147,7 +160,7 @@ export function PfCompareTable<T>({
       <table
         style={{
           ...tableStyle,
-          minWidth: `${LABEL_MIN + COL_MIN * columns.length}px`,
+          minWidth: `${LABEL_MIN + COL_MIN * (columns.length + (leadColumn ? 1 : 0))}px`,
         }}
       >
         <thead>
@@ -155,6 +168,11 @@ export function PfCompareTable<T>({
             <th scope="col" style={stickyStyle}>
               <span style={hiddenStyle}>Item</span>
             </th>
+            {leadColumn && (
+              <th scope="col" style={{ ...cellStyle, minWidth: `${COL_MIN}px`, fontWeight: 600 }}>
+                {leadColumn.header}
+              </th>
+            )}
             {columns.map((c) => (
               <th
                 key={getColumnId(c)}
@@ -186,6 +204,9 @@ export function PfCompareTable<T>({
                   <th scope="row" style={stickyStyle}>
                     {r.label}
                   </th>
+                  {leadColumn && (
+                    <td style={{ ...cellStyle, minWidth: `${COL_MIN}px` }}>{leadColumn.get(r)}</td>
+                  )}
                   {columns.map((c, ci) => {
                     const tone = r.tone?.(c) ?? 'neutral'
                     const isBest = best.has(ci) && tone !== 'bad'
@@ -199,6 +220,9 @@ export function PfCompareTable<T>({
                             : tone === 'ok'
                               ? 'var(--pf-positive)'
                               : undefined
+                    // One word per cell: best wins over the tone word, except for bad
+                    const key = isBest ? 'best' : tone
+                    const word = toneWords?.[key] ?? DEFAULT_WORDS[key]
                     return (
                       <td
                         key={getColumnId(c)}
@@ -210,10 +234,15 @@ export function PfCompareTable<T>({
                         }}
                       >
                         {r.get(c)}
-                        {isBest && <span style={hiddenStyle}> best</span>}
-                        {tone === 'bad' && <span style={hiddenStyle}> fails</span>}
-                        {tone === 'warn' && <span style={hiddenStyle}> warning</span>}
-                        {tone === 'ok' && <span style={hiddenStyle}> ok</span>}
+                        {word &&
+                          (wordsVisible && key !== 'neutral' ? (
+                            <>
+                              {' '}
+                              <PfBadge variant={BADGE_VARIANT[key]}>{word}</PfBadge>
+                            </>
+                          ) : (
+                            <span style={hiddenStyle}>{` ${word}`}</span>
+                          ))}
                       </td>
                     )
                   })}
