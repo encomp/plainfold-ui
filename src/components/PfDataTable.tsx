@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react'
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { useBreakpoint } from '../utils/useBreakpoint'
 import { sortRows } from './sortRows'
@@ -107,7 +107,7 @@ export interface PfDataTableProps<T> {
   onPageSizeChange?: (n: number) => void
   /** "Load more" button; the caller renders errors and keeps hasMore true to allow a retry */
   loadMore?: { hasMore: boolean; loading?: boolean; onLoadMore(): void }
-  /** Container width in px. While the table's own box is narrower than this it renders the phone card layout, even on a wide viewport. Measured with ResizeObserver; without it (or without this prop) only the viewport rule applies. */
+  /** Container width in px. While the table's own box is narrower than this it renders the phone card layout, even on a wide viewport. Measured with ResizeObserver; without it (or without this prop) only the viewport rule applies. Set it once: toggling it between undefined and a number remounts the table and resets its state. */
   cardsBelow?: number
 }
 
@@ -164,8 +164,10 @@ export function PfDataTable<T>(props: PfDataTableProps<T>) {
 function Measured<T>(props: PfDataTableProps<T>) {
   const ref = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState<number | null>(null)
-  useEffect(() => {
+  // layout effect: measure before first paint so a narrow container never shows the table first
+  useLayoutEffect(() => {
     if (!ref.current || typeof ResizeObserver === 'undefined') return
+    setWidth(ref.current.getBoundingClientRect().width)
     const ro = new ResizeObserver((es) => setWidth(es[es.length - 1].contentRect.width))
     ro.observe(ref.current)
     return () => ro.disconnect()

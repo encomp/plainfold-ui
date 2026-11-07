@@ -737,15 +737,39 @@ describe('viewport switch without cardsBelow', () => {
 
 describe('cardsBelow', () => {
   let fire: (w: number) => void
+  const disconnect = vi.fn()
   beforeEach(() => {
+    disconnect.mockClear()
     vi.stubGlobal('ResizeObserver', class {
       constructor(cb: (e: unknown[]) => void) { fire = (w) => act(() => cb([{ contentRect: { width: w } }])) }
       observe() {}
       unobserve() {}
-      disconnect() {}
+      disconnect = disconnect
     })
   })
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
+
+  it('first render is already cards when the container starts narrow', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 340 } as DOMRect)
+    setup({ cardsBelow: 720 })
+    expect(screen.queryByRole('table')).toBeNull()
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+  })
+
+  it('card list keeps its label and roles', () => {
+    setup({ cardsBelow: 720, 'aria-label': 'Things' })
+    fire(600)
+    const list = screen.getByRole('list', { name: 'Things' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByRole('link', { name: 'Name 1' })).toBeTruthy()
+  })
+
+  it('disconnects the observer on unmount', () => {
+    const { unmount } = setup({ cardsBelow: 720 })
+    expect(disconnect).not.toHaveBeenCalled()
+    unmount()
+    expect(disconnect).toHaveBeenCalledTimes(1)
+  })
 
   it('cards when the wrapper is narrower than cardsBelow on a desktop viewport', () => {
     setup({ cardsBelow: 720 })
