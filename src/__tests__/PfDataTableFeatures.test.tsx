@@ -725,3 +725,64 @@ describe('load more', () => {
     expect(screen.getByRole('button', { name: 'Load more' })).toBeInTheDocument()
   })
 })
+
+describe('viewport switch without cardsBelow', () => {
+  it.each(['desktop', 'tablet', 'mobile'] as const)('markup is unchanged at %s', (bp) => {
+    vi.mocked(useBreakpoint).mockReturnValue(bp)
+    const { container } = setup()
+    expect(container.innerHTML).toMatchSnapshot()
+    expect(!!screen.queryByRole('table')).toBe(bp !== 'mobile')
+  })
+})
+
+describe('cardsBelow', () => {
+  let fire: (w: number) => void
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(cb: (e: unknown[]) => void) { fire = (w) => act(() => cb([{ contentRect: { width: w } }])) }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('cards when the wrapper is narrower than cardsBelow on a desktop viewport', () => {
+    setup({ cardsBelow: 720 })
+    fire(600)
+    expect(screen.queryByRole('table')).toBeNull()
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+  })
+
+  it('table when the wrapper is wider', () => {
+    setup({ cardsBelow: 720 })
+    fire(900)
+    expect(screen.getByRole('table')).toBeTruthy()
+  })
+
+  it('switches when the width crosses the value', () => {
+    setup({ cardsBelow: 720 })
+    fire(900)
+    expect(screen.getByRole('table')).toBeTruthy()
+    fire(600)
+    expect(screen.queryByRole('table')).toBeNull()
+    fire(720)
+    expect(screen.getByRole('table')).toBeTruthy()
+  })
+
+  it('no prop keeps the viewport rule', () => {
+    setup()
+    expect(screen.getByRole('table')).toBeTruthy()
+    cleanup()
+    vi.mocked(useBreakpoint).mockReturnValue('mobile')
+    setup()
+    expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('keeps today\'s behaviour when ResizeObserver is missing', () => {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('ResizeObserver', undefined)
+    setup({ cardsBelow: 720 })
+    expect(screen.getByRole('table')).toBeTruthy()
+  })
+})

@@ -107,6 +107,8 @@ export interface PfDataTableProps<T> {
   onPageSizeChange?: (n: number) => void
   /** "Load more" button; the caller renders errors and keeps hasMore true to allow a retry */
   loadMore?: { hasMore: boolean; loading?: boolean; onLoadMore(): void }
+  /** Container width in px. While the table's own box is narrower than this it renders the phone card layout, even on a wide viewport. Measured with ResizeObserver; without it (or without this prop) only the viewport rule applies. */
+  cardsBelow?: number
 }
 
 const EMPTY = '—'
@@ -154,13 +156,35 @@ const flatButton: CSSProperties = {
   background: 'var(--pf-bg-surface)', border: '1px solid var(--pf-border)', borderRadius: 6,
 }
 
-export function PfDataTable<T>({
+export function PfDataTable<T>(props: PfDataTableProps<T>) {
+  return props.cardsBelow === undefined ? <PfDataTableBody {...props} /> : <Measured {...props} />
+}
+
+// the wrapper exists only when cardsBelow is set, so other tables keep their markup
+function Measured<T>(props: PfDataTableProps<T>) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState<number | null>(null)
+  useEffect(() => {
+    if (!ref.current || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver((es) => setWidth(es[es.length - 1].contentRect.width))
+    ro.observe(ref.current)
+    return () => ro.disconnect()
+  }, [])
+  return (
+    <div ref={ref}>
+      <PfDataTableBody {...props} narrow={width !== null && width < props.cardsBelow!} />
+    </div>
+  )
+}
+
+function PfDataTableBody<T>({
+  narrow,
   rows, columns, getRowId, 'data-testid': testId, rowTestId, 'aria-label': ariaLabel,
   emptyState, loading, loadingState, sort, onSortChange, renderCard,
   selection, selectedId, onRowClick, isDimmed, rowAttrs, rowMenu, rowMenuLabel, rowMenuTestId,
   popupTestId, renderDetail, groupBy, hideDisabledSelection, paging, page, onPageChange, total, pageSize, pageSizeOptions, onPageSizeChange, loadMore,
-}: PfDataTableProps<T>) {
-  const bp = useBreakpoint()
+}: PfDataTableProps<T> & { narrow?: boolean }) {
+  const cards = useBreakpoint() === 'mobile' || !!narrow
   const showBones = useSkeletonGate(!!loading, rows.length > 0)
   const controlled = onSortChange !== undefined
   const [innerSort, setInnerSort] = useState<PfSort | null>(sort ?? null)
@@ -397,7 +421,7 @@ export function PfDataTable<T>({
     if (showBones) {
       return (
         <PfSkeletonRegion label={ariaLabel ?? 'rows'}>
-          {bp === 'mobile' ? (
+          {cards ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {Array.from({ length: boneRows }, (_, i) => (
                 <div key={i} style={{ border: '1px solid var(--pf-border)', borderRadius: 8, padding: 12, background: 'var(--pf-bg-surface)' }}>
@@ -438,7 +462,7 @@ export function PfDataTable<T>({
     else groups.push({ id: g?.id ?? '', label: g?.label, rows: [r] })
   }
 
-  if (bp === 'mobile') {
+  if (cards) {
     const sortCols = columns.filter(isSortable)
     const body = columns.filter((c) => c.kind !== 'checkbox' && !c.hideOnCard)
     const titleCol = body.find((c) => c.kind !== 'actions')
