@@ -80,6 +80,39 @@ describe('PfChipListField', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Hosts'))
   })
 
+  it('adds the typed text on blur', () => {
+    const { onChange, input } = setup()
+    type(input, 'example.com')
+    fireEvent.blur(input)
+    expect(onChange).toHaveBeenCalledWith(['example.com'])
+  })
+
+  it('keeps an invalid value in the input on blur, with its error', () => {
+    const { onChange, input } = setup({ validate: () => 'Not a host' })
+    type(input, 'nodot')
+    fireEvent.blur(input)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(input.value).toBe('nodot')
+    expect(screen.getByRole('alert').textContent).toBe('Not a host')
+  })
+
+  it('refuses a duplicate on blur', () => {
+    const { onChange, input } = setup({ values: ['a.com'] })
+    type(input, 'a.com')
+    fireEvent.blur(input)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert').textContent).toMatch(/already/i)
+  })
+
+  it('does nothing on blur when the input is blank', () => {
+    const { onChange, input } = setup()
+    fireEvent.blur(input)
+    type(input, '   ')
+    fireEvent.blur(input)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('Backspace on an empty input removes nothing', () => {
     const { onChange, input } = setup({ values: ['a.com'] })
     fireEvent.keyDown(input, { key: 'Backspace' })

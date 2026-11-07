@@ -101,6 +101,7 @@ export function PfChipListField({
             aria-describedby={error ? errId : undefined}
             onChange={(e) => { setText(e.target.value); setError(null) }}
             onKeyDown={onKeyDown}
+            onBlur={add}
           />
         )}
       </div>
