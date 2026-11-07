@@ -180,4 +180,64 @@ describe('PfSearchMultiSelect', () => {
     setup({ values: ['Gone-value'] })
     expect(screen.getByRole('button', { name: 'Remove Gone-value' })).toBeInTheDocument()
   })
+
+  describe('render props and groups', () => {
+    const rows = [
+      { value: 'e', label: 'Electrical contractors', count: 4 },
+      { value: 'p', label: 'Plumbing contractors' },
+    ]
+
+    it('without render props the output is unchanged', () => {
+      const { container, input } = setup({ values: ['Pears-value'] })
+      fireEvent.click(input)
+      expect(container.innerHTML).toMatchSnapshot()
+    })
+
+    it('renderOption replaces the visible row and keeps the accessible name', () => {
+      const { input } = setup({
+        options: rows,
+        renderOption: (o) => <b data-testid="custom-row">{o.label.toUpperCase()}</b>,
+      })
+      fireEvent.click(input)
+      const opt = screen.getByRole('option', { name: 'Electrical contractors, 4 items' })
+      expect(within(opt).getByTestId('custom-row')).toHaveTextContent('ELECTRICAL CONTRACTORS')
+      expect(screen.getByRole('option', { name: 'Plumbing contractors' })).toBeInTheDocument()
+    })
+
+    it('renderChip shows custom chip content and the remove button still works', () => {
+      const { onChange } = setup({
+        options: rows,
+        values: ['e'],
+        renderChip: (v) => <i data-testid="custom-chip">chip:{v}</i>,
+      })
+      expect(screen.getByTestId('custom-chip')).toHaveTextContent('chip:e')
+      fireEvent.click(screen.getByRole('button', { name: 'Remove Electrical contractors' }))
+      expect(onChange).toHaveBeenLastCalledWith([])
+    })
+
+    it('options with a group get one heading per group', () => {
+      const { input } = setup({
+        options: [
+          { value: 'a', label: 'Alpha', group: 'First' },
+          { value: 'b', label: 'Beta', group: 'First' },
+          { value: 'c', label: 'Gamma', group: 'Second' },
+          { value: 'd', label: 'Delta' },
+        ],
+      })
+      fireEvent.click(input)
+      const groups = screen.getAllByRole('group')
+      expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['First', 'Second'])
+      expect(screen.getAllByRole('option')).toHaveLength(4)
+    })
+
+    it('the list stays open after a pick and a second pick adds a second value', () => {
+      const { input, onChange, rerender } = setup()
+      fireEvent.click(input)
+      fireEvent.click(screen.getByRole('option', { name: /Apples/ }))
+      rerender(<PfSearchMultiSelect options={options} values={['Apples-value']} onChange={onChange} label="Fruit" />)
+      expect(input).toHaveAttribute('aria-expanded', 'true')
+      fireEvent.click(screen.getByRole('option', { name: /Quinces/ }))
+      expect(onChange).toHaveBeenLastCalledWith(['Apples-value', 'Quinces-value'])
+    })
+  })
 })

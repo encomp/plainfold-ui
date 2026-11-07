@@ -8,6 +8,8 @@ export interface PfSearchMultiSelectOption {
   label: string
   count?: number
   disabled?: boolean
+  /** Consecutive options with the same group sit under one non-selectable heading */
+  group?: string
 }
 
 export interface PfSearchMultiSelectProps {
@@ -27,6 +29,10 @@ export interface PfSearchMultiSelectProps {
   loading?: boolean
   /** Server search: when given, options are not filtered locally */
   onSearch?: (text: string) => void
+  /** The option row's visible content; the option's accessible name stays its label (and count) */
+  renderOption?: (o: PfSearchMultiSelectOption) => React.ReactNode
+  /** The chip's visible content; the remove button keeps "Remove {label}" */
+  renderChip?: (value: string) => React.ReactNode
   'data-testid'?: string
 }
 
@@ -54,6 +60,8 @@ export function PfSearchMultiSelect({
   countLabel = (n) => `${n}`,
   loading = false,
   onSearch,
+  renderOption,
+  renderChip,
   'data-testid': testId,
 }: PfSearchMultiSelectProps) {
   const uid = useId()
@@ -152,7 +160,7 @@ export function PfSearchMultiSelect({
           <ul role="list" style={{ display: 'contents', listStyle: 'none', margin: 0, padding: 0 }}>
             {values.map((v) => (
               <Chip key={v} removeLabel={`Remove ${labelOf(v)}`} onRemove={() => remove(v)}>
-                {labelOf(v)}
+                {renderChip ? renderChip(v) : labelOf(v)}
               </Chip>
             ))}
           </ul>
@@ -198,13 +206,22 @@ export function PfSearchMultiSelect({
           {shown.map((o, i) => {
             const on = values.includes(o.value)
             return (
+              <React.Fragment key={o.value}>
+              {o.group !== undefined && o.group !== shown[i - 1]?.group && (
+                <li
+                  role="group"
+                  aria-label={o.group}
+                  style={{ padding: '8px 12px 4px', fontSize: pfText.meta, color: 'var(--pf-text-secondary)' }}
+                >
+                  {o.group}
+                </li>
+              )}
               <li
-                key={o.value}
                 id={`${uid}-${i}`}
                 role="option"
                 aria-selected={on}
                 aria-disabled={o.disabled || undefined}
-                aria-label={o.count === undefined ? undefined : `${o.label}, ${countLabel(o.count)}`}
+                aria-label={o.count === undefined ? (renderOption ? o.label : undefined) : `${o.label}, ${countLabel(o.count)}`}
                 onClick={() => toggle(o)}
                 style={{
                   display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 12px', fontSize: pfText.body,
@@ -214,9 +231,14 @@ export function PfSearchMultiSelect({
                   background: i === at ? 'var(--pf-accent-muted)' : undefined,
                 }}
               >
-                <span>{o.label}</span>
-                {o.count !== undefined && <span style={{ color: 'var(--pf-text-secondary)', fontSize: pfText.meta }}>{o.count}</span>}
+                {renderOption ? renderOption(o) : (
+                  <>
+                    <span>{o.label}</span>
+                    {o.count !== undefined && <span style={{ color: 'var(--pf-text-secondary)', fontSize: pfText.meta }}>{o.count}</span>}
+                  </>
+                )}
               </li>
+              </React.Fragment>
             )
           })}
           {loading && <li role="presentation" style={{ padding: '8px 12px', fontSize: pfText.meta, color: 'var(--pf-text-secondary)' }}>Loading</li>}
