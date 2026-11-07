@@ -30,7 +30,7 @@ Forms: wraps react-hook-form + zod (both peer dependencies). PfForm provides For
 - **PfEmptyState** — icon + heading + subtext + optional actions; always left-aligned inside a dashed box; subtext is capped at 52ch
 - **PfEmptyLine** — one-line empty note for small areas where a full empty state is too large
 - **PfSkeleton** / **PfSkeletonRegion** / `useSkeletonGate` — loading placeholder bones (`Line`, `Block`, `Circle`, `CardBody`, `TableRows`, `ChartArea`) on one shared shimmer; the region is a `role="status"` named "Loading <label>" and `aria-busy` while bones are inside; the hook `useSkeletonGate(loading, hasData)` shows bones only on a first empty load (after 250 ms, for at least 300 ms)
-- **PfSnackbar** — toast with auto-hide and optional action. Props: `open`, `onClose`
+- **PfSnackbar** — toast with auto-hide (pauses on hover/focus; `autoHideDuration={null}` stays until closed), optional action and optional close button. Props: `open`, `onClose`, `message`, `action`, `autoHideDuration`, `closeLabel`
 - **PfTooltip** — Radix Tooltip wrapper; optional controlled `open` / `onOpenChange`
 
 ### Overlay

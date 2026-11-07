@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { PfButton } from './PfButton'
 
 interface PfSnackbarProps {
@@ -9,7 +9,10 @@ interface PfSnackbarProps {
     label: string
     onClick: () => void
   }
-  autoHideDuration?: number
+  /** Milliseconds before onClose fires; null keeps it open until closed. */
+  autoHideDuration?: number | null
+  /** When set, shows a close button with this accessible name. */
+  closeLabel?: string
 }
 
 export function PfSnackbar({
@@ -18,16 +21,27 @@ export function PfSnackbar({
   message,
   action,
   autoHideDuration = 5000,
+  closeLabel,
 }: PfSnackbarProps) {
+  const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const paused = hovered || focused
+  const remaining = useRef(autoHideDuration)
+
   useEffect(() => {
-    if (!open) return
+    remaining.current = autoHideDuration
+  }, [open, autoHideDuration])
 
-    const timer = setTimeout(() => {
-      onClose()
-    }, autoHideDuration)
-
-    return () => clearTimeout(timer)
-  }, [open, autoHideDuration, onClose])
+  // Runs after the reset effect above; cleanup banks the time already elapsed.
+  useEffect(() => {
+    if (!open || paused || autoHideDuration === null) return
+    const startedAt = Date.now()
+    const timer = setTimeout(onClose, remaining.current ?? 0)
+    return () => {
+      clearTimeout(timer)
+      remaining.current = (remaining.current ?? 0) - (Date.now() - startedAt)
+    }
+  }, [open, paused, autoHideDuration, onClose])
 
   if (!open) return null
 
@@ -56,11 +70,24 @@ export function PfSnackbar({
   }
 
   return (
-    <div style={containerStyle} role="alert" data-testid="pf-snackbar">
+    <div
+      style={containerStyle}
+      role="alert"
+      data-testid="pf-snackbar"
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+    >
       <span style={messageStyle}>{message}</span>
       {action && (
         <PfButton variant="ghost" size="sm" onClick={action.onClick}>
           {action.label}
+        </PfButton>
+      )}
+      {closeLabel && (
+        <PfButton variant="ghost" size="sm" aria-label={closeLabel} onClick={onClose}>
+          ×
         </PfButton>
       )}
     </div>

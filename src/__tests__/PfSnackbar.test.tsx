@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { PfSnackbar } from '../components/PfSnackbar'
 
 describe('PfSnackbar', () => {
@@ -74,5 +74,56 @@ describe('PfSnackbar', () => {
       <PfSnackbar open onClose={() => {}} message="Simple" />
     )
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('stays open when autoHideDuration is null', () => {
+    const onClose = vi.fn()
+    render(<PfSnackbar open onClose={onClose} message="Stay" autoHideDuration={null} />)
+    act(() => { vi.advanceTimersByTime(60000) })
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByTestId('pf-snackbar')).toBeInTheDocument()
+  })
+
+  it('pauses while hovered and resumes after leave', () => {
+    const onClose = vi.fn()
+    render(<PfSnackbar open onClose={onClose} message="Hover" autoHideDuration={10000} />)
+    const el = screen.getByTestId('pf-snackbar')
+    act(() => { vi.advanceTimersByTime(4000) })
+    fireEvent.pointerEnter(el)
+    act(() => { vi.advanceTimersByTime(20000) })
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent.pointerLeave(el)
+    act(() => { vi.advanceTimersByTime(5999) })
+    expect(onClose).not.toHaveBeenCalled()
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('pauses while focus is inside', () => {
+    const onClose = vi.fn()
+    render(
+      <PfSnackbar
+        open
+        onClose={onClose}
+        message="Focus"
+        autoHideDuration={10000}
+        action={{ label: 'Undo', onClick: () => {} }}
+      />
+    )
+    const btn = screen.getByRole('button', { name: 'Undo' })
+    act(() => { vi.advanceTimersByTime(4000) })
+    act(() => { btn.focus() })
+    act(() => { vi.advanceTimersByTime(20000) })
+    expect(onClose).not.toHaveBeenCalled()
+    act(() => { btn.blur() })
+    act(() => { vi.advanceTimersByTime(6000) })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('close button calls onClose and has the given name', () => {
+    const onClose = vi.fn()
+    render(<PfSnackbar open onClose={onClose} message="Closable" autoHideDuration={null} closeLabel="Close" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 })
