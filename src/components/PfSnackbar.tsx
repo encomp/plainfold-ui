@@ -28,9 +28,18 @@ export function PfSnackbar({
   const paused = hovered || focused
   const remaining = useRef(autoHideDuration)
 
+  // A new onClose restarts the countdown, as before; pause/resume does not.
   useEffect(() => {
     remaining.current = autoHideDuration
-  }, [open, autoHideDuration])
+  }, [open, autoHideDuration, onClose])
+
+  // An unmounted node may never fire leave/blur, so clear both on close.
+  useEffect(() => {
+    if (!open) {
+      setHovered(false)
+      setFocused(false)
+    }
+  }, [open])
 
   // Runs after the reset effect above; cleanup banks the time already elapsed.
   useEffect(() => {

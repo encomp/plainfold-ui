@@ -126,4 +126,27 @@ describe('PfSnackbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('restarts the full countdown when onClose changes while open', () => {
+    const first = vi.fn()
+    const second = vi.fn()
+    const { rerender } = render(<PfSnackbar open onClose={first} message="Inline" />)
+    act(() => { vi.advanceTimersByTime(3000) })
+    rerender(<PfSnackbar open onClose={second} message="Inline" />)
+    act(() => { vi.advanceTimersByTime(4999) })
+    expect(second).not.toHaveBeenCalled()
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(second).toHaveBeenCalledTimes(1)
+    expect(first).not.toHaveBeenCalled()
+  })
+
+  it('hides after reopening when it was closed while hovered', () => {
+    const onClose = vi.fn()
+    const { rerender } = render(<PfSnackbar open onClose={onClose} message="Again" />)
+    fireEvent.pointerEnter(screen.getByTestId('pf-snackbar'))
+    rerender(<PfSnackbar open={false} onClose={onClose} message="Again" />)
+    rerender(<PfSnackbar open onClose={onClose} message="Again" />)
+    act(() => { vi.advanceTimersByTime(5000) })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })
