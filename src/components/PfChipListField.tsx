@@ -1,5 +1,6 @@
-import React, { useId, useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import { pfText } from '../tokens/type'
+import { Chip, chipCss } from './chip'
 
 export interface PfChipListFieldProps {
   label: string
@@ -16,17 +17,13 @@ export interface PfChipListFieldProps {
   'data-testid'?: string
 }
 
-const css = `
+const css = chipCss + `
 .pf-clf-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px;
   background: var(--pf-bg-surface); border: 1px solid var(--pf-border-strong); border-radius: var(--pf-radius-md) }
 .pf-clf-box:focus-within { outline: 2px solid var(--pf-accent-text, var(--pf-accent)); outline-offset: 1px }
 .pf-clf-box[data-invalid] { border-color: var(--pf-danger) }
 .pf-clf-input { flex: 1 1 120px; min-width: 0; border: 0; outline: none; background: transparent;
   color: var(--pf-text-primary); font-family: var(--pf-font-ui); font-size: ${pfText.body} }
-.pf-clf-chip-x { border: 0; background: transparent; color: var(--pf-text-secondary); cursor: pointer; padding: 0 2px;
-  font-size: ${pfText.body}; line-height: 1; border-radius: 4px }
-.pf-clf-chip-x:hover { color: var(--pf-text-primary) }
-.pf-clf-chip-x:focus-visible { outline: 2px solid var(--pf-accent-text, var(--pf-accent)) }
 `
 
 export function PfChipListField({
@@ -36,6 +33,17 @@ export function PfChipListField({
   const errId = `${uid}-err`
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  const listRef = useRef<HTMLUListElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const focusAt = useRef<number | null>(null)
+  // After a remove, focus the chip that took its place, else the input.
+  useEffect(() => {
+    if (focusAt.current === null) return
+    const btns = listRef.current?.querySelectorAll<HTMLButtonElement>('button')
+    ;(btns?.[focusAt.current] ?? inputRef.current)?.focus()
+    focusAt.current = null
+  }, [values])
 
   const add = () => {
     const v = (normalize ?? ((s: string) => s))(text.trim())
@@ -69,26 +77,21 @@ export function PfChipListField({
         </label>
       )}
       <div className="pf-clf-box" data-invalid={error ? '' : undefined}>
-        <ul role="list" aria-label={disabled ? label : undefined} style={{ display: 'contents', listStyle: 'none', margin: 0, padding: 0 }}>
-          {values.map((v) => (
-            <li
+        <ul ref={listRef} role="list" aria-label={disabled ? label : undefined} style={{ display: 'contents', listStyle: 'none', margin: 0, padding: 0 }}>
+          {values.map((v, i) => (
+            <Chip
               key={v}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4, padding: disabled ? '2px 8px' : '2px 4px 2px 8px', fontSize: pfText.meta,
-                background: 'var(--pf-accent-muted)', border: '1px solid var(--pf-border)', borderRadius: 'var(--pf-radius-sm)',
-              }}
+              plain={disabled}
+              removeLabel={disabled ? undefined : `Remove ${v}`}
+              onRemove={() => { focusAt.current = i; onChange(values.filter((x) => x !== v)) }}
             >
               {v}
-              {!disabled && (
-                <button type="button" className="pf-clf-chip-x" aria-label={`Remove ${v}`} onClick={() => onChange(values.filter((x) => x !== v))}>
-                  <span aria-hidden="true">×</span>
-                </button>
-              )}
-            </li>
+            </Chip>
           ))}
         </ul>
         {!disabled && (
           <input
+            ref={inputRef}
             id={`${uid}-input`}
             className="pf-clf-input"
             autoComplete="off"

@@ -1,6 +1,7 @@
 import React, { useId, useRef, useState } from 'react'
 import { pfText } from '../tokens/type'
 import { PfButton } from './PfButton'
+import { Chip, chipCss } from './chip'
 
 export interface PfSearchMultiSelectOption {
   value: string
@@ -34,16 +35,12 @@ const hiddenStyle: React.CSSProperties = {
   overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
 }
 
-const css = `
+const css = chipCss + `
 .pf-sms-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px;
   background: var(--pf-bg-surface); border: 1px solid var(--pf-border-strong); border-radius: var(--pf-radius-md) }
 .pf-sms-box:focus-within { outline: 2px solid var(--pf-accent-text, var(--pf-accent)); outline-offset: 1px }
 .pf-sms-input { flex: 1 1 120px; min-width: 0; border: 0; outline: none; background: transparent;
   color: var(--pf-text-primary); font-family: var(--pf-font-ui); font-size: ${pfText.body} }
-.pf-sms-chip-x { border: 0; background: transparent; color: var(--pf-text-secondary); cursor: pointer; padding: 0 2px;
-  font-size: ${pfText.body}; line-height: 1; border-radius: 4px }
-.pf-sms-chip-x:hover { color: var(--pf-text-primary) }
-.pf-sms-chip-x:focus-visible { outline: 2px solid var(--pf-accent-text, var(--pf-accent)) }
 `
 
 export function PfSearchMultiSelect({
@@ -154,18 +151,9 @@ export function PfSearchMultiSelect({
         {values.length > 0 && (
           <ul role="list" style={{ display: 'contents', listStyle: 'none', margin: 0, padding: 0 }}>
             {values.map((v) => (
-              <li
-                key={v}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 4px 2px 8px', fontSize: pfText.meta,
-                  background: 'var(--pf-accent-muted)', border: '1px solid var(--pf-border)', borderRadius: 'var(--pf-radius-sm)',
-                }}
-              >
+              <Chip key={v} removeLabel={`Remove ${labelOf(v)}`} onRemove={() => remove(v)}>
                 {labelOf(v)}
-                <button type="button" className="pf-sms-chip-x" aria-label={`Remove ${labelOf(v)}`} onClick={() => remove(v)}>
-                  <span aria-hidden="true">×</span>
-                </button>
-              </li>
+              </Chip>
             ))}
           </ul>
         )}

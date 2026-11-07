@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { useState } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { PfChipListField } from '../components/PfChipListField'
 import type { PfChipListFieldProps } from '../components/PfChipListField'
@@ -65,6 +66,18 @@ describe('PfChipListField', () => {
     fireEvent.keyDown(input, { key: 'Enter' })
     expect(onChange).not.toHaveBeenCalled()
     expect(screen.getByRole('alert').textContent).toMatch(/1/)
+  })
+
+  it('moves focus to the next remove button, then the input', () => {
+    function Host() {
+      const [v, setV] = useState(['a.com', 'b.com'])
+      return <PfChipListField label="Hosts" values={v} onChange={setV} />
+    }
+    render(<Host />)
+    fireEvent.click(screen.getByRole('button', { name: 'Remove a.com' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Remove b.com' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove b.com' }))
+    expect(document.activeElement).toBe(screen.getByLabelText('Hosts'))
   })
 
   it('Backspace on an empty input removes nothing', () => {
