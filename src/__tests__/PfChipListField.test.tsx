@@ -113,6 +113,41 @@ describe('PfChipListField', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
+  it('Enter then blur adds the value once, with no duplicate error', () => {
+    function Host() {
+      const [v, setV] = useState<string[]>([])
+      return <PfChipListField label="Hosts" values={v} onChange={setV} />
+    }
+    render(<Host />)
+    const input = screen.getByLabelText('Hosts')
+    type(input as HTMLInputElement, 'example.com')
+    fireEvent.keyDown(input, { key: 'Enter' })
+    fireEvent.blur(input)
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('disabled has no input, so a blur commits nothing', () => {
+    const { onChange } = setup({ values: ['a.com'], disabled: true })
+    fireEvent.blur(screen.getByRole('list'))
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it('removing a chip while text is typed commits the text and keeps focus right', () => {
+    function Host() {
+      const [v, setV] = useState(['a.com', 'b.com'])
+      return <PfChipListField label="Hosts" values={v} onChange={setV} />
+    }
+    render(<Host />)
+    const input = screen.getByLabelText('Hosts') as HTMLInputElement
+    type(input, 'c.com')
+    fireEvent.blur(input)
+    fireEvent.click(screen.getByRole('button', { name: 'Remove a.com' }))
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent?.replace('×', ''))).toEqual(['b.com', 'c.com'])
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Remove b.com' }))
+  })
+
   it('Backspace on an empty input removes nothing', () => {
     const { onChange, input } = setup({ values: ['a.com'] })
     fireEvent.keyDown(input, { key: 'Backspace' })
