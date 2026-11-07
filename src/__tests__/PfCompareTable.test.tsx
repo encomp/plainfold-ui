@@ -227,9 +227,9 @@ describe('PfCompareTable', () => {
   })
 
   it('a best ok cell reads best once and no ok', () => {
-    renderTable([row({ best: 'max', tone: () => 'ok' })])
-    const cell = screen.getAllByRole('cell')[0]
-    expect(cell.textContent).toBe('80 best')
+    renderTable([row({ best: 'min', tone: () => 'ok' })])
+    const cell = screen.getAllByRole('cell')[1]
+    expect(cell.textContent).toBe('60 best')
     expect(within(cell).queryByText(/ok$/)).toBeNull()
   })
 
@@ -267,14 +267,27 @@ describe('PfCompareTable', () => {
     expect(best.style.position).not.toBe('absolute')
   })
 
+  it('a best warn cell keeps the warning in its accessible text', () => {
+    renderTable([row({ best: 'max', tone: () => 'warn' })])
+    const cell = screen.getAllByRole('cell')[0]
+    expect(cell.textContent).toBe('80 best, warning')
+    renderTable([row({ best: 'max', tone: () => 'warn' })], cols, { toneWords: { warn: 'close' }, wordsVisible: true })
+    expect(screen.getAllByRole('cell')[2].textContent).toBe('80 best, close')
+  })
+
+  it('wordsVisible respects a neutral override', () => {
+    renderTable([row()], cols, { wordsVisible: true, toneWords: { neutral: 'n/a' } })
+    expect(screen.getAllByRole('cell')[0].textContent).toBe('80 n/a')
+    expect(screen.getAllByRole('cell')[0].querySelector('span')?.style.position).not.toBe('absolute')
+  })
+
   it('leadColumn renders after the label and does not change best or only differences', () => {
     renderTable([row({ best: 'max' }), row({ id: 'd', label: 'D', value: () => 1 })], cols, {
       onlyDifferences: true,
-      leadColumn: { header: 'Pass at', get: () => 'L' },
+      leadColumn: { header: 'First', get: (r) => (r.id === 'd' ? 'varies-d' : 'varies-score') },
     })
     expect(screen.getAllByRole('rowheader')).toHaveLength(1)
-    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Item', 'Pass at', 'Alpha', 'Beta'])
-    const cells = screen.getAllByRole('cell')
-    expect(cells.map((c) => c.textContent)).toEqual(['L', '80 best', '60'])
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Item', 'First', 'Alpha', 'Beta'])
+    expect(screen.getAllByRole('cell').map((c) => c.textContent)).toEqual(['varies-score', '80 best', '60'])
   })
 })

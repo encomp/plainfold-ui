@@ -40,7 +40,7 @@ export interface PfCompareTableProps<T> {
 }
 
 const DEFAULT_WORDS = { best: 'best', bad: 'fails', warn: 'warning', ok: 'ok', neutral: '' }
-const BADGE_VARIANT = { best: 'success', ok: 'success', bad: 'danger', warn: 'warning' } as const
+const BADGE_VARIANT = { best: 'success', ok: 'success', bad: 'danger', warn: 'warning', neutral: 'muted' } as const
 
 // position: relative is the containing block for the visually hidden spans, so they stay inside the clip
 const wrapStyle: React.CSSProperties = {
@@ -223,6 +223,8 @@ export function PfCompareTable<T>({
                     // One word per cell: best wins over the tone word, except for bad
                     const key = isBest ? 'best' : tone
                     const word = toneWords?.[key] ?? DEFAULT_WORDS[key]
+                    // A best cell that is also warn keeps the warning for screen readers; ok is implied by best
+                    const warnWord = isBest && tone === 'warn' ? (toneWords?.warn ?? DEFAULT_WORDS.warn) : ''
                     return (
                       <td
                         key={getColumnId(c)}
@@ -235,7 +237,7 @@ export function PfCompareTable<T>({
                       >
                         {r.get(c)}
                         {word &&
-                          (wordsVisible && key !== 'neutral' ? (
+                          (wordsVisible ? (
                             <>
                               {' '}
                               <PfBadge variant={BADGE_VARIANT[key]}>{word}</PfBadge>
@@ -243,6 +245,7 @@ export function PfCompareTable<T>({
                           ) : (
                             <span style={hiddenStyle}>{` ${word}`}</span>
                           ))}
+                        {word && warnWord && <span style={hiddenStyle}>{`, ${warnWord}`}</span>}
                       </td>
                     )
                   })}
