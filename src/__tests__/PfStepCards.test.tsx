@@ -1,7 +1,10 @@
+import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import { PfStepCards } from '../components/PfStepCards'
 import type { PfStepCardsStep } from '../components/PfStepCards'
+import { gridCases } from './gridCases'
+import fixture from './fixtures/stepCardsGrid.a698f33.json'
 
 const steps: PfStepCardsStep[] = [
   { id: 'a', title: 'Draft', state: 'done', count: '120', cost: '$11.90', note: 'All drafted' },
@@ -128,7 +131,15 @@ describe('PfStepCards', () => {
     expect(screen.getByRole('list').style.gridTemplateColumns).toBe('repeat(auto-fit, minmax(min(240px, 100%), 1fr))')
   })
 
-  it('renders the same markup when layout is unset or "grid"', () => {
+  it('renders byte-identical markup to a698f33 with layout unset', () => {
+    for (const [k, p] of Object.entries(gridCases)) {
+      const { container, unmount } = render(<PfStepCards {...p} />)
+      expect(container.innerHTML, k).toBe(fixture[k])
+      unmount()
+    }
+  })
+
+  it('ignores guide props when layout is "grid"', () => {
     const a = render(<PfStepCards steps={steps} currentId="b" />).container.innerHTML
     const b = render(<PfStepCards steps={steps} currentId="b" layout="grid" openId="a" onContinue={() => {}} />).container.innerHTML
     expect(b).toBe(a)
@@ -137,7 +148,7 @@ describe('PfStepCards', () => {
 
 describe('PfStepCards guide layout', () => {
   const guide: PfStepCardsStep[] = [
-    { id: 'a', title: 'Choose', state: 'done', summary: 'Example Fencing', cost: '$1.00', action: <a href="#c">Change</a> },
+    { id: 'a', title: 'Choose', state: 'done', summary: 'Example step', cost: '$1.00', action: <a href="#c">Change</a> },
     { id: 'b', title: 'Find', state: 'skipped', count: '7', note: 'few' },
     { id: 'c', title: 'Check', state: 'current', body: <p>Do this</p> },
     { id: 'd', title: 'Remove', state: 'todo', body: <p>Hidden body</p> },
@@ -160,7 +171,7 @@ describe('PfStepCards guide layout', () => {
   it('done steps are one row with their summary, cost and action', () => {
     render(<PfStepCards steps={guide} layout="guide" openId="c" />)
     const row = screen.getByLabelText('Choose, done')
-    expect(row).toHaveTextContent('Example Fencing')
+    expect(row).toHaveTextContent('Example step')
     expect(row).toHaveTextContent('$1.00')
     expect(within(row).getByRole('link', { name: 'Change' })).toBeInTheDocument()
     expect(screen.getByLabelText('Find, skipped')).toHaveTextContent('7')
@@ -187,11 +198,43 @@ describe('PfStepCards guide layout', () => {
     expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
   })
 
-  it('moves focus to the newly open step title, not on first render', () => {
-    const { rerender } = render(<PfStepCards steps={guide} layout="guide" openId="c" footerNote="Free" />)
+  it('shows the Continue reason as visible text', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="c" onContinue={() => {}} continueDisabledReason="Pick a number first" />)
+    expect(screen.getByText('Pick a number first')).toBeVisible()
+  })
+
+  it('renders a todo row without a body', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="c" />)
+    const row = screen.getByLabelText('Remove, todo')
+    expect(row).toHaveTextContent(/^Remove$/)
+  })
+
+  it('opens nothing and shows no buttons when openId matches no step', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="zzz" onBack={() => {}} onContinue={() => {}} />)
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.queryByRole('listitem', { current: 'step' })).toBeNull()
+  })
+
+  it('does not take focus on mount', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="c" />)
     expect(document.body).toHaveFocus()
-    expect(screen.getByText('Free')).toBeInTheDocument()
+  })
+
+  it('does not take focus when openId changes from props', () => {
+    const { rerender } = render(<PfStepCards steps={guide} layout="guide" openId="c" />)
     rerender(<PfStepCards steps={guide} layout="guide" openId="d" />)
+    expect(document.body).toHaveFocus()
+  })
+
+  it('moves focus to the new step title after Continue and after Back', () => {
+    const Host = () => {
+      const [open, setOpen] = React.useState('c')
+      return <PfStepCards steps={guide} layout="guide" openId={open} onContinue={() => setOpen('d')} onBack={() => setOpen('b')} />
+    }
+    render(<Host />)
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.getByRole('heading', { name: 'Remove' })).toHaveFocus()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('heading', { name: 'Find' })).toHaveFocus()
   })
 })

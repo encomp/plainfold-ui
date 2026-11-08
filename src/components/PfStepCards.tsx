@@ -24,7 +24,7 @@ export interface PfStepCardsStep {
 
 export interface PfStepCardsProps {
   steps: PfStepCardsStep[]
-  /** The highlighted card. If it matches no step, none is highlighted. Without it, the first step in state 'current' is highlighted. */
+  /** The highlighted card (grid only; the guide ignores it and uses openId). If it matches no step, none is highlighted. Without it, the first step in state 'current' is highlighted. */
   currentId?: string
   /** Minimum card width in px before the grid wraps. Default 150. */
   minCardWidth?: number
@@ -122,12 +122,20 @@ function Guide({
   'data-testid': dataTestId,
 }: PfStepCardsProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const first = useRef(true)
-  // After Continue or Back the old button is gone; put focus on the newly open step's title.
+  const prevOpen = useRef(openId)
+  const fromClick = useRef(false)
+  // Only a Back or Continue click moves focus (its button is gone); mount and prop-driven changes never do.
+  // shortcut: the flag lasts until openId changes, so a click the parent ignores leaves it set, upgrade if that shows up.
   useEffect(() => {
-    if (first.current) first.current = false
-    else headingRef.current?.focus()
+    if (prevOpen.current === openId) return
+    prevOpen.current = openId
+    if (fromClick.current) headingRef.current?.focus()
+    fromClick.current = false
   }, [openId])
+  const clicked = (fn?: () => void) => () => {
+    fromClick.current = true
+    fn?.()
+  }
 
   return (
     <div role="list" style={{ ...rootStyle, gridTemplateColumns: '1fr' }} data-testid={dataTestId}>
@@ -175,12 +183,12 @@ function Guide({
             {(onBack || onContinue) && (
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                 {i > 0 && onBack && (
-                  <PfButton variant="secondary" onClick={onBack}>
+                  <PfButton variant="secondary" onClick={clicked(onBack)}>
                     {backLabel}
                   </PfButton>
                 )}
                 {onContinue && (
-                  <PfButton disabled={!!continueDisabledReason} reason={continueDisabledReason} onClick={onContinue}>
+                  <PfButton disabled={!!continueDisabledReason} reason={continueDisabledReason} onClick={clicked(onContinue)}>
                     {continueLabel}
                   </PfButton>
                 )}
