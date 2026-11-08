@@ -127,4 +127,71 @@ describe('PfStepCards', () => {
     render(<PfStepCards steps={steps} minCardWidth={240} />)
     expect(screen.getByRole('list').style.gridTemplateColumns).toBe('repeat(auto-fit, minmax(min(240px, 100%), 1fr))')
   })
+
+  it('renders the same markup when layout is unset or "grid"', () => {
+    const a = render(<PfStepCards steps={steps} currentId="b" />).container.innerHTML
+    const b = render(<PfStepCards steps={steps} currentId="b" layout="grid" openId="a" onContinue={() => {}} />).container.innerHTML
+    expect(b).toBe(a)
+  })
+})
+
+describe('PfStepCards guide layout', () => {
+  const guide: PfStepCardsStep[] = [
+    { id: 'a', title: 'Choose', state: 'done', summary: 'Example Fencing', cost: '$1.00', action: <a href="#c">Change</a> },
+    { id: 'b', title: 'Find', state: 'skipped', count: '7', note: 'few' },
+    { id: 'c', title: 'Check', state: 'current', body: <p>Do this</p> },
+    { id: 'd', title: 'Remove', state: 'todo', body: <p>Hidden body</p> },
+  ]
+
+  it('opens only openId and labels its position', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="c" />)
+    expect(screen.getByText('Step 3 of 4')).toBeInTheDocument()
+    expect(screen.getByText('Do this')).toBeInTheDocument()
+    expect(screen.queryByText('Hidden body')).toBeNull()
+    expect(screen.getByRole('listitem', { current: 'step' })).toHaveAttribute('aria-label', 'Check, Step 3 of 4')
+    expect(screen.getAllByRole('listitem')).toHaveLength(4)
+  })
+
+  it('takes positionLabel', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="c" positionLabel={(n, t) => `${n}/${t}`} />)
+    expect(screen.getByText('3/4')).toBeInTheDocument()
+  })
+
+  it('done steps are one row with their summary, cost and action', () => {
+    render(<PfStepCards steps={guide} layout="guide" openId="c" />)
+    const row = screen.getByLabelText('Choose, done')
+    expect(row).toHaveTextContent('Example Fencing')
+    expect(row).toHaveTextContent('$1.00')
+    expect(within(row).getByRole('link', { name: 'Change' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Find, skipped')).toHaveTextContent('7')
+  })
+
+  it('disables Continue with its reason, enables it otherwise', () => {
+    const onContinue = vi.fn()
+    const { rerender } = render(<PfStepCards steps={guide} layout="guide" openId="c" onContinue={onContinue} continueDisabledReason="Pick a number first" />)
+    const btn = screen.getByRole('button', { name: 'Continue' })
+    expect(btn).toBeDisabled()
+    expect(btn).toHaveAccessibleDescription('Pick a number first')
+    rerender(<PfStepCards steps={guide} layout="guide" openId="c" onContinue={onContinue} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(onContinue).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides Back on the first step and calls it elsewhere', () => {
+    const onBack = vi.fn()
+    const { rerender } = render(<PfStepCards steps={guide} layout="guide" openId="a" onBack={onBack} onContinue={() => {}} />)
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
+    rerender(<PfStepCards steps={guide} layout="guide" openId="c" onBack={onBack} onContinue={() => {}} backLabel="Go back" continueLabel="Next" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Go back' }))
+    expect(onBack).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
+  })
+
+  it('moves focus to the newly open step title, not on first render', () => {
+    const { rerender } = render(<PfStepCards steps={guide} layout="guide" openId="c" footerNote="Free" />)
+    expect(document.body).toHaveFocus()
+    expect(screen.getByText('Free')).toBeInTheDocument()
+    rerender(<PfStepCards steps={guide} layout="guide" openId="d" />)
+    expect(screen.getByRole('heading', { name: 'Remove' })).toHaveFocus()
+  })
 })

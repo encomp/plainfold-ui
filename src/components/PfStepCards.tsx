@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
+import { PfButton } from './PfButton'
 
 export interface PfStepCardsStep {
   /** Must be unique among the steps */
@@ -15,6 +16,10 @@ export interface PfStepCardsStep {
   note?: React.ReactNode
   /** Slot for the app's button(s) or form */
   action?: React.ReactNode
+  /** Guide layout: the open step's instruction, primary action and help link */
+  body?: React.ReactNode
+  /** Guide layout: the one-row result of a done or skipped step. Replaces count and note there. */
+  summary?: React.ReactNode
 }
 
 export interface PfStepCardsProps {
@@ -24,6 +29,23 @@ export interface PfStepCardsProps {
   /** Minimum card width in px before the grid wraps. Default 150. */
   minCardWidth?: number
   'data-testid'?: string
+  /** 'grid' (default) is the card grid. 'guide' is a vertical list with one open step. */
+  layout?: 'grid' | 'guide'
+  /** Guide layout: the step that is expanded */
+  openId?: string
+  /** Guide layout: default `Step ${n} of ${total}` */
+  positionLabel?: (n: number, total: number) => string
+  /** Guide layout: Back is hidden on the first step */
+  onBack?(): void
+  onContinue?(): void
+  /** Guide layout: disables Continue and shows this beside it */
+  continueDisabledReason?: string
+  /** Default "Back" */
+  backLabel?: string
+  /** Default "Continue" */
+  continueLabel?: string
+  /** Guide layout: shown under the Back and Continue buttons */
+  footerNote?: React.ReactNode
 }
 
 // Muted colour goes on title and count only (note and chip already have their own), never on the action slot.
@@ -80,8 +102,99 @@ const noteStyle: React.CSSProperties = {
 
 const actionStyle: React.CSSProperties = { marginTop: '4px' }
 
-export function PfStepCards({ steps, currentId, minCardWidth = 150, 'data-testid': dataTestId }: PfStepCardsProps) {
-  if (steps.length === 0) return null
+export function PfStepCards(props: PfStepCardsProps) {
+  if (props.steps.length === 0) return null
+  return props.layout === 'guide' ? <Guide {...props} /> : <Grid {...props} />
+}
+
+const rowStyle: React.CSSProperties = { ...cardBase, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: '4px 12px' }
+
+function Guide({
+  steps,
+  openId,
+  positionLabel = (n, total) => `Step ${n} of ${total}`,
+  onBack,
+  onContinue,
+  continueDisabledReason,
+  backLabel = 'Back',
+  continueLabel = 'Continue',
+  footerNote,
+  'data-testid': dataTestId,
+}: PfStepCardsProps) {
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const first = useRef(true)
+  // After Continue or Back the old button is gone; put focus on the newly open step's title.
+  useEffect(() => {
+    if (first.current) first.current = false
+    else headingRef.current?.focus()
+  }, [openId])
+
+  return (
+    <div role="list" style={{ ...rootStyle, gridTemplateColumns: '1fr' }} data-testid={dataTestId}>
+      {steps.map((step, i) => {
+        const isOpen = step.id === openId
+        const muted = step.state === 'todo' || step.state === 'skipped'
+        const chip = step.state === 'skipped' ? 'skipped' : step.cost || (step.state === 'done' ? 'Done' : undefined)
+        const title = (
+          <span style={muted ? { ...headerStyle, color: MUTED } : headerStyle}>
+            <span>{step.title}</span>
+            {step.tag && <span style={tagStyle}>{step.tag}</span>}
+          </span>
+        )
+        if (!isOpen) {
+          return (
+            <div key={step.id} role="listitem" aria-label={`${step.title}, ${step.state}`} style={rowStyle}>
+              {title}
+              {step.summary != null ? (
+                <span style={noteStyle}>{step.summary}</span>
+              ) : (
+                <>
+                  {step.count != null && <span style={muted ? { ...chipStyle, color: MUTED } : chipStyle}>{step.count}</span>}
+                  {step.note != null && <span style={noteStyle}>{step.note}</span>}
+                </>
+              )}
+              {chip && <span style={{ ...chipStyle, color: step.state === 'done' ? 'var(--pf-positive)' : 'var(--pf-text-secondary)' }}>{chip}</span>}
+              {step.action != null && <span>{step.action}</span>}
+            </div>
+          )
+        }
+        return (
+          <div
+            key={step.id}
+            role="listitem"
+            aria-label={`${step.title}, ${positionLabel(i + 1, steps.length)}`}
+            aria-current="step"
+            style={{ ...cardBase, border: '2px solid var(--pf-accent-text, var(--pf-accent))', padding: '11px', background: 'var(--pf-bg-surface-alt)' }}
+          >
+            <div style={noteStyle}>{positionLabel(i + 1, steps.length)}</div>
+            <h3 ref={headingRef} tabIndex={-1} style={{ ...headerStyle, margin: 0, fontSize: '16px' }}>
+              <span>{step.title}</span>
+              {step.tag && <span style={tagStyle}>{step.tag}</span>}
+            </h3>
+            {step.body != null && <div>{step.body}</div>}
+            {(onBack || onContinue) && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                {i > 0 && onBack && (
+                  <PfButton variant="secondary" onClick={onBack}>
+                    {backLabel}
+                  </PfButton>
+                )}
+                {onContinue && (
+                  <PfButton disabled={!!continueDisabledReason} reason={continueDisabledReason} onClick={onContinue}>
+                    {continueLabel}
+                  </PfButton>
+                )}
+              </div>
+            )}
+            {footerNote != null && <div style={noteStyle}>{footerNote}</div>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function Grid({ steps, currentId, minCardWidth = 150, 'data-testid': dataTestId }: PfStepCardsProps) {
 
   // With currentId, only that card is current. Without it, only the first 'current' step is.
   const currentIndex =
