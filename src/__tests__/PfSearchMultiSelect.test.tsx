@@ -240,4 +240,50 @@ describe('PfSearchMultiSelect', () => {
       expect(onChange).toHaveBeenLastCalledWith(['Apples-value', 'Quinces-value'])
     })
   })
+
+  describe('max', () => {
+    const grouped = [
+      { value: 'a', label: 'Apples', group: 'Sweet' },
+      { value: 'b', label: 'Pears', group: 'Sweet' },
+      { value: 'c', label: 'Lemons', group: 'Sour' },
+    ]
+    const rich = { options: grouped, renderOption: (o: { label: string }) => <b>{o.label}</b>, renderChip: (v: string) => <i>{v}</i> }
+
+    it('max 1 replaces the value and closes the list', () => {
+      const { input, onChange } = setup({ ...rich, values: ['a'], max: 1 })
+      fireEvent.click(input)
+      fireEvent.click(screen.getByRole('option', { name: 'Pears' }))
+      expect(onChange).toHaveBeenCalledWith(['b'])
+      expect(screen.queryByRole('listbox')).toBeNull()
+    })
+
+    it('max 1 keeps groups and renderOption', () => {
+      const { input } = setup({ ...rich, values: ['a'], max: 1 })
+      fireEvent.click(input)
+      expect(screen.getAllByRole('group').map((g) => g.textContent)).toEqual(['Sweet', 'Sour'])
+      expect(within(screen.getByRole('option', { name: 'Lemons' })).getByText('Lemons').tagName).toBe('B')
+    })
+
+    it('max 2 disables further options at the limit', () => {
+      const { input, onChange } = setup({ ...rich, values: ['a', 'b'], max: 2 })
+      fireEvent.click(input)
+      const c = screen.getByRole('option', { name: 'Lemons' })
+      expect(c).toHaveAttribute('aria-disabled', 'true')
+      fireEvent.click(c)
+      expect(onChange).not.toHaveBeenCalled()
+      expect(screen.getByRole('option', { name: 'Apples' })).not.toHaveAttribute('aria-disabled')
+      fireEvent.click(screen.getByRole('option', { name: 'Apples' }))
+      expect(onChange).toHaveBeenCalledWith(['b'])
+    })
+
+    it('no max keeps today\'s behaviour: list stays open, nothing disabled', () => {
+      const { input, onChange } = setup({ ...rich, values: ['a', 'b'] })
+      fireEvent.click(input)
+      fireEvent.click(screen.getByRole('option', { name: 'Lemons' }))
+      expect(onChange).toHaveBeenCalledWith(['a', 'b', 'c'])
+      expect(screen.getByRole('listbox')).toBeVisible()
+      screen.getAllByRole('option').forEach((o) => expect(o).not.toHaveAttribute('aria-disabled'))
+      expect(screen.getAllByRole('group')).toHaveLength(2)
+    })
+  })
 })

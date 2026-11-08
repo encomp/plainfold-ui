@@ -33,6 +33,8 @@ export interface PfSearchMultiSelectProps {
   renderOption?: (o: PfSearchMultiSelectOption) => React.ReactNode
   /** The chip's visible content; the remove button keeps "Remove {label}" */
   renderChip?: (value: string) => React.ReactNode
+  /** At most this many picks. 1: a pick replaces the value and closes the list. More: options past the limit are disabled. Unset: no limit */
+  max?: number
   'data-testid'?: string
 }
 
@@ -62,6 +64,7 @@ export function PfSearchMultiSelect({
   onSearch,
   renderOption,
   renderChip,
+  max,
   'data-testid': testId,
 }: PfSearchMultiSelectProps) {
   const uid = useId()
@@ -92,9 +95,19 @@ export function PfSearchMultiSelect({
     setOpen(false)
     setActive(-1)
   }
+  const full = (o: PfSearchMultiSelectOption) => max !== undefined && max > 1 && values.length >= max && !values.includes(o.value)
   const toggle = (o: PfSearchMultiSelectOption) => {
-    if (o.disabled) return
+    if (o.disabled || full(o)) return
     const on = values.includes(o.value)
+    if (max === 1) {
+      onChange([o.value])
+      setTyping(false)
+      setSaid(`${o.label} selected`)
+      setText('')
+      onSearch?.('')
+      close()
+      return
+    }
     onChange(on ? values.filter((v) => v !== o.value) : [...values, o.value])
     setTyping(false)
     setSaid(`${o.label} ${on ? 'removed' : 'selected'}`)
@@ -220,13 +233,13 @@ export function PfSearchMultiSelect({
                 id={`${uid}-${i}`}
                 role="option"
                 aria-selected={on}
-                aria-disabled={o.disabled || undefined}
+                aria-disabled={o.disabled || full(o) || undefined}
                 aria-label={o.count === undefined ? (renderOption ? o.label : undefined) : `${o.label}, ${countLabel(o.count)}`}
                 onClick={() => toggle(o)}
                 style={{
                   display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 12px', fontSize: pfText.body,
-                  borderRadius: 'var(--pf-radius-sm)', cursor: o.disabled ? 'not-allowed' : 'pointer',
-                  color: o.disabled ? 'var(--pf-text-muted)' : 'var(--pf-text-primary)',
+                  borderRadius: 'var(--pf-radius-sm)', cursor: o.disabled || full(o) ? 'not-allowed' : 'pointer',
+                  color: o.disabled || full(o) ? 'var(--pf-text-muted)' : 'var(--pf-text-primary)',
                   fontWeight: on ? 600 : 400,
                   background: i === at ? 'var(--pf-accent-muted)' : undefined,
                 }}
