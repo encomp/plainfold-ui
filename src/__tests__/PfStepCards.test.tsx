@@ -237,4 +237,19 @@ describe('PfStepCards guide layout', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByRole('heading', { name: 'Find' })).toHaveFocus()
   })
+
+  it('is StrictMode-safe: no focus on mount, focus lands on the new heading after Continue', () => {
+    const Host = () => {
+      const [open, setOpen] = React.useState('c')
+      return <PfStepCards steps={guide} layout="guide" openId={open} onContinue={() => setOpen('d')} />
+    }
+    render(
+      <React.StrictMode>
+        <Host />
+      </React.StrictMode>,
+    )
+    expect(document.body).toHaveFocus()
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.getByRole('heading', { name: 'Remove' })).toHaveFocus()
+  })
 })
