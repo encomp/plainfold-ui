@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { PfButton } from './PfButton'
+import { useBreakpoint } from '../utils/useBreakpoint'
 
 interface PfSnackbarProps {
   open: boolean
@@ -13,6 +14,8 @@ interface PfSnackbarProps {
   autoHideDuration?: number | null
   /** When set, shows a close button with this accessible name. */
   closeLabel?: string
+  /** Distance from the bottom edge (number = px), to clear fixed bottom UI. Default 24px; the safe-area inset is added. */
+  bottomOffset?: number | string
 }
 
 export function PfSnackbar({
@@ -22,9 +25,11 @@ export function PfSnackbar({
   action,
   autoHideDuration = 5000,
   closeLabel,
+  bottomOffset = 24,
 }: PfSnackbarProps) {
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
+  const narrow = useBreakpoint() === 'mobile'
   const paused = hovered || focused
   const remaining = useRef(autoHideDuration)
 
@@ -56,9 +61,11 @@ export function PfSnackbar({
 
   const containerStyle: React.CSSProperties = {
     position: 'fixed',
-    bottom: '24px',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    bottom: `calc(${typeof bottomOffset === 'number' ? `${bottomOffset}px` : bottomOffset} + env(safe-area-inset-bottom, 0px))`,
+    ...(narrow
+      ? { left: '16px', right: '16px', transform: 'none' }
+      : { left: '50%', transform: 'translateX(-50%)', maxWidth: 'min(560px, calc(100vw - 32px))' }),
+    boxSizing: 'border-box',
     background: 'var(--pf-bg-elevated, var(--pf-bg-surface))',
     border: '1px solid var(--pf-border)',
     borderRadius: 'var(--pf-radius-md)',

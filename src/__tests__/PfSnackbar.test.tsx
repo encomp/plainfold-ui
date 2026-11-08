@@ -149,4 +149,33 @@ describe('PfSnackbar', () => {
     act(() => { vi.advanceTimersByTime(5000) })
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  it('keeps the default bottom of 24px plus the safe-area inset', () => {
+    render(<PfSnackbar open onClose={() => {}} message="Pos" />)
+    const el = screen.getByTestId('pf-snackbar')
+    expect(el.style.bottom).toContain('24px')
+    expect(el.style.bottom).toContain('safe-area-inset-bottom')
+    expect(el.style.left).toBe('50%')
+  })
+
+  it('applies bottomOffset as number or string', () => {
+    const { rerender } = render(<PfSnackbar open onClose={() => {}} message="Pos" bottomOffset={80} />)
+    expect(screen.getByTestId('pf-snackbar').style.bottom).toContain('80px')
+    rerender(<PfSnackbar open onClose={() => {}} message="Pos" bottomOffset="5rem" />)
+    expect(screen.getByTestId('pf-snackbar').style.bottom).toContain('5rem')
+  })
+
+  it('spans the screen minus gutters on a narrow viewport', () => {
+    const old = window.innerWidth
+    window.innerWidth = 375
+    try {
+      render(<PfSnackbar open onClose={() => {}} message="Pos" />)
+      const el = screen.getByTestId('pf-snackbar')
+      expect(el.style.left).toBe('16px')
+      expect(el.style.right).toBe('16px')
+      expect(el.style.transform).toBe('none')
+    } finally {
+      window.innerWidth = old
+    }
+  })
 })
